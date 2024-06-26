@@ -1,60 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NativeRouter, Route, Routes } from 'react-router-native';
-import { Provider as PaperProvider } from 'react-native-paper';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import AppBarComponent from './components/AppBarComponent';
-import WebViewComponent from './components/WebViewComponent';
-import PaymentPage from "./pages/PaymentPage";
+import * as React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import ServiceContainer from './components/ServiceContainer';
+import MediaScreen from './pages/MediaScreen';
+import RadioScreen from './pages/RadioScreen';
+import MoviesScreen from './pages/MoviesScreen';
+import MusicScreen from './pages/MusicScreen';
+import ShowsScreen from './pages/ShowsScreen';
+import INethiVideosScreen from './pages/INethiVideosScreen';
 
-const App = () => {
-    const [userToken, setUserToken] = useState(null);
+const Stack = createStackNavigator();
 
-    useEffect(() => {
-        const loadToken = async () => {
-            const token = await AsyncStorage.getItem('userToken');
-            setUserToken(token);
-        };
-        loadToken();
-    }, []);
-    const logout = async () => {
-        await AsyncStorage.removeItem('userToken');
-        await AsyncStorage.removeItem('tokenExpiry');
-        await AsyncStorage.removeItem('refreshToken');
-        setUserToken(null);  // This will trigger a re-render and redirect to the login page
-    };
-
-    const handleLoginSuccess = async (token, expiresIn, refresh_token) => {
-        const expiryDate = new Date().getTime() + expiresIn * 1000;
-        await AsyncStorage.setItem('userToken', token);
-        await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());  // Store the expiry time
-        await AsyncStorage.setItem('refreshToken', refresh_token);
-        setUserToken(token);
-    };
-
-
-    return (
-        <PaperProvider>
-            <SafeAreaProvider>
-                <NativeRouter>
-                    <AppBarComponent logout={logout} />
-                    <Routes>
-                        {userToken ? (
-                            <>
-                                <Route exact path="/" element={<HomePage logout={logout}/>} />
-                                <Route path="/payment" element={<PaymentPage />}/>
-                                <Route path="/webview" element={<WebViewComponent />}/>
-                            </>
-                        ) : (
-                            <Route path="*" element={<LoginPage onLoginSuccess={handleLoginSuccess}/>} />
-                        )}
-                    </Routes>
-                </NativeRouter>
-            </SafeAreaProvider>
-        </PaperProvider>
-    );
-};
+function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={ServiceContainer} />
+        <Stack.Screen name="Media" component={MediaScreen} />
+        <Stack.Screen name="Radio" component={RadioScreen} />
+        <Stack.Screen name="Movies" component={MoviesScreen} />
+        <Stack.Screen name="Music" component={MusicScreen} />
+        <Stack.Screen name="Shows" component={ShowsScreen} />
+        <Stack.Screen name="INethiVideos" component={INethiVideosScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
 
 export default App;

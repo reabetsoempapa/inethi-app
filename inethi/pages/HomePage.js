@@ -6,6 +6,7 @@ import { Linking } from 'react-native';
 import UploadModal from '../components/UploadModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import Shows from '../components/Shows';
 
 const HomePage = ({ logout }) => {
     const navigate = useNavigate();
@@ -188,7 +189,11 @@ const HomePage = ({ logout }) => {
      
     {renderCategoryCards()}
 
+    <Shows/>
+
     </View>
+  
+   
   );
 };
 
