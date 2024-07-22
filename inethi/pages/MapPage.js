@@ -1,30 +1,104 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
-MapboxGL.setAccessToken('sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw');
+MapboxGL.setAccessToken('sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw'); // Ensure the token is valid
 
 const MapPage = () => {
     const [selectedRouter, setSelectedRouter] = useState(null);
     const [routers, setRouters] = useState([]);
-    const [innerCircleSize] = useState(new Animated.Value(10));
-    const [outerCircleSize] = useState(new Animated.Value(20));
+    const [isOffline, setIsOffline] = useState(false);
 
     useEffect(() => {
-        fetch('http://172.16.7.31:8000/monitoring/devices/')
-            .then(response => response.json())
-            .then(data => {
-                setRouters(data.map((item, index) => ({
-                    id: index,
-                    coordinates: [item.lon, item.lat],
-                    ipAddress: item.ip,
-                    status: item.status,
-                    name: item.name,
-                    mac: item.mac
-                })));
-            })
-            .catch(error => console.error('Error fetching router data:', error));
+        const fetchData = async () => {
+            try {
+                const cachedData = await AsyncStorage.getItem('routerData');
+                if (cachedData) {
+                    console.log('Using local stored data');
+                    setRouters(JSON.parse(cachedData));
+                } else {
+                    console.log('No local data found, fetching from API');
+                }
+
+                const state = await NetInfo.fetch();
+                if (state.isConnected && state.type === 'wifi') {
+                    console.log('Connected to Wi-Fi, fetching new data from API');
+                    const response = await fetch('http://172.16.7.31:8000/monitoring/devices/');
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const data = await response.json();
+                    const formattedData = data.map((item, index) => ({
+                        id: index,
+                        coordinates: [item.lon, item.lat],
+                        ipAddress: item.ip,
+                        status: item.status,
+                        name: item.name,
+                        mac: item.mac,
+                    }));
+                    setRouters(formattedData);
+                    await AsyncStorage.setItem('routerData', JSON.stringify(formattedData));
+                    console.log('Data fetched from API and saved to local storage');
+                } else {
+                    console.log('Not connected to Wi-Fi, using cached data if available');
+                }
+
+                // Check for offline status
+                setIsOffline(!(state.isConnected && state.type === 'wifi'));
+            } catch (error) {
+                console.error('Error fetching router data:', error);
+            }
+        };
+
+        fetchData();
     }, []);
+
+    useEffect(() => {
+        const downloadMapRegion = async () => {
+            if (!isOffline) {
+                const bounds = [
+                    [18.3685, -34.1278], // NE
+                    [18.3485, -34.1478]  // SW
+                ];
+
+                const offlineRegion = {
+                    name: 'offlinePack',
+                    styleURL: MapboxGL.StyleURL.Street, // Ensure style URL is provided
+                    minZoom: 10,
+                    maxZoom: 18,
+                    bounds
+                };
+
+                const progressListener = (offlineRegion, status) => {
+                    console.log(`Download progress: ${status.percentage}%`, offlineRegion);
+                };
+                const errorListener = (offlineRegion, err) => {
+                    console.error('Error downloading offline pack:', err, offlineRegion);
+                };
+
+                try {
+                    // Check if the offline pack already exists
+                    const packs = await MapboxGL.offlineManager.getPacks();
+                    const existingPack = packs.find(pack => pack.name === 'offlinePack');
+                    if (existingPack) {
+                        console.log('Offline pack already exists. Using existing pack.');
+                    } else {
+                        await MapboxGL.offlineManager.createPack(offlineRegion, progressListener, errorListener);
+                        console.log('Created new offline pack.');
+                    }
+                } catch (error) {
+                    console.error('Error creating offline pack:', error);
+                }
+            }
+        };
+
+        downloadMapRegion();
+    }, [isOffline]);
+
+    const [innerCircleSize] = useState(new Animated.Value(10));
+    const [outerCircleSize] = useState(new Animated.Value(20));
 
     const handleMouseEnter = () => {
         Animated.timing(outerCircleSize, {
@@ -100,6 +174,10 @@ const MapPage = () => {
                     style={styles.map}
                     zoomEnabled={true}
                     scrollEnabled={true}
+                    styleURL={isOffline ? MapboxGL.StyleURL.Street : MapboxGL.StyleURL.Outdoors}
+                    onWillStartLoadingMap={() => {
+                        console.log(isOffline ? 'Using offline Mapbox' : 'Using online Mapbox');
+                    }}
                 >
                     <MapboxGL.Camera
                         zoomLevel={14}

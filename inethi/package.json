@@ -11,9 +11,10 @@
   },
   "dependencies": {
     "@react-keycloak/native": "^0.6.4",
-    "@react-native-async-storage/async-storage": "^1.23.1",
+    "@react-native-async-storage/async-storage": "^1.24.0",
+    "@react-native-community/netinfo": "^11.3.2",
     "@react-native-picker/picker": "^2.7.5",
-    "@rnmapbox/maps": "^10.1.27",
+    "@rnmapbox/maps": "^10.1.28",
     "axios": "^1.6.8",
     "react": "18.2.0",
     "react-native": "0.73.4",
