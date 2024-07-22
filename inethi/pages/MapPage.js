@@ -4,7 +4,7 @@ import MapboxGL from '@rnmapbox/maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 
-MapboxGL.setAccessToken('sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw'); // Ensure the token is valid
+MapboxGL.setAccessToken('sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw');
 
 const MapPage = () => {
     const [selectedRouter, setSelectedRouter] = useState(null);
@@ -24,28 +24,38 @@ const MapPage = () => {
 
                 const state = await NetInfo.fetch();
                 if (state.isConnected && state.type === 'wifi') {
-                    console.log('Connected to Wi-Fi, fetching new data from API');
-                    const response = await fetch('http://172.16.7.31:8000/monitoring/devices/');
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                    console.log('Connected to Wi-Fi, checking internet access');
+                    try {
+                        // Check internet access by making a request to a reliable URL
+                        const internetCheck = await fetch('https://www.google.com', { method: 'HEAD' });
+                        if (internetCheck.ok) {
+                            console.log('Internet access confirmed, fetching data from API');
+                            const response = await fetch('http://172.16.7.31:8000/monitoring/devices/');
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            const data = await response.json();
+                            const formattedData = data.map((item, index) => ({
+                                id: index,
+                                coordinates: [item.lon, item.lat],
+                                ipAddress: item.ip,
+                                status: item.status,
+                                name: item.name,
+                                mac: item.mac,
+                            }));
+                            setRouters(formattedData);
+                            await AsyncStorage.setItem('routerData', JSON.stringify(formattedData));
+                            console.log('Data fetched from API and saved to local storage');
+                        } else {
+                            console.log('No internet access, using cached data if available');
+                        }
+                    } catch (error) {
+                        console.error('Error checking internet access or fetching router data from API:', error);
                     }
-                    const data = await response.json();
-                    const formattedData = data.map((item, index) => ({
-                        id: index,
-                        coordinates: [item.lon, item.lat],
-                        ipAddress: item.ip,
-                        status: item.status,
-                        name: item.name,
-                        mac: item.mac,
-                    }));
-                    setRouters(formattedData);
-                    await AsyncStorage.setItem('routerData', JSON.stringify(formattedData));
-                    console.log('Data fetched from API and saved to local storage');
                 } else {
                     console.log('Not connected to Wi-Fi, using cached data if available');
                 }
 
-                // Check for offline status
                 setIsOffline(!(state.isConnected && state.type === 'wifi'));
             } catch (error) {
                 console.error('Error fetching router data:', error);
@@ -65,7 +75,7 @@ const MapPage = () => {
 
                 const offlineRegion = {
                     name: 'offlinePack',
-                    styleURL: MapboxGL.StyleURL.Street, // Ensure style URL is provided
+                    styleURL: MapboxGL.StyleURL.Street,
                     minZoom: 10,
                     maxZoom: 18,
                     bounds
@@ -79,7 +89,6 @@ const MapPage = () => {
                 };
 
                 try {
-                    // Check if the offline pack already exists
                     const packs = await MapboxGL.offlineManager.getPacks();
                     const existingPack = packs.find(pack => pack.name === 'offlinePack');
                     if (existingPack) {
