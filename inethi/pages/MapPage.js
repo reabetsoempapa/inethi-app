@@ -6,90 +6,73 @@ MapboxGL.setAccessToken('sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2
 
 const MapPage = () => {
     const [selectedRouter, setSelectedRouter] = useState(null);
+    const [routers, setRouters] = useState([]);
+    const [innerCircleSize] = useState(new Animated.Value(10));
+    const [outerCircleSize] = useState(new Animated.Value(20));
 
-    const routers = [
-        {
-            id: 1,
-            coordinates: [18.3585, -34.1378],
-            ipAddress: '192.168.1.1',
-            status: 'Online',
-            name: 'Router 1',
-        },
-        {
-            id: 2,
-            coordinates: [18.3600, -34.1390],
-            ipAddress: '192.168.1.2',
-            status: 'Offline',
-            name: 'Router 2',
-        },
-        {
-            id: 3,
-            coordinates: [18.3570, -34.1380],
-            ipAddress: '192.168.1.3',
-            status: 'Online',
-            name: 'Router 3',
-        },
-        {
-            id: 4,
-            coordinates: [18.3590, -34.1400],
-            ipAddress: '192.168.1.4',
-            status: 'Offline',
-            name: 'Router 4',
-        },
-    ];
+    useEffect(() => {
+        fetch('http://172.16.7.31:8000/monitoring/devices/')
+            .then(response => response.json())
+            .then(data => {
+                setRouters(data.map((item, index) => ({
+                    id: index,
+                    coordinates: [item.lon, item.lat],
+                    ipAddress: item.ip,
+                    status: item.status,
+                    name: item.name,
+                    mac: item.mac
+                })));
+            })
+            .catch(error => console.error('Error fetching router data:', error));
+    }, []);
 
-    const renderRouterMarker = (router) => {
-        const [innerCircleSize] = useState(new Animated.Value(10));
-        const [outerCircleSize] = useState(new Animated.Value(20));
-
-        const handleMouseEnter = () => {
-            Animated.timing(outerCircleSize, {
-                toValue: 30,
-                duration: 300,
-                useNativeDriver: false,
-            }).start();
-        };
-
-        const handleMouseLeave = () => {
-            Animated.timing(outerCircleSize, {
-                toValue: 20,
-                duration: 300,
-                useNativeDriver: false,
-            }).start();
-        };
-
-        return (
-            <MapboxGL.PointAnnotation
-                key={router.id}
-                id={`router-${router.id}`}
-                coordinate={router.coordinates}
-                onSelected={() => setSelectedRouter(router)}
-            >
-                <TouchableOpacity
-                    onPress={() => setSelectedRouter(router)}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                >
-                    <View style={styles.markerContainer}>
-                        <Animated.View
-                            style={[
-                                styles.outerCircle,
-                                {
-                                    width: outerCircleSize,
-                                    height: outerCircleSize,
-                                    borderRadius: outerCircleSize.interpolate({
-                                        inputRange: [0, 100],
-                                        outputRange: [0, 50],
-                                    }),
-                                },
-                            ]}
-                        />
-                        <View style={styles.innerCircle} />
-                    </View>
-                </TouchableOpacity>
-            </MapboxGL.PointAnnotation>
-        );
+    const handleMouseEnter = () => {
+        Animated.timing(outerCircleSize, {
+            toValue: 30,
+            duration: 300,
+            useNativeDriver: false,
+        }).start();
     };
+
+    const handleMouseLeave = () => {
+        Animated.timing(outerCircleSize, {
+            toValue: 20,
+            duration: 300,
+            useNativeDriver: false,
+        }).start();
+    };
+
+    const renderRouterMarker = (router) => (
+        <MapboxGL.PointAnnotation
+            key={router.id}
+            id={`router-${router.id}`}
+            coordinate={router.coordinates}
+            onSelected={() => setSelectedRouter(router)}
+        >
+            <TouchableOpacity
+                onPress={() => setSelectedRouter(router)}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+            >
+                <View style={styles.markerContainer}>
+                    <Animated.View
+                        style={[
+                            styles.outerCircle,
+                            {
+                                width: outerCircleSize,
+                                height: outerCircleSize,
+                                borderRadius: outerCircleSize.interpolate({
+                                    inputRange: [0, 100],
+                                    outputRange: [0, 50],
+                                }),
+                            },
+                        ]}
+                    />
+                    <View style={styles.innerCircle} />
+                </View>
+            </TouchableOpacity>
+        </MapboxGL.PointAnnotation>
+    );
 
     const renderPopup = () => {
         if (!selectedRouter) return null;
@@ -98,6 +81,7 @@ const MapPage = () => {
                 <View style={styles.popupContainer}>
                     <Animated.View style={styles.popup}>
                         <Text style={styles.popupText}>Name: {selectedRouter.name}</Text>
+                        <Text style={styles.popupText}>MAC Address: {selectedRouter.mac}</Text>
                         <Text style={styles.popupText}>IP Address: {selectedRouter.ipAddress}</Text>
                         <Text style={styles.popupText}>Status: {selectedRouter.status}</Text>
                         <TouchableOpacity onPress={() => setSelectedRouter(null)} style={styles.closeButton}>
