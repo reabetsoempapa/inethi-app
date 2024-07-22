@@ -4,6 +4,7 @@ import { Button, Card, Title } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import { Linking } from 'react-native';
 import UploadModal from '../components/UploadModal';
+import NewModalNetworkStatus from '../components/NewModalNetworkStatus';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 

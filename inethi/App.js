@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
+import NewModalNetworkStatus from './components/NewModalNetworkStatus';
 import PaymentPage from "./pages/PaymentPage";
 
 const App = () => {
@@ -42,7 +43,7 @@ const App = () => {
                 <NativeRouter>
                     <AppBarComponent logout={logout} />
                     <Routes>
-                        <Route exact path="/" element={<MapPage />} />
+                        <Route exact path="/" element={<NewModalNetworkStatus />} />
                         {userToken ? (
                             <>
                                 <Route path="/home" element={<HomePage logout={logout} />} />
