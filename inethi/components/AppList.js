@@ -89,7 +89,7 @@ const requestStoragePermission = async () => {
 export default function AppList() {
   const [apps, setApps] = useState([]);
   const [installedApps, setInstalledApps] = useState({});
-  const [downloadProgress, setDownloadProgress] = useState(0); // State for download progress
+  const [downloadProgress, setDownloadProgress] = useState({}); // State for download progress
   const navigate = useNavigate();
   const [featureClicked, setFeatureClicked] = useState("");
 
@@ -136,7 +136,7 @@ export default function AppList() {
     return downloadDirectory;
   };
 
-  const downloadApp = async (url) => {
+  const downloadApp = async (url, appId) => {
     try {
       const downloadDirectory = await createDownloadDirectory();
       const appname = url.split('/').pop();
@@ -155,7 +155,10 @@ export default function AppList() {
           if (res.bytesWritten && res.contentLength) {
             let progressPercent = (res.bytesWritten / res.contentLength) * 100;
             console.log(`Progress: ${progressPercent}%`);
-            setDownloadProgress(progressPercent / 100); // Update progress for Progress.Bar
+            setDownloadProgress((prevProgress) => ({
+              ...prevProgress,
+              [appId]: progressPercent / 100,
+            })); // Update progress for the specific app
           } else {
             console.error('Progress update received invalid values', res);
           }
@@ -189,7 +192,10 @@ export default function AppList() {
             ],
             { cancelable: true }
           );
-          setDownloadProgress(0); // Reset progress after successful download
+          setDownloadProgress((prevProgress) => ({
+            ...prevProgress,
+            [appId]: 0,
+          })); // Reset progress for the specific app after successful download
         } else {
           console.error('File does not exist after download');
           Alert.alert('Error', 'File does not exist after download.');
@@ -204,33 +210,36 @@ export default function AppList() {
     }
   };
 
-  const renderAppItem = ({ item }) => (
-    <View style={styles.appItem} key={item.url}>
-      <Image source={{ uri: `http://10.0.2.2:81${item.icon}` }} style={styles.icon} />
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.description}>{item.description}</Text>
-      {installedApps[item.packageName] ? (
-        <Text style={styles.installedText}>Installed</Text>
-      ) : (
-        <TouchableOpacity
-          style={styles.downloadButton}
-          onPress={() => downloadApp(item.url)}
-        >
-          <Text style={styles.downloadButtonText}>Download</Text>
-        </TouchableOpacity>
-      )}
-      {downloadProgress > 0 && (
-        <View style={styles.progressContainer}>
-          <Progress.Bar
-            progress={downloadProgress}
-            width={200}
-            color="#007BFF"
-          />
-          <Text>{Math.floor(downloadProgress * 100)}%</Text>
-        </View>
-      )}
-    </View>
-  );
+  const renderAppItem = ({ item }) => {
+    const appId = item.url; // Use URL as a unique ID for the item
+    return (
+      <View style={styles.appItem} key={appId}>
+        <Image source={{ uri: `http://10.0.2.2:81${item.icon}` }} style={styles.icon} />
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.description}>{item.description}</Text>
+        {installedApps[item.packageName] ? (
+          <Text style={styles.installedText}>Installed</Text>
+        ) : (
+          <TouchableOpacity
+            style={styles.downloadButton}
+            onPress={() => downloadApp(item.url, appId)}
+          >
+            <Text style={styles.downloadButtonText}>Download</Text>
+          </TouchableOpacity>
+        )}
+        {downloadProgress[appId] > 0 && (
+          <View style={styles.progressContainer}>
+            <Progress.Bar
+              progress={downloadProgress[appId]}
+              width={200}
+              color="#007BFF"
+            />
+            <Text>{Math.floor(downloadProgress[appId] * 100)}%</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -246,7 +255,6 @@ export default function AppList() {
         keyExtractor={(item) => item.url} // Use URL as a unique key
         contentContainerStyle={styles.listContainer}
       />
-
     </View>
   );
 };

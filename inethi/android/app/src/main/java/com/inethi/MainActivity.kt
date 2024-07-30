@@ -1,12 +1,13 @@
 package com.inethi
 
 import android.Manifest
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import android.content.pm.PackageManager // Add this import
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -19,12 +20,14 @@ class MainActivity : ReactActivity() {
         arrayListOf(
             Manifest.permission.READ_MEDIA_AUDIO,
             Manifest.permission.READ_MEDIA_VIDEO,
-            Manifest.permission.READ_MEDIA_IMAGES
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.QUERY_ALL_PACKAGES // Add permission for querying packages
         )
     } else {
         arrayListOf(
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.QUERY_ALL_PACKAGES // Add permission for querying packages
         )
     }
 
@@ -55,12 +58,21 @@ class MainActivity : ReactActivity() {
         if (requestCode == multiplePermissionId) {
             val allPermissionsGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
             if (allPermissionsGranted) {
-                // All permissions are granted
                 Toast.makeText(this, "All permissions granted", Toast.LENGTH_SHORT).show()
+                listInstalledApps() // Call method to list installed apps
             } else {
-                // Some permissions are denied
                 Toast.makeText(this, "Some permissions are denied", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun listInstalledApps() {
+        val pm: PackageManager = packageManager
+        val packages: List<PackageInfo> = pm.getInstalledPackages(PackageManager.GET_META_DATA)
+        for (packageInfo in packages) {
+            val packageName = packageInfo.packageName
+            val appName = packageInfo.applicationInfo.loadLabel(pm).toString()
+            println("Package: $packageName, App Name: $appName")
         }
     }
 }
