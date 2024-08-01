@@ -1,35 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, PermissionsAndroid, Platform, Alert, Linking } from 'react-native';
+import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, PermissionsAndroid, Platform, Alert, Linking, NativeModules, AppState } from 'react-native';
 import RNFS from 'react-native-fs';
 import { useNavigate } from 'react-router-native';
 import { getApps } from '../service/api.js';
-import * as Progress from 'react-native-progress'; // Import react-native-progress
-import DeviceInfo from 'react-native-device-info'; // Import device info
+import * as Progress from 'react-native-progress';
+import DeviceInfo from 'react-native-device-info';
 import { recordAppDownloaded } from '../service/Metric.js';
 
-const requestStoragePermission = async () => {
+const { InstalledAppsModule } = NativeModules;
+
+const requestPermissions = async () => {
   if (Platform.OS === 'android') {
     try {
-      let permissions;
       const sdkInt = Platform.Version;
+      const permissions = [];
+
       if (sdkInt >= 33) {
-        permissions = [
+        permissions.push(
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-        ];
-      } else {
-        permissions = [
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
+        );
+      }
+      else {
+        permissions.push(
           PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        ];
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+        );
+
       }
 
       const granted = await PermissionsAndroid.requestMultiple(
         permissions,
         {
-          title: 'Storage Permission',
-          message: 'This app needs access to your storage to download files',
+          title: 'Permissions Required',
+          message: 'This app needs access to storage and installed apps list',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',
@@ -38,28 +43,16 @@ const requestStoragePermission = async () => {
 
       console.log("Permission status:", granted);
 
-      if (sdkInt >= 33) {
-        const allPermissionsGranted = permissions.every(permission => granted[permission] === PermissionsAndroid.RESULTS.GRANTED);
-        if (allPermissionsGranted) {
-          console.log('You can use the media storage');
-          return true;
-        }
-      } else {
-        if (granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED &&
-          granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('You can use the storage');
-          return true;
-        }
+      const allPermissionsGranted = permissions.every(permission => granted[permission] === PermissionsAndroid.RESULTS.GRANTED);
+      if (allPermissionsGranted) {
+        console.log('All required permissions granted');
+        return true;
       }
 
-      if (granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      if (permissions.some(permission => granted[permission] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN)) {
         Alert.alert(
           'Permission Required',
-          'Storage permission is required to download files. Please enable it in the app settings.',
+          'Some permissions are required for the app to function properly. Please enable them in the app settings.',
           [
             {
               text: 'Open Settings',
@@ -72,12 +65,10 @@ const requestStoragePermission = async () => {
           ],
           { cancelable: false }
         );
-        return false;
       } else {
-        console.log('Storage permission denied');
         Alert.alert('Permission Denied', 'Storage permission is required to download files.');
-        return false;
       }
+      return false;
     } catch (err) {
       console.warn(err);
       return false;
@@ -89,42 +80,70 @@ const requestStoragePermission = async () => {
 export default function AppList() {
   const [apps, setApps] = useState([]);
   const [installedApps, setInstalledApps] = useState({});
-  const [downloadProgress, setDownloadProgress] = useState({}); // State for download progress
+  const [downloadProgress, setDownloadProgress] = useState({});
   const navigate = useNavigate();
   const [featureClicked, setFeatureClicked] = useState("");
+  const [installedAppsData, setInstalledAppData] = useState([]);
+  const [appStatus, setInstalledAppsStatus] = useState({});
+  const [numdownloaded, setNumDownloaded] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
-      const hasPermission = await requestStoragePermission();
-      console.log("permission", hasPermission);
-      if (hasPermission) {
-        try {
-          console.log("feature before set:", featureClicked);
-          // setFeatureClicked("AppStore")
+      try {
+        const hasPermission = await requestPermissions();
+        if (!hasPermission) return;
 
-          const data = await getApps();
-          console.log("data received:", data);
-          setApps(data);
-          checkInstalledApps(data);
+        console.log("Permissions granted:", hasPermission);
 
+        const installedApps = await InstalledAppsModule.getInstalledApps();
+        console.log("Installed apps data fetched:", installedApps);
+        setInstalledApps(installedApps);
 
-        } catch (error) {
-          console.error('Error fetching apps:', error);
-        }
+        const data = await getApps();
+        console.log("App store data received:", data);
+        setApps(data);
+
+        checkInstalledApps(installedApps, data);
+      } catch (error) {
+        console.error('Error fetching data or checking installed apps:', error);
       }
     };
 
     fetchData();
-  }, []);
-  // console.log("feature after set:", featureClicked);
 
-  const checkInstalledApps = async (apps) => {
-    const installedStatus = {};
-    for (const app of apps) {
-      const isInstalled = await DeviceInfo.isAppInstalled(app.packageName); // Use packageName to check if the app is installed
-      installedStatus[app.packageName] = isInstalled;
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        fetchData();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+  const checkInstalledApps = (installedAppsData, appsData) => {
+    try {
+      console.log("Checking installed apps...");
+      const installedAppStatus = appsData.map((appstoreApp) => {
+        const appstoreAppName = appstoreApp.name.split(".")[0];
+        console.log("Checking app:", appstoreAppName);
+
+        const matchedApp = installedAppsData.find((app) => app.appName.toLowerCase() === appstoreAppName.toLowerCase());
+
+        console.log("Matched app:", matchedApp);
+        return { appName: appstoreApp.name, isInstalled: Boolean(matchedApp) };
+      });
+
+      console.log("Installed apps status:", installedAppStatus);
+
+      const installedStatus = {};
+      installedAppStatus.forEach(app => {
+        installedStatus[app.appName] = app.isInstalled;
+      });
+      setInstalledAppsStatus(installedStatus);
+    } catch (error) {
+      console.error("Error checking installed apps:", error);
     }
-    setInstalledApps(installedStatus);
   };
 
   const createDownloadDirectory = async () => {
@@ -140,9 +159,9 @@ export default function AppList() {
     try {
       const downloadDirectory = await createDownloadDirectory();
       const appname = url.split('/').pop();
-      console.log("app name :", appname);
+      console.log("app namee :", appname);
 
-      const downloadDest = `${downloadDirectory}/${url.split('/').pop()}`;
+      const downloadDest = `${downloadDirectory}/${appname}`;
       console.log("Download destination:", downloadDest);
 
       const downloadOptions = {
@@ -158,7 +177,7 @@ export default function AppList() {
             setDownloadProgress((prevProgress) => ({
               ...prevProgress,
               [appId]: progressPercent / 100,
-            })); // Update progress for the specific app
+            }));
           } else {
             console.error('Progress update received invalid values', res);
           }
@@ -171,7 +190,6 @@ export default function AppList() {
         console.log('File downloaded to:', downloadDest);
         recordAppDownloaded(appname);
 
-
         const fileExists = await RNFS.exists(downloadDest);
         if (fileExists) {
           console.log("file exists!!")
@@ -183,6 +201,7 @@ export default function AppList() {
                 text: 'Open Files',
                 onPress: () => {
                   Linking.openURL('content://com.android.externalstorage.documents/root/primary');
+                  setNumDownloaded(numdownloaded + 1);
                 },
               },
               {
@@ -195,7 +214,8 @@ export default function AppList() {
           setDownloadProgress((prevProgress) => ({
             ...prevProgress,
             [appId]: 0,
-          })); // Reset progress for the specific app after successful download
+          }));
+
         } else {
           console.error('File does not exist after download');
           Alert.alert('Error', 'File does not exist after download.');
@@ -211,13 +231,13 @@ export default function AppList() {
   };
 
   const renderAppItem = ({ item }) => {
-    const appId = item.url; // Use URL as a unique ID for the item
+    const appId = item.url;
     return (
       <View style={styles.appItem} key={appId}>
         <Image source={{ uri: `http://10.0.2.2:81${item.icon}` }} style={styles.icon} />
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.description}>{item.description}</Text>
-        {installedApps[item.packageName] ? (
+        {appStatus[item.name] ? (
           <Text style={styles.installedText}>Installed</Text>
         ) : (
           <TouchableOpacity
@@ -252,12 +272,12 @@ export default function AppList() {
       <FlatList
         data={apps}
         renderItem={renderAppItem}
-        keyExtractor={(item) => item.url} // Use URL as a unique key
+        keyExtractor={(item) => item.url}
         contentContainerStyle={styles.listContainer}
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
