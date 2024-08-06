@@ -1,7 +1,9 @@
 import axios from 'axios';
 import RNFS from 'react-native-fs';
 
-const baseURL = 'http://10.0.2.2:81';
+// const baseURL = 'http://196.24.156.25:5000';
+const baseURL = 'http://192.168.26.112:81';
+
 
 const api = axios.create({
   baseURL: baseURL,
@@ -40,3 +42,4 @@ export const downloadApp = async (url) => {
     console.error('Error downloading file:', error);
   }
 };
+export const getBaseUrl = () => { return baseURL };

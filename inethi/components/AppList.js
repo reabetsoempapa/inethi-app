@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, PermissionsAndroid, Platform, Alert, Linking, NativeModules, AppState } from 'react-native';
 import RNFS from 'react-native-fs';
 import { useNavigate } from 'react-router-native';
-import { getApps } from '../service/api.js';
+import { getApps, getBaseUrl } from '../service/api.js';
 import * as Progress from 'react-native-progress';
 import DeviceInfo from 'react-native-device-info';
 import { recordAppDownloaded } from '../service/Metric.js';
+import { cloneReactChildrenWithProps } from '@rnmapbox/maps/lib/typescript/src/utils/index.js';
 
 const { InstalledAppsModule } = NativeModules;
 
@@ -14,6 +15,7 @@ const requestPermissions = async () => {
     try {
       const sdkInt = Platform.Version;
       const permissions = [];
+
 
       if (sdkInt >= 33) {
         permissions.push(
@@ -86,7 +88,7 @@ export default function AppList() {
   const [installedAppsData, setInstalledAppData] = useState([]);
   const [appStatus, setInstalledAppsStatus] = useState({});
   const [numdownloaded, setNumDownloaded] = useState(0);
-
+  const [logs, setLogs] = useState('');
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -95,15 +97,16 @@ export default function AppList() {
 
         console.log("Permissions granted:", hasPermission);
 
-        const installedApps = await InstalledAppsModule.getInstalledApps();
-        console.log("Installed apps data fetched:", installedApps);
-        setInstalledApps(installedApps);
+        // const installedApps = await InstalledAppsModule.getInstalledApps();
+        // console.log("Installed apps data fetched:", installedApps);
+        // setInstalledApps(installedApps);
 
         const data = await getApps();
         console.log("App store data received:", data);
+        // logToFile("App store data recieved...")
         setApps(data);
 
-        checkInstalledApps(installedApps, data);
+        // checkInstalledApps(installedApps, data);
       } catch (error) {
         console.error('Error fetching data or checking installed apps:', error);
       }
@@ -121,6 +124,18 @@ export default function AppList() {
       subscription.remove();
     };
   }, []);
+  const logToFile = async (logMessage) => {
+    const logPath = `${RNFS.DownloadDirectoryPath}/app_logs.txt`;
+    const logEntry = `${new Date().toISOString()} - ${logMessage}\n`;
+
+    try {
+      await RNFS.appendFile(logPath, logEntry, 'utf8');
+      console.log('Log written to file:', logPath);
+    } catch (error) {
+      console.error('Error writing log to file:', error);
+    }
+  };
+
   const checkInstalledApps = (installedAppsData, appsData) => {
     try {
       console.log("Checking installed apps...");
@@ -149,26 +164,31 @@ export default function AppList() {
   const createDownloadDirectory = async () => {
     const downloadDirectory = `${RNFS.DownloadDirectoryPath}/MyAppDownloads`;
     const exists = await RNFS.exists(downloadDirectory);
+    console.log("download path,", downloadDirectory);
     if (!exists) {
       await RNFS.mkdir(downloadDirectory);
+      Alert.alert("directory created :", `${downloadDirectory}`)
     }
     return downloadDirectory;
   };
+
 
   const downloadApp = async (url, appId) => {
     try {
       const downloadDirectory = await createDownloadDirectory();
       const appname = url.split('/').pop();
-      console.log("app namee :", appname);
+      console.log("app name:", appname);
 
       const downloadDest = `${downloadDirectory}/${appname}`;
       console.log("Download destination:", downloadDest);
+      logToFile(`download dest: ${downloadDest}`);
 
       const downloadOptions = {
-        fromUrl: `http://10.0.2.2:81${url}`,
+        fromUrl: `${getBaseUrl()}${url}`,
         toFile: downloadDest,
         begin: (res) => {
           console.log('Download has begun', res);
+          logToFile("Download has begun");
         },
         progress: (res) => {
           if (res.bytesWritten && res.contentLength) {
@@ -188,11 +208,12 @@ export default function AppList() {
 
       if (response.statusCode === 200) {
         console.log('File downloaded to:', downloadDest);
+        // logToFile("File downloaded");
         recordAppDownloaded(appname);
 
         const fileExists = await RNFS.exists(downloadDest);
         if (fileExists) {
-          console.log("file exists!!")
+          console.log("File exists!!");
           Alert.alert(
             'Download Complete',
             'The Application has been downloaded successfully. Opening the Files app now..',
@@ -215,18 +236,18 @@ export default function AppList() {
             ...prevProgress,
             [appId]: 0,
           }));
-
         } else {
           console.error('File does not exist after download');
           Alert.alert('Error', 'File does not exist after download.');
         }
       } else {
         console.error('Failed to download file:', response.statusCode);
-        Alert.alert('Error', 'Failed to download the file.');
+        Alert.alert('Error', `Failed to download the file. ${response.statusCode}`);
       }
     } catch (error) {
       console.error('Error downloading file:', error);
-      Alert.alert('Error', 'An error occurred while downloading the file.');
+      logToFile(`Error: An error occurred while downloading the file. ${error.message}`);
+      Alert.alert('Error', `An error occurred while downloading the file: ${error.message}`);
     }
   };
 
@@ -234,7 +255,7 @@ export default function AppList() {
     const appId = item.url;
     return (
       <View style={styles.appItem} key={appId}>
-        <Image source={{ uri: `http://10.0.2.2:81${item.icon}` }} style={styles.icon} />
+        <Image source={{ uri: `${getBaseUrl()}${item.icon}` }} style={styles.icon} />
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.description}>{item.description}</Text>
         {appStatus[item.name] ? (
@@ -267,7 +288,9 @@ export default function AppList() {
         style={styles.backButton}
         onPress={() => navigate('/')}
       >
-        <Text style={styles.backButtonText}>Back</Text>
+        <Text style={styles.backButtonText}>Back to Home
+
+        </Text>
       </TouchableOpacity>
       <FlatList
         data={apps}
