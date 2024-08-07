@@ -6,7 +6,7 @@ import { getApps, getBaseUrl } from '../service/api.js';
 import * as Progress from 'react-native-progress';
 import DeviceInfo from 'react-native-device-info';
 import { recordAppDownloaded } from '../service/Metric.js';
-import { cloneReactChildrenWithProps } from '@rnmapbox/maps/lib/typescript/src/utils/index.js';
+import { getCache, setCache, isCacheValid, invalidateCache, updateCache } from '../service/Cache.js'; // Import caching functions
 
 const { InstalledAppsModule } = NativeModules;
 
@@ -16,20 +16,17 @@ const requestPermissions = async () => {
       const sdkInt = Platform.Version;
       const permissions = [];
 
-
       if (sdkInt >= 33) {
         permissions.push(
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
         );
-      }
-      else {
+      } else {
         permissions.push(
           PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
         );
-
       }
 
       const granted = await PermissionsAndroid.requestMultiple(
@@ -81,14 +78,13 @@ const requestPermissions = async () => {
 
 export default function AppList() {
   const [apps, setApps] = useState([]);
-  const [installedApps, setInstalledApps] = useState({});
+  const [installedApps, setInstalledApps] = useState([]);
   const [downloadProgress, setDownloadProgress] = useState({});
   const navigate = useNavigate();
-  const [featureClicked, setFeatureClicked] = useState("");
-  const [installedAppsData, setInstalledAppData] = useState([]);
   const [appStatus, setInstalledAppsStatus] = useState({});
-  const [numdownloaded, setNumDownloaded] = useState(0);
-  const [logs, setLogs] = useState('');
+  const [numDownloaded, setNumDownloaded] = useState(0);
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -97,16 +93,25 @@ export default function AppList() {
 
         console.log("Permissions granted:", hasPermission);
 
-        // const installedApps = await InstalledAppsModule.getInstalledApps();
-        // console.log("Installed apps data fetched:", installedApps);
-        // setInstalledApps(installedApps);
-
         const data = await getApps();
         console.log("App store data received:", data);
-        // logToFile("App store data recieved...")
         setApps(data);
 
-        // checkInstalledApps(installedApps, data);
+        const cache = await getCache();
+        let installedAppsData;
+        if (isCacheValid(cache)) {
+          console.log("Using cache.....", cache.data);
+          installedAppsData = cache.data;
+        } else {
+          console.log("Getting installed apps from phone...");
+          installedAppsData = await InstalledAppsModule.getInstalledApps();
+          console.log("Installed apps data fetched:", installedAppsData);
+          await setCache(installedAppsData);
+          console.log("Apps have been cached.");
+        }
+        setInstalledApps(installedAppsData);
+
+        checkInstalledApps(installedAppsData, data);
       } catch (error) {
         console.error('Error fetching data or checking installed apps:', error);
       }
@@ -124,6 +129,7 @@ export default function AppList() {
       subscription.remove();
     };
   }, []);
+
   const logToFile = async (logMessage) => {
     const logPath = `${RNFS.DownloadDirectoryPath}/app_logs.txt`;
     const logEntry = `${new Date().toISOString()} - ${logMessage}\n`;
@@ -164,24 +170,23 @@ export default function AppList() {
   const createDownloadDirectory = async () => {
     const downloadDirectory = `${RNFS.DownloadDirectoryPath}/MyAppDownloads`;
     const exists = await RNFS.exists(downloadDirectory);
-    console.log("download path,", downloadDirectory);
+    console.log("Download path,", downloadDirectory);
     if (!exists) {
       await RNFS.mkdir(downloadDirectory);
-      Alert.alert("directory created :", `${downloadDirectory}`)
+      Alert.alert("Directory created:", `${downloadDirectory}`);
     }
     return downloadDirectory;
   };
 
-
   const downloadApp = async (url, appId) => {
     try {
       const downloadDirectory = await createDownloadDirectory();
-      const appname = url.split('/').pop();
-      console.log("app name:", appname);
+      const apkname = url.split('/').pop();
+      console.log("App name:", apkname);
 
-      const downloadDest = `${downloadDirectory}/${appname}`;
+      const downloadDest = `${downloadDirectory}/${apkname}`;
       console.log("Download destination:", downloadDest);
-      logToFile(`download dest: ${downloadDest}`);
+      logToFile(`Download dest: ${downloadDest}`);
 
       const downloadOptions = {
         fromUrl: `${getBaseUrl()}${url}`,
@@ -208,7 +213,7 @@ export default function AppList() {
 
       if (response.statusCode === 200) {
         console.log('File downloaded to:', downloadDest);
-        // logToFile("File downloaded");
+        const appname = apkname.split('.')[0];
         recordAppDownloaded(appname);
 
         const fileExists = await RNFS.exists(downloadDest);
@@ -222,7 +227,12 @@ export default function AppList() {
                 text: 'Open Files',
                 onPress: () => {
                   Linking.openURL('content://com.android.externalstorage.documents/root/primary');
-                  setNumDownloaded(numdownloaded + 1);
+                  setNumDownloaded(numDownloaded + 1);
+                  const newApp = { appName: appname, packageName: 'com.example.package' }; // Update with actual package name if known
+                  console.log("neApp:", newApp);
+                  updateCache(newApp); // Update cache with new app
+                  setInstalledApps((prevApps) => [...prevApps, newApp]);
+                  checkInstalledApps([...installedApps, newApp], apps);
                 },
               },
               {
@@ -288,9 +298,7 @@ export default function AppList() {
         style={styles.backButton}
         onPress={() => navigate('/')}
       >
-        <Text style={styles.backButtonText}>Back to Home
-
-        </Text>
+        <Text style={styles.backButtonText}>Back to Home</Text>
       </TouchableOpacity>
       <FlatList
         data={apps}

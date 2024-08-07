@@ -1,8 +1,7 @@
-
 import axios from 'axios';
 
-
-const url = 'http://10.0.2.2:3001';
+// const url = 'http://10.0.2.2:3001'; // developing url
+const url = "http://192.168.26.112:3001";
 
 const recordFeatureUsage = async (feature) => {
     try {
@@ -22,6 +21,13 @@ const recordAppDownloaded = async (app) => {
     }
 };
 
-export { recordFeatureUsage, recordAppDownloaded };
+const clearDatabase = async () => {
+    try {
+        const response = await axios.post(`${url}/clear-database`);
+        console.log('Database cleared:', response.data);
+    } catch (error) {
+        console.error('Error clearing database:', error);
+    }
+};
 
-
+export { recordFeatureUsage, recordAppDownloaded, clearDatabase };
