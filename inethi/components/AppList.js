@@ -4,9 +4,8 @@ import RNFS from 'react-native-fs';
 import { useNavigate } from 'react-router-native';
 import { getApps, getBaseUrl } from '../service/api.js';
 import * as Progress from 'react-native-progress';
-import DeviceInfo from 'react-native-device-info';
 import { recordAppDownloaded } from '../service/Metric.js';
-import { getCache, setCache, isCacheValid, invalidateCache, updateCache } from '../service/Cache.js'; // Import caching functions
+import { getInstalledAppsCache, setInstalledAppsCache, getCachedAppsCache, setCachedAppsCache, isCacheValid, invalidateCache, updateInstalledAppsCache, updateCachedAppsCache } from '../service/Cache.js';
 
 const { InstalledAppsModule } = NativeModules;
 
@@ -76,6 +75,15 @@ const requestPermissions = async () => {
   return true;
 };
 
+const copyFileFromAssets = async (assetFile, destPath) => {
+  try {
+    await RNFS.copyFileAssets(assetFile, destPath);
+    console.log(`${assetFile} copied to ${destPath}`);
+  } catch (error) {
+    console.error(`Error copying ${assetFile}:`, error);
+  }
+};
+
 export default function AppList() {
   const [apps, setApps] = useState([]);
   const [installedApps, setInstalledApps] = useState([]);
@@ -83,7 +91,7 @@ export default function AppList() {
   const navigate = useNavigate();
   const [appStatus, setInstalledAppsStatus] = useState({});
   const [numDownloaded, setNumDownloaded] = useState(0);
-
+  const [isAppFromCache, setAppFromCache] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,29 +100,109 @@ export default function AppList() {
         if (!hasPermission) return;
 
         console.log("Permissions granted:", hasPermission);
+        let data = [];
+        try {
+          console.log("before sending request for appstore to the server...");
+          data = await getApps();
+          console.log("App store data received:", data);
+          setApps(data);
+        } catch (error) {
+          console.error('Error fetching apps from server:', error);
+          console.log("Falling back to local cache...");
+          data = await fetchCachedApps(); // Fallback to cached apps
+          console.log("fetched Data:", data)
+          if (data.length === 0) {
+            console.warn("No data available in cache.");
+            await copyAssetsToLocal();
+            data = await fetchCachedApps();
+            setApps(data);
 
-        const data = await getApps();
-        console.log("App store data received:", data);
-        setApps(data);
+          } else {
+            console.log("Using cached data:", data);
+            setApps(data);
+            setAppFromCache(true);
 
-        const cache = await getCache();
-        let installedAppsData;
+          }
+        }
+
+        // Handle installed apps
+        const cache = await getInstalledAppsCache();
+        let installedAppsData = [];
         if (isCacheValid(cache)) {
-          console.log("Using cache.....", cache.data);
+          console.log("Using installed apps cache.....", cache.data);
           installedAppsData = cache.data;
         } else {
           console.log("Getting installed apps from phone...");
           installedAppsData = await InstalledAppsModule.getInstalledApps();
           console.log("Installed apps data fetched:", installedAppsData);
-          await setCache(installedAppsData);
-          console.log("Apps have been cached.");
+          await setInstalledAppsCache(installedAppsData);
+          console.log("Installed apps have been cached.");
         }
         setInstalledApps(installedAppsData);
-
         checkInstalledApps(installedAppsData, data);
+
       } catch (error) {
-        console.error('Error fetching data or checking installed apps:', error);
+        console.error('Error during the fetch or cache process:', error);
+        Alert.alert("Error", "Could not load apps. Please check your network connection.");
       }
+    };
+    const copyAssetsToLocal = async () => {
+      const downloadDirectory = `${RNFS.DownloadDirectoryPath}/MyAppDownloads`;
+      const assetFiles = [
+        'ovibrations radio station.apk',
+        'alphabetbook.apk',
+        'brickgames.apk',
+        'chesswalk.apk',
+        'default_icon.png'
+      ];
+
+      // Await the filtering and mapping operation
+      const appsWithIcons = await Promise.all(
+        assetFiles.filter(file => file.endsWith('.apk')).map(file => ({
+          name: file,
+          icon: `file://${downloadDirectory}/default_icon.png`,
+          url: file // Use the file name as the unique key
+        }))
+      );
+
+      console.log("appwithicons:", appsWithIcons);
+
+      // Set the apps state and log after it's updated
+      setApps(appsWithIcons);
+
+      // Log the updated apps state after the next render cycle
+      setTimeout(() => {
+        console.log("Apps after waiting for state update..", apps);
+      }, 0);
+
+      try {
+        await RNFS.mkdir(downloadDirectory);
+      } catch (error) {
+        console.error('Error creating download directory:', error);
+      }
+
+      // const cache = await getCachedAppsCache();
+      // if (isCacheValid(cache)) {
+      //   console.log("Cache is valid, skipping copy from assets.");
+      //   return;
+      // }
+
+      for (const file of assetFiles) {
+        const destPath = `${downloadDirectory}/${file}`;
+        try {
+          await copyFileFromAssets(file, destPath);
+          console.log(`${file} copied to ${destPath}`);
+        } catch (error) {
+          console.error(`Error copying ${file}:, error`);
+        }
+      }
+
+      // Update cache with the copied apps info
+      await updateCachedAppsCache(appsWithIcons.map(app => ({
+        name: app.name,
+        url: `${downloadDirectory}/${app.name}`,
+        icon: app.icon
+      })));
     };
 
     fetchData();
@@ -130,15 +218,23 @@ export default function AppList() {
     };
   }, []);
 
-  const logToFile = async (logMessage) => {
-    const logPath = `${RNFS.DownloadDirectoryPath}/app_logs.txt`;
-    const logEntry = `${new Date().toISOString()} - ${logMessage}\n`;
-
+  const fetchCachedApps = async () => {
+    console.log("Inside fetchCachedApps")
     try {
-      await RNFS.appendFile(logPath, logEntry, 'utf8');
-      console.log('Log written to file:', logPath);
+      const downloadDirectory = `${RNFS.DownloadDirectoryPath}/MyAppDownloads`;
+      const files = await RNFS.readDir(downloadDirectory);
+      console.log("file:", files)
+      const apps = files.filter(file => file.name.endsWith('.apk')).map(file => ({
+        name: file.name,
+        url: file.path,
+        icon: `file://${downloadDirectory}/default_icon.png`, // Correctly formatted local URI
+        description: 'Cached app'
+      }));
+      console.log("apps:", apps);
+      return apps;
     } catch (error) {
-      console.error('Error writing log to file:', error);
+      console.error('Error fetching cached apps:', error);
+      return [];
     }
   };
 
@@ -193,7 +289,7 @@ export default function AppList() {
         toFile: downloadDest,
         begin: (res) => {
           console.log('Download has begun', res);
-          logToFile("Download has begun");
+
         },
         progress: (res) => {
           if (res.bytesWritten && res.contentLength) {
@@ -221,7 +317,8 @@ export default function AppList() {
           console.log("File exists!!");
           Alert.alert(
             'Download Complete',
-            'The Application has been downloaded successfully. Opening the Files app now..',
+            "Go to Download folder and click on MyAppDownloads",
+            "Then click on the app you want to install",
             [
               {
                 text: 'Open Files',
@@ -229,8 +326,8 @@ export default function AppList() {
                   Linking.openURL('content://com.android.externalstorage.documents/root/primary');
                   setNumDownloaded(numDownloaded + 1);
                   const newApp = { appName: appname, packageName: 'com.example.package' }; // Update with actual package name if known
-                  console.log("neApp:", newApp);
-                  updateCache(newApp); // Update cache with new app
+                  console.log("newApp:", newApp);
+                  updateInstalledAppsCache(newApp); // Update cache with new app
                   setInstalledApps((prevApps) => [...prevApps, newApp]);
                   checkInstalledApps([...installedApps, newApp], apps);
                 },
@@ -261,21 +358,51 @@ export default function AppList() {
     }
   };
 
+  const openDownloadsFolder = () => {
+    // Open the downloads folder for manual installation
+    Alert.alert("Go to Download folder and click on MyAppDownloads",
+      "Then click on the app you want to install", [
+      {
+        text: "Open to install", onPress: () => {
+          Linking.openURL('content://com.android.externalstorage.documents/root/primary')
+            .catch((err) => {
+              console.error('Error opening downloads folder:', err);
+              Alert.alert('Error', 'An error occurred while opening the downloads folder.');
+            })
+        },
+      }, {
+        text: "cancel",
+        style: 'cancel',
+      },
+    ], { cancelable: true });
+
+  };
+
   const renderAppItem = ({ item }) => {
     const appId = item.url;
+    const appInstalled = appStatus[item.name];
+    const appCached = isAppFromCache;
+    const iconUri = appCached ? item.icon : `${getBaseUrl()}${item.icon}`;
+
     return (
       <View style={styles.appItem} key={appId}>
-        <Image source={{ uri: `${getBaseUrl()}${item.icon}` }} style={styles.icon} />
+        <Image source={{ uri: iconUri }} style={styles.icon} onError={() => console.log(`Failed to load icon for ${item.name}`)} />
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.description}>{item.description}</Text>
-        {appStatus[item.name] ? (
+        {appInstalled ? (
           <Text style={styles.installedText}>Installed</Text>
         ) : (
           <TouchableOpacity
             style={styles.downloadButton}
-            onPress={() => downloadApp(item.url, appId)}
+            onPress={() => {
+              if (appCached) {
+                openDownloadsFolder();
+              } else {
+                downloadApp(item.url, appId);
+              }
+            }}
           >
-            <Text style={styles.downloadButtonText}>Download</Text>
+            <Text style={styles.downloadButtonText}>{appCached ? 'Install' : 'Download'}</Text>
           </TouchableOpacity>
         )}
         {downloadProgress[appId] > 0 && (
@@ -291,6 +418,7 @@ export default function AppList() {
       </View>
     );
   };
+
 
   return (
     <View style={styles.container}>
