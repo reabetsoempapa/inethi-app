@@ -1,7 +1,7 @@
 import axios from 'axios';
 import RNFS from 'react-native-fs';
 
-const url = "http://196.24.156.25:3001";
+const url = "http://192.168.0.168:81:3001";
 const LOCAL_LOG_PATH = `${RNFS.DocumentDirectoryPath}/metric_logs.json`;
 
 const recordFeatureUsage = async (feature) => {

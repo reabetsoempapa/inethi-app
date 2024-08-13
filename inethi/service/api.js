@@ -1,7 +1,7 @@
 import axios from 'axios';
 import RNFS from 'react-native-fs';
 
-const baseURL = 'http://196.24.156.25:81'; // eduroam
+const baseURL = 'http://192.168.0.168:81'; // eduroam
 // const baseURL = "http://192.168.43.138:81"
 const api = axios.create({
   baseURL: baseURL,

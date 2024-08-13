@@ -14,6 +14,7 @@ import { BalanceProvider } from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
 import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
+import FdroidAppstore from './components/FdroidAppstore';
 
 const App = () => {
     const [userToken, setUserToken] = useState(null);
@@ -58,7 +59,8 @@ const App = () => {
                                     <Route path="/payment" element={<PaymentPage logout={logout} />} />
                                     <Route path="/webview" element={<WebViewComponent />} />
                                     <Route path="/container" element={<ServiceContainer />} />
-                                    <Route path="/appstore" element={<AppList />} />
+                                    {/* <Route path="/appstore" element={<AppList />} /> */}
+                                    <Route path="/appstore" element={<FdroidAppstore />} />
                                 </>
                             ) : (
                                 <>

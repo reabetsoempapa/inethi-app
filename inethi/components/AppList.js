@@ -109,6 +109,7 @@ export default function AppList() {
         } catch (error) {
           console.error('Error fetching apps from server:', error);
           console.log("Falling back to local cache...");
+          await copyAssetsToLocal();
           data = await fetchCachedApps(); // Fallback to cached apps
           console.log("fetched Data:", data)
           if (data.length === 0) {
@@ -143,16 +144,19 @@ export default function AppList() {
 
       } catch (error) {
         console.error('Error during the fetch or cache process:', error);
-        Alert.alert("Error", "Could not load apps. Please check your network connection.");
+        Alert.alert("You are not connected to the inethi ",
+          "Please connect to get all apps",
+          "you are currently viewing cached apps"
+        );
       }
     };
     const copyAssetsToLocal = async () => {
       const downloadDirectory = `${RNFS.DownloadDirectoryPath}/MyAppDownloads`;
       const assetFiles = [
-        'ovibrations radio station.apk',
+        'ovibrations_radio_station.apk',
         'alphabetbook.apk',
         'brickgames.apk',
-        'chesswalk.apk',
+        'vlc.apk',
         'default_icon.png'
       ];
 
@@ -282,7 +286,7 @@ export default function AppList() {
 
       const downloadDest = `${downloadDirectory}/${apkname}`;
       console.log("Download destination:", downloadDest);
-      logToFile(`Download dest: ${downloadDest}`);
+
 
       const downloadOptions = {
         fromUrl: `${getBaseUrl()}${url}`,

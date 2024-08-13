@@ -1,6 +1,6 @@
 package com.inethi
+import android.util.Log
 
-import android.Manifest
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -32,19 +32,20 @@ class MainActivity : ReactActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestAllPackagesPermission()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Request permission only on Android 11 (SDK 30) and above
+            requestAllPackagesPermission()
+        }
     }
 
     private fun requestAllPackagesPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.QUERY_ALL_PACKAGES)
-                != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.QUERY_ALL_PACKAGES),
-                    QUERY_ALL_PACKAGES_PERMISSION_REQUEST_CODE
-                )
-            }
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.QUERY_ALL_PACKAGES)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.QUERY_ALL_PACKAGES),
+                QUERY_ALL_PACKAGES_PERMISSION_REQUEST_CODE
+            )
         }
     }
 
@@ -65,26 +66,34 @@ class MainActivity : ReactActivity() {
         }
 
         @ReactMethod
-        fun getInstalledApps(promise: Promise) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                ContextCompat.checkSelfPermission(reactApplicationContext, Manifest.permission.QUERY_ALL_PACKAGES) != PackageManager.PERMISSION_GRANTED) {
+    fun getInstalledApps(promise: Promise) {
+        val pm: PackageManager = reactApplicationContext.packageManager
+        val sdkVersion = Build.VERSION.SDK_INT
+        Log.d("SDK_VERSION", "Running on Android SDK: $sdkVersion")
+
+        if (sdkVersion >= Build.VERSION_CODES.Q) { // Android 11 and above
+            if (ContextCompat.checkSelfPermission(
+                    reactApplicationContext, 
+                    android.Manifest.permission.QUERY_ALL_PACKAGES
+                ) != PackageManager.PERMISSION_GRANTED) {
                 promise.reject("PermissionDenied", "QUERY_ALL_PACKAGES permission is not granted")
                 return
             }
-
-            try {
-                val pm: PackageManager = reactApplicationContext.packageManager
-                val packages: List<PackageInfo> = pm.getInstalledPackages(PackageManager.GET_META_DATA)
-                val apps = packages.map { packageInfo ->
-                    mapOf(
-                        "packageName" to packageInfo.packageName,
-                        "appName" to packageInfo.applicationInfo.loadLabel(pm).toString()
-                    )
-                }
-                promise.resolve(apps)
-            } catch (e: Exception) {
-                promise.reject("Error", e)
-            }
         }
-    }
+
+        try {
+            val packages: List<PackageInfo> = pm.getInstalledPackages(PackageManager.GET_META_DATA)
+            val apps = packages.map { packageInfo ->
+                mapOf(
+                    "packageName" to packageInfo.packageName,
+                    "appName" to packageInfo.applicationInfo.loadLabel(pm).toString()
+                )
+            }
+            promise.resolve(apps)
+        } catch (e: Exception) {
+            promise.reject("Error", e)
+        }
+    }   
+}
+
 }
