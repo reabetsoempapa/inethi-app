@@ -1,17 +1,24 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigate } from 'react-router-native';
-import { recordFeatureUsage } from '../service/Metric'
+import * as amplitude from '@amplitude/analytics-react-native';
 
 export default function ServiceContainer() {
     const navigate = useNavigate();
 
     const apstoreNav = () => {
-        //implement try and catch arround record Feature 
-        //if 
-        recordFeatureUsage('AppStore');
+        try {
+            // Track the event using Amplitude
+            amplitude.track('AppStore Button Clicked');
+            
+            // Implement logic to record that the app store has been visited, if applicable
+            // e.g., update some state or make an API call to record the visit
 
-        navigate('/appstore');
+            // Navigate to the App Store page
+            navigate('/appstore');
+        } catch (error) {
+            console.error('Error tracking AppStore button click:', error);
+        }
     };
 
     return (

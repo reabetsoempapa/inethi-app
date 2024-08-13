@@ -14,12 +14,16 @@ import { BalanceProvider } from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
 import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
+import * as amplitude from '@amplitude/analytics-react-native';
+
 import FdroidAppstore from './components/FdroidAppstore';
 
 const App = () => {
     const [userToken, setUserToken] = useState(null);
 
     useEffect(() => {
+        amplitude.init('d584a34a7957c1300fa733ee33a3a960');
+
         const loadToken = async () => {
             const token = await AsyncStorage.getItem('userToken');
             setUserToken(token);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, ScrollView, Button, PermissionsAndroid, Platform, Alert, Linking, NativeModules, AppState } from 'react-native';
-
+import * as amplitude from '@amplitude/analytics-react-native';
 import { getApps, download } from '../service/FdroidApi'; // Ensure this is correctly implemented for React Native
 
 export default function FdroidAppstore() {
@@ -35,7 +35,9 @@ export default function FdroidAppstore() {
         const response = await download(packageName);
         if (response.statusCode === 200) {
             console.log('Client-side: File downloaded!!');
-
+            amplitude.track('App Downloaded', {
+                packageName: packageName,
+            });
             // recordAppDownloaded(packageName);
             //     Alert.alert(
             //         'Download Complete',
