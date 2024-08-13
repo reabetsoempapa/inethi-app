@@ -1,10 +1,11 @@
 import axios from 'axios';
 import RNFS from 'react-native-fs';
 
-const baseURL = 'http://10.0.2.2:81';
-
+const baseURL = 'http://192.168.0.168:81'; // eduroam
+// const baseURL = "http://192.168.43.138:81"
 const api = axios.create({
   baseURL: baseURL,
+  timeout: 5000, // Set the timeout to 5 seconds
 });
 
 export const getApps = async () => {
@@ -13,8 +14,13 @@ export const getApps = async () => {
     console.log("data received:", response.data);
     return response.data;
   } catch (error) {
-    console.error('Error fetching apps:', error);
-    throw error;
+    if (error.code === 'ECONNABORTED') {
+      console.error('Error fetching apps: Request timed out');
+      throw new Error('Request timed out');
+    } else {
+      console.error('Error fetching apps:', error);
+      throw error;
+    }
   }
 };
 
@@ -40,3 +46,5 @@ export const downloadApp = async (url) => {
     console.error('Error downloading file:', error);
   }
 };
+
+export const getBaseUrl = () => baseURL;

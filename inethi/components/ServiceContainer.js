@@ -7,11 +7,9 @@ export default function ServiceContainer() {
     const navigate = useNavigate();
 
     const apstoreNav = () => {
+        //implement try and catch arround record Feature 
+        //if 
         recordFeatureUsage('AppStore');
-
-
-
-
 
         navigate('/appstore');
     };

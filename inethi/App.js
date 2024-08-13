@@ -13,6 +13,7 @@ import { BalanceProvider } from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
 import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
+import FdroidAppstore from './components/FdroidAppstore';
 import { vexo } from 'vexo-analytics';
 
 // You may want to wrap this with `if (!__DEV__) { ... }` to only run Vexo in production.
@@ -32,7 +33,7 @@ const AppRoutes = ({ logout, userToken, handleLoginSuccess, handleRegisterSucces
                         <Route path="/payment" element={<PaymentPage logout={logout} />} />
                         <Route path="/webview" element={<WebViewComponent />} />
                         <Route path="/container" element={<ServiceContainer />} />
-                        <Route path="/appstore" element={<AppList />} />
+                        <Route path="/appstore" element={<FdroidAppstore />} />
                         <Route path="/map" element={<MapPage />} />
                     </>
                 ) : (

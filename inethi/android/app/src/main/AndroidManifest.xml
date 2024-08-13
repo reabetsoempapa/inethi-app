@@ -1,7 +1,10 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+  
   <!-- General permissions -->
   <uses-permission android:name="android.permission.INTERNET"/>
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
   
   <!-- Permissions for media and storage access -->
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
@@ -10,20 +13,30 @@
   <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION"/>
   <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
 
+  <!-- Include QUERY_ALL_PACKAGES permission only for SDK 30 and above -->
+  <uses-permission
+      android:name="android.permission.QUERY_ALL_PACKAGES"
+      android:required="false"
+      tools:node="remove"
+      android:maxSdkVersion="29" />
+
   <!-- Media permissions for API level 33 and above -->
   <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" android:required="false"/>
   <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" android:required="false"/>
   <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" android:required="false"/>
 
   <application
-    android:name=".MainApplication"
-    android:label="@string/app_name"
-    android:icon="@mipmap/ic_launcher"
-    android:roundIcon="@mipmap/ic_launcher_round"
-    android:allowBackup="false"
-    android:theme="@style/AppTheme">
+      android:usesCleartextTraffic="true"
+      android:requestLegacyExternalStorage="true"
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:theme="@style/AppTheme">
     
     <activity
+      android:usesCleartextTraffic="true"
       android:name=".MainActivity"
       android:label="@string/app_name"
       android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
