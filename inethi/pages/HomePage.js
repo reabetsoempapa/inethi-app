@@ -135,48 +135,6 @@ const HomePage = ({logout}) => {
     }
   };
 
-  const handleFindHotspotClick = () => {
-    const eventName = 'find_hotspot_button_clicked';
-
-    // Log event to Firebase Analytics
-    analytics()
-      .logEvent(eventName, {
-        button: 'FindHotspot',
-      })
-      .then(() => {
-        console.log(`Firebase Analytics event logged: ${eventName}`);
-      })
-      .catch(error => {
-        console.error(`Error logging event to Firebase Analytics: ${error}`);
-      });
-
-    // Log event to Amplitude
-    amplitude.track(eventName, {
-      button: 'FindHotspot',
-    });
-
-    const navigateEventName = 'navigate_to_map';
-
-    // Log event to Firebase Analytics
-    analytics()
-      .logEvent(navigateEventName, {
-        feature: 'Map',
-      })
-      .then(() => {
-        console.log(`Firebase Analytics event logged: ${navigateEventName}`);
-      })
-      .catch(error => {
-        console.error(`Error logging event to Firebase Analytics: ${error}`);
-      });
-
-    // Log event to Amplitude
-    amplitude.track(navigateEventName, {
-      feature: 'Map',
-    });
-
-    navigate('/map');
-  };
-
   const timeout = ms =>
     new Promise((_, reject) =>
       setTimeout(() => reject(new Error('timeout')), ms),

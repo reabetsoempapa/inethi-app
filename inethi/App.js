@@ -143,6 +143,10 @@ import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
 import {vexo} from 'vexo-analytics';
 import WalletCategoriesPage from './pages/Wallet';
+import RecipientDetailsScreen from './pages/RecipientDetails';
+import WalletDetailsPage from './pages/WalletDetails';
+import AddRecipientScreen from './pages/AddRecipients';
+import ViewRecipientsScreen from './pages/ViewRecipients';
 
 // You may want to wrap this with `if (!__DEV__) { ... }` to only run Vexo in production.
 vexo('707528fb-5be6-49d1-9a78-5afe749580cc');
@@ -174,6 +178,14 @@ const AppRoutes = ({
               path="/wallet-categories"
               element={<WalletCategoriesPage />}
             />
+            <Route path="/view-recipients" element={<ViewRecipientsScreen />} />
+            <Route path="/add-recipient" element={<AddRecipientScreen />} />
+
+            <Route
+              path="/recipient-details"
+              element={<RecipientDetailsScreen />}
+            />
+            <Route path="/wallet-details" element={<WalletDetailsPage />} />
           </>
         ) : (
           <>
