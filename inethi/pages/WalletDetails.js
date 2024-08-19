@@ -5,6 +5,8 @@ import {useLocation} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import QRCode from 'react-native-qrcode-svg';
+import RNFS from 'react-native-fs';
+
 
 const WalletDetailsPage = () => {
   const location = useLocation();
@@ -14,7 +16,62 @@ const WalletDetailsPage = () => {
 
   const [walletDetails, setWalletDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const requestStoragePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        if (Number(Platform.Version) >= 33) {
+          return true;
+        }
+        const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            {
+              title: 'Storage Permission',
+              message: 'App needs access to your storage to save the QR code',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'OK',
+            },
+        );
+        console.log(`Results... ${granted}`)
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    } else {
+      return true; // iOS does not need this permission
+    }
+  };
 
+// Function to download the QR code
+  const handleDownloadQrCode = async () => {
+    const hasPermission = await requestStoragePermission();
+
+    if (!hasPermission) {
+      alert('Permission to access storage was denied');
+      return;
+    }
+
+    try {
+      const svg = qrCodeRef;
+
+      if (svg) {
+        const filePath = `${RNFS.DownloadDirectoryPath}/qrcode.png`;
+
+        const svgData = await new Promise((resolve, reject) => {
+          svg.toDataURL((data) => {
+            resolve(data);
+          });
+        });
+
+        await RNFS.writeFile(filePath, svgData, 'base64');
+        alert(`QR code saved to ${filePath}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Failed to save QR code');
+    }
+  };
   useEffect(() => {
     if (walletAddress) {
       fetchWalletDetails();
@@ -89,7 +146,16 @@ const WalletDetailsPage = () => {
               <QRCode
                 value={`${baseURL}/wallet/${walletDetails.wallet_address}/qr_code/`}
                 size={200}
-              />
+                getRef={(ref) => setQrCodeRef(ref)}
+                />
+
+                <Button
+                    mode="contained"
+                    onPress={handleDownloadQrCode}
+                    style={styles.downloadButton}
+                >
+                  Download QR Code
+                </Button>
             </>
           ) : (
             <Paragraph>Error loading wallet details.</Paragraph>

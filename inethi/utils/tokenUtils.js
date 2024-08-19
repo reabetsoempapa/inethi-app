@@ -17,7 +17,7 @@ export const getToken = async logout => {
       return null;
     }
   }
-  console.log(token);
+
   return token;
 };
 
@@ -38,11 +38,10 @@ export const getNewToken = async logout => {
     if (!refreshToken) throw new Error('No refresh token available');
 
     const response = await axios.post(
-      'https://keycloak.inethilocal.net/realms/Test/protocol/openid-connect/token',
+      'https://keycloak.inethicloud.net/realms/inethi-global-services/protocol/openid-connect/token',
       {
-        client_id: 'testclient',
+        client_id: 'inethi-app',
         grant_type: 'refresh_token',
-        client_secret: 'k3jvAdgSgHDSyBgRoRPQTksscr1D8JXo',
         refresh_token: refreshToken,
       },
       {
