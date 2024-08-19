@@ -270,7 +270,7 @@ const WalletCategoriesPage = () => {
     },
     {
       name: 'Wallet QR Code',
-      action: () => handleShowQrCode(),
+      action: () => navigate('/wallet-details'),
       requiresWallet: true,
     },
   ];
