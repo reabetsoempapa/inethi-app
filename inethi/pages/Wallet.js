@@ -24,7 +24,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 
 const WalletCategoriesPage = () => {
-  const baseURL = 'http://172.16.13.141:9000';
+  const baseURL = 'https://manage-backend.inethicloud.net';
   const walletCreateEndpoint = '/wallet/create/';
   const walletOwnershipEndpoint = '/wallet/ownership/';
   const walletDetailsEndpoint = '/wallet/details/';

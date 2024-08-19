@@ -151,7 +151,7 @@ const HomePage = ({logout}) => {
         },
       };
 
-      const urlLocal = 'http://172.16.13.141:9000';
+      const urlLocal = 'https://manage-backend.inethicloud.net';
       const urlGlobal =
         'https://manage-backend.inethicloud.net/service/list-by-type/';
 

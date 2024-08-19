@@ -2,7 +2,7 @@
 // import axios from 'axios';
 // import {getToken} from '../utils/tokenUtils';
 
-// const baseURL = 'http://172.16.13.141:9000';
+// const baseURL = 'https://manage-backend.inethicloud.net';
 
 // export const addRecipient = async (name, wallet_address, wallet_name) => {
 //   try {
