@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -83,13 +84,13 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
     }
   };
 
-  useEffect(() => {
-    if (password && username && confirmPassword) {
-      setIsButtonDisabled(false);
-    } else {
-      setIsButtonDisabled(true);
-    }
-  }, [password, password, confirmPassword]);
+    useEffect(() => {
+        if (password && username && confirmPassword) {
+            setIsButtonDisabled(false);
+        } else {
+            setIsButtonDisabled(true);
+        }
+    }, [password, confirmPassword, username]);
 
   return (
     <View style={styles.container}>

@@ -1,23 +1,7 @@
-import React, {useState, useEffect} from 'react';
-import {
-  View,
-  StyleSheet,
-  Image,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-} from 'react-native';
-import {
-  Button,
-  Card,
-  Title,
-  Dialog,
-  Portal,
-  TextInput,
-  Paragraph,
-} from 'react-native-paper';
-import {useNavigate} from 'react-router-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Image, ActivityIndicator, Alert , ScrollView,Text} from 'react-native';
+import {Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton} from 'react-native-paper';
+import { useNavigate } from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext'; // Import useBalance
@@ -27,6 +11,7 @@ import analytics from '@react-native-firebase/analytics';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
+
 
 const HomePage = ({logout}) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -437,6 +422,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  downloadButton: {
+    marginTop: 20,
+  },
+
   walletAddress: {
     flex: 1,
   },
