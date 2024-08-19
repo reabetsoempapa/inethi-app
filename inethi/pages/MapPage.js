@@ -118,6 +118,44 @@ const MapPage = () => {
         }
     }, [pinLocation, routers]);
 
+    const storeEvent = async (eventName, eventProperties) => {
+        try {
+            const storedEvents = JSON.parse(await AsyncStorage.getItem('trackedEvents')) || [];
+            storedEvents.push({ eventName, eventProperties, timestamp: new Date() });
+            await AsyncStorage.setItem('trackedEvents', JSON.stringify(storedEvents));
+        } catch (error) {
+            console.error('Failed to store event:', error);
+        }
+    };
+
+    const uploadStoredEvents = async () => {
+        try {
+            const storedEvents = JSON.parse(await AsyncStorage.getItem('trackedEvents')) || [];
+            for (let event of storedEvents) {
+                // Upload to Amplitude
+                amplitude.track(event.eventName, event.eventProperties);
+                // Upload to Firebase Analytics
+                await analytics().logEvent(event.eventName, event.eventProperties);
+            }
+            // Clear stored events after upload
+            await AsyncStorage.removeItem('trackedEvents');
+        } catch (error) {
+            console.error('Failed to upload events:', error);
+        }
+    };
+
+    useEffect(() => {
+        const unsubscribe = NetInfo.addEventListener(state => {
+            if (state.isConnected && state.isInternetReachable) {
+                uploadStoredEvents();
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, []);
+
     const findNearestRouter = () => {
         const onlineRouters = routers.filter(router => router.status === 'online');
         if (onlineRouters.length === 0) return null;
@@ -183,20 +221,20 @@ const MapPage = () => {
         setPopupPosition({ top: coordinates[1], left: coordinates[0] });
 
         const eventName = 'view_router_details';
-
-        analytics().logEvent(eventName, {
+        const eventProperties = {
             router_name: router.name,
             router_ip: router.ipAddress
-        }).then(() => {
-            console.log(`Firebase Analytics event logged: ${eventName}`);
-        }).catch((error) => {
-            console.error(`Error logging event to Firebase Analytics: ${error}`);
-        });
+        };
 
-        amplitude.track(eventName, {
-            router_name: router.name,
-            router_ip: router.ipAddress
-        });
+        if (isOffline) {
+            storeEvent(eventName, eventProperties);
+        } else {
+            analytics().logEvent(eventName, eventProperties)
+                .then(() => console.log(`Firebase Analytics event logged: ${eventName}`))
+                .catch((error) => console.error(`Error logging event to Firebase Analytics: ${error}`));
+
+            amplitude.track(eventName, eventProperties);
+        }
     };
 
     const renderRouterMarker = (router) => (
@@ -305,20 +343,19 @@ const MapPage = () => {
             const duration = Date.now() - startTime;
 
             const eventName = 'map_session_duration';
+            const eventProperties = { duration: duration };
 
-            analytics().logEvent(eventName, {
-                duration: duration
-            }).then(() => {
-                console.log(`Firebase Analytics event logged: ${eventName}`);
-            }).catch((error) => {
-                console.error(`Error logging event to Firebase Analytics: ${error}`);
-            });
+            if (isOffline) {
+                storeEvent(eventName, eventProperties);
+            } else {
+                analytics().logEvent(eventName, eventProperties)
+                    .then(() => console.log(`Firebase Analytics event logged: ${eventName}`))
+                    .catch((error) => console.error(`Error logging event to Firebase Analytics: ${error}`));
 
-            amplitude.track(eventName, {
-                duration: duration
-            });
+                amplitude.track(eventName, eventProperties);
+            }
         };
-    }, []);
+    }, [isOffline]);
 
     return (
         <View style={styles.container}>
