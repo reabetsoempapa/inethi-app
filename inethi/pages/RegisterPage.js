@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -15,7 +16,7 @@ import {handleLogin} from '../utils/utils';
 import {Dialog} from 'react-native-paper';
 
 const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
-  const baseURL = 'http://172.16.13.141:9000';
+  const baseURL = 'https://manage-backend.inethicloud.net';
   //const baseURL = 'https://manage-backend.inethicloud.net';
   const registerEndpoint = '/user/keycloak/register/';
   const [username, setUsername] = useState('');
@@ -83,13 +84,13 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
     }
   };
 
-  useEffect(() => {
-    if (password && username && confirmPassword) {
-      setIsButtonDisabled(false);
-    } else {
-      setIsButtonDisabled(true);
-    }
-  }, [password, password, confirmPassword]);
+    useEffect(() => {
+        if (password && username && confirmPassword) {
+            setIsButtonDisabled(false);
+        } else {
+            setIsButtonDisabled(true);
+        }
+    }, [password, confirmPassword, username]);
 
   return (
     <View style={styles.container}>

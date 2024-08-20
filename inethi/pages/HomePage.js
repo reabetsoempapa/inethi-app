@@ -1,12 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Text,
-  ActivityIndicator,
-} from 'react-native';
-import { Button, Card, Title, Dialog, Portal } from 'react-native-paper';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Image, ActivityIndicator, Alert , ScrollView,Text} from 'react-native';
+import {Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton} from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,8 +11,11 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
+
 const HomePage = ({ logout }) => {
   const nextcloudURL = 'https://nextcloud.inethicloud.net';
+  const baseURL = 'https://manage-backend.inethicloud.net';
+
 
   const [hasWallet, setHasWallet] = useState(false);
   const navigate = useNavigate();
@@ -106,6 +103,90 @@ const HomePage = ({ logout }) => {
       setIsConnectedToWireless(false);
     }
   };
+
+  const timeout = ms =>
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), ms),
+    );
+
+  const fetchServices = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      const urlLocal = 'https://manage-backend.inethicloud.net';
+      const urlGlobal =
+        'https://manage-backend.inethicloud.net/service/list-by-type/';
+
+      let servicesDataGlobal = {};
+      let servicesDataLocal = {};
+
+      try {
+        const responseGlobal = await Promise.race([
+          axios.get(urlGlobal, config),
+          timeout(5000),
+        ]);
+        servicesDataGlobal = responseGlobal.data.data;
+      } catch (err) {
+        console.error(`Error fetching global data. You may not have Internet.`);
+      }
+
+      try {
+        const responseLocal = await Promise.race([
+          axios.get(urlLocal, config),
+          timeout(5000),
+        ]);
+        servicesDataLocal = responseLocal.data.data;
+      } catch (err) {
+        console.error(
+          `Error fetching local data. Are you connected to an iNethi network?`,
+        );
+      }
+
+      const combinedServices = {...servicesDataGlobal};
+
+      Object.entries(servicesDataLocal).forEach(([category, services]) => {
+        combinedServices[category] = services;
+      });
+
+      const fetchedCategories = {
+        ...categories, // Include the Wallet and App categories
+      };
+
+      Object.entries(combinedServices).forEach(([category, services]) => {
+        fetchedCategories[category] = services.map(service => ({
+          name: service.name,
+          url: service.url,
+          action: () => navigate('/webview', {state: {url: service.url}}),
+        }));
+      });
+
+      setCategories(fetchedCategories);
+    } catch (err) {
+      console.error('Error fetching services:', err);
+      setError(`Failed to fetch services: ${err.message}`);
+    }
+  };
+
+  useEffect(() => {
+    const initialize = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([fetchServices(), fetchBalance()]);
+      } catch (err) {
+        console.error('Initialization error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    initialize();
+  }, []);
 
   const openURL = url => {
     navigate('/webview', { state: { url } });
@@ -312,6 +393,30 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
+  },
+  input: {
+    marginBottom: 8,
+  },
+  walletAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  downloadButton: {
+    marginTop: 20,
+  },
+
+  walletAddress: {
+    flex: 1,
+  },
+  icon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
   },
   internetDataCard: {
     backgroundColor: '#4285F4',

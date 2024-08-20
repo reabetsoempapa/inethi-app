@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import axios from 'axios';
 
 export const handleLogin = async (
@@ -9,17 +10,14 @@ export const handleLogin = async (
   navigate,
 ) => {
   setLoading(true);
-
   try {
     const response = await axios.post(
-      'https://keycloak.inethilocal.net/realms/Test/protocol/openid-connect/token',
-      `client_id=testclient&username=${encodeURIComponent(
+      'https://keycloak.inethicloud.net/realms/inethi-global-services/protocol/openid-connect/token',
+      `client_id=inethi-app&username=${encodeURIComponent(
         username,
       )}&password=${encodeURIComponent(
         password,
-      )}&grant_type=password&scope=openid offline_access&client_secret=${encodeURIComponent(
-        'k3jvAdgSgHDSyBgRoRPQTksscr1D8JXo',
-      )}`,
+      )}&grant_type=password&scope=openid offline_access`,
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
