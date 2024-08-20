@@ -1,7 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator, Alert , ScrollView,Text} from 'react-native';
-import {Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton} from 'react-native-paper';
-import { useNavigate } from 'react-router-native';
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+} from 'react-native';
+import {
+  Button,
+  Card,
+  Title,
+  Dialog,
+  Portal,
+  TextInput,
+  Paragraph,
+  IconButton,
+} from 'react-native-paper';
+import {useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext'; // Import useBalance
@@ -11,7 +28,6 @@ import analytics from '@react-native-firebase/analytics';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
-
 
 const HomePage = ({logout}) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -32,7 +48,7 @@ const HomePage = ({logout}) => {
       {
         name: 'Wallet',
         action: () => navigate('/wallet-categories'),
-        url: '', // Add an empty URL field to maintain structure
+        url: '',
       },
     ],
     Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],

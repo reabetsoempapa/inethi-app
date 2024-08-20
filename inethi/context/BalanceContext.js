@@ -7,7 +7,6 @@ const BalanceContext = createContext();
 export const BalanceProvider = ({children, logout}) => {
   const [balance, setBalance] = useState('Loading...');
   const baseURL = 'https://manage-backend.inethicloud.net';
-  //const baseURL = 'https://manage-backend.inethicloud.net';
 
   const balanceEndpoint = '/wallet/balance/';
   const walletOwnershipEndpoint = '/wallet/ownership/';
