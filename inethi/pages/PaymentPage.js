@@ -1,10 +1,8 @@
-/* eslint-disable prettier/prettier */
 import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   ActivityIndicator,
   Alert,
@@ -22,17 +20,17 @@ import {
   useCameraPermission,
   useCodeScanner,
 } from 'react-native-vision-camera';
-import Ionicons from 'react-native-vector-icons/Ionicons'; // Import Ionicons
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const PaymentPage = () => {
   const device = useCameraDevice('back');
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletSendEndpoint = '/wallet/send-token/';
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState('username'); // Default method
+  const [paymentMethod, setPaymentMethod] = useState('username');
   const [receiver, setReceiver] = useState('');
   const [amount, setAmount] = useState('');
-  const {balance, fetchBalance} = useBalance(); // Destructure balance and fetchBalance
+  const {balance, fetchBalance} = useBalance();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
@@ -42,8 +40,8 @@ const PaymentPage = () => {
     codeTypes: ['qr', 'ean-13'],
     onCodeScanned: codes => {
       if (codes.length > 0) {
-        setReceiver(codes[0].value); // Fill the wallet address with the scanned code
-        setIsScannerOpen(false); // Exit the scanner
+        setReceiver(codes[0].value);
+        setIsScannerOpen(false);
       }
     },
   });
@@ -87,7 +85,7 @@ const PaymentPage = () => {
 
       setIsLoading(false);
       Alert.alert('Success', 'Payment sent successfully');
-      fetchBalance(); // Refresh balance after payment
+      fetchBalance();
     } catch (error) {
       setIsLoading(false);
       console.error('Error sending payment:', error);
@@ -120,7 +118,7 @@ const PaymentPage = () => {
   };
 
   useEffect(() => {
-    fetchBalance(); // Fetch balance when the page loads
+    fetchBalance();
   }, [fetchBalance]);
 
   useEffect(() => {
@@ -154,18 +152,18 @@ const PaymentPage = () => {
             isActive={isScannerOpen}
             codeScanner={codeScanner}
           />
-          <Button
-            title="Exit Scanner"
-            onPress={() => setIsScannerOpen(false)}
-          />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setIsScannerOpen(false)}>
+            <Text style={styles.buttonText}>Exit Scanner</Text>
+          </TouchableOpacity>
         </>
       ) : (
         <>
-          <View style={styles.balanceContainer}>
-            <Text style={styles.balanceText}>Your Balance: {balance}</Text>
+          <View style={styles.header}>
+            <Text style={styles.headerText}>Make a Payment</Text>
           </View>
           <View style={styles.formContainer}>
-            <Text style={styles.title}>Make a Payment</Text>
             <Picker
               selectedValue={paymentMethod}
               style={styles.picker}
@@ -179,23 +177,43 @@ const PaymentPage = () => {
                 <Text style={styles.scanButtonText}>Scan QR Code</Text>
               </TouchableOpacity>
             )}
-            <TextInput
-              style={styles.input}
-              onChangeText={setReceiver}
-              value={receiver}
-              placeholder={
-                paymentMethod === 'username'
-                  ? 'Username of receiver'
-                  : 'Wallet address'
-              }
-            />
-            <TextInput
-              style={styles.input}
-              onChangeText={setAmount}
-              value={amount}
-              placeholder="Amount"
-              keyboardType="numeric"
-            />
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name={
+                  paymentMethod === 'username'
+                    ? 'person-outline'
+                    : 'wallet-outline'
+                }
+                size={20}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                onChangeText={setReceiver}
+                value={receiver}
+                placeholder={
+                  paymentMethod === 'username'
+                    ? 'Username of receiver'
+                    : 'Wallet address'
+                }
+                placeholderTextColor="#aaa"
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="cash-outline"
+                size={20}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                onChangeText={setAmount}
+                value={amount}
+                placeholder="Amount"
+                keyboardType="numeric"
+                placeholderTextColor="#aaa"
+              />
+            </View>
             <TouchableOpacity
               style={[
                 styles.sendButton,
@@ -227,54 +245,59 @@ const PaymentPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#fff',
+  },
+  header: {
+    marginBottom: 20,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'black',
   },
   formContainer: {
-    flex: 1, // Use flex to make the form take up the whole screen
     padding: 20,
-    width: '100%',
     backgroundColor: 'white',
     borderRadius: 10,
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 10,
-    marginBottom: 20,
-    justifyContent: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
     marginBottom: 20,
-    textAlign: 'center',
+    backgroundColor: '#f9f9f9',
   },
   input: {
-    height: 40,
-    marginBottom: 12,
-    borderWidth: 1,
-    padding: 10,
+    flex: 1,
+    height: 50,
+    paddingLeft: 40,
+    paddingRight: 10,
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: 10,
   },
   picker: {
     height: 50,
     width: '100%',
-    marginBottom: 12,
-  },
-  balanceContainer: {
-    marginVertical: 10,
-  },
-  balanceText: {
-    fontSize: 18,
-    fontWeight: '500',
+    marginBottom: 20,
   },
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4285F4',
+    backgroundColor: '#0066ff',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 5,
-    marginBottom: 12,
+    borderRadius: 8,
+    marginBottom: 20,
   },
   scanButtonText: {
     color: 'white',
@@ -282,10 +305,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   sendButton: {
-    backgroundColor: '#4285F4',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+    backgroundColor: '#0066ff',
+    paddingVertical: 15,
+    borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
@@ -293,15 +315,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#A0A0A0',
   },
   backButton: {
-    backgroundColor: '#4285F4',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    backgroundColor: '#0066ff',
     alignItems: 'center',
-    borderRadius: 5,
+    borderRadius: 8,
+    paddingVertical: 15,
+    marginTop: 20,
   },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
