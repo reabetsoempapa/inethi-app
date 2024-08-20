@@ -4,12 +4,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Button,
   Platform,
   PermissionsAndroid,
 } from 'react-native';
+import {Button} from 'react-native-paper';
 import {Card, Title, Paragraph} from 'react-native-paper';
-import {useLocation} from 'react-router-native';
+import {useLocation, useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import QRCode from 'react-native-qrcode-svg';
@@ -17,6 +17,7 @@ import RNFS from 'react-native-fs';
 
 const WalletDetailsPage = () => {
   const location = useLocation();
+  const navigate = useNavigate(); // Hook to handle navigation
   const {walletAddress} = location.state || {};
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletDetailsEndpoint = `/wallet/details`;
@@ -155,7 +156,8 @@ const WalletDetailsPage = () => {
                 Wallet Address: {walletDetails.wallet_address}
               </Paragraph>
               <QRCode
-                value={`${baseURL}/wallet/${walletDetails.wallet_address}/qr_code/`}
+                //value={`${baseURL}/wallet/${walletDetails.wallet_address}/qr_code/`}
+                value={walletDetails.wallet_address}
                 size={200}
                 getRef={ref => setQrCodeRef(ref)}
               />
@@ -164,6 +166,12 @@ const WalletDetailsPage = () => {
                 onPress={handleDownloadQrCode}
                 style={styles.downloadButton}>
                 Download QR Code
+              </Button>
+              <Button
+                mode="outlined"
+                onPress={() => navigate(-1)} // Go back to the previous page
+                style={styles.backButton}>
+                Back
               </Button>
             </>
           ) : (
@@ -193,6 +201,9 @@ const styles = StyleSheet.create({
   },
   downloadButton: {
     marginTop: 20,
+  },
+  backButton: {
+    marginTop: 10,
   },
 });
 
