@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import {useNavigate} from 'react-router-native';
+import {useNavigate, useLocation} from 'react-router-native';
 import axios from 'axios';
 import {Dialog} from 'react-native-paper';
 import {getToken} from '../utils/tokenUtils';
@@ -27,8 +27,11 @@ const PaymentPage = () => {
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletSendEndpoint = '/wallet/send-token/';
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState('username');
-  const [receiver, setReceiver] = useState('');
+  const {state} = useLocation(); // Get the state from navigation
+  const [paymentMethod, setPaymentMethod] = useState('walletAddress');
+  const [receiver, setReceiver] = useState(
+    state?.recipient?.wallet_address || '',
+  );
   const [amount, setAmount] = useState('');
   const {balance, fetchBalance} = useBalance();
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +48,19 @@ const PaymentPage = () => {
       }
     },
   });
+
+  // Function to open the QR code scanner
+  const openScanner = async () => {
+    const permission = await requestPermission();
+    if (permission) {
+      setIsScannerOpen(true);
+    } else {
+      Alert.alert(
+        'Camera Permission',
+        'Camera permission is required to scan QR codes.',
+      );
+    }
+  };
 
   const handleSendPayment = async () => {
     if (!receiver || !amount) {
@@ -71,9 +87,7 @@ const PaymentPage = () => {
 
       const paymentData = {
         payment_method: paymentMethod,
-        recipient_alias: paymentMethod === 'username' ? receiver : undefined,
-        recipient_address:
-          paymentMethod === 'walletAddress' ? receiver : undefined,
+        recipient_address: receiver,
         amount,
       };
 
@@ -128,19 +142,6 @@ const PaymentPage = () => {
       setIsButtonDisabled(true);
     }
   }, [receiver, amount]);
-
-  const openScanner = async () => {
-    console.log('opening camera');
-    const permission = await requestPermission();
-    if (permission) {
-      setIsScannerOpen(true);
-    } else {
-      Alert.alert(
-        'Camera Permission',
-        'Camera permission is required to scan QR codes.',
-      );
-    }
-  };
 
   return (
     <View style={styles.container}>

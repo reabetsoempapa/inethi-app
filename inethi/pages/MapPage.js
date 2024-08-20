@@ -14,6 +14,7 @@ import analytics from '@react-native-firebase/analytics';
 import MapboxDirectionsFactory from '@mapbox/mapbox-sdk/services/directions';
 import { lineString as makeLineString } from '@turf/helpers';
 
+amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 vexo('2240fbec-f5f9-4010-98c8-2375bdaf4509');
 
 MapboxGL.setAccessToken('sk.eyJ1IjoicG1hbWJhbWJvIiwiYSI6ImNseG56djZwdDA4cGoycnM2MjN2ZWxoNXIifQ.DVX2kNaurf_IJFPlZYE0zw');
@@ -51,15 +52,15 @@ const MapPage = () => {
             try {
                 const cachedData = await AsyncStorage.getItem('routerData');
                 if (cachedData) {
-                    console.log('Using local stored data');
+                    console.log('Using locally stored data');
                     setRouters(JSON.parse(cachedData));
                 } else {
                     console.log('No local data found, fetching from API');
                 }
 
                 const state = await NetInfo.fetch();
-                if (state.isConnected && state.type === 'wifi') {
-                    console.log('Connected to Wi-Fi, checking internet access');
+                if (state.isConnected) {
+                    console.log('Internet connection detected, checking access');
                     try {
                         const internetCheck = await fetch('https://www.google.com', { method: 'HEAD' });
                         if (internetCheck.ok) {
@@ -97,10 +98,10 @@ const MapPage = () => {
                         console.error('Error checking internet access or fetching router data from API:', error);
                     }
                 } else {
-                    console.log('Not connected to Wi-Fi, using cached data if available');
+                    console.log('No internet connection, using cached data if available');
                 }
 
-                setIsOffline(!(state.isConnected && state.type === 'wifi'));
+                setIsOffline(!state.isConnected);
             } catch (error) {
                 console.error('Error fetching router data:', error);
             }
@@ -170,7 +171,6 @@ const MapPage = () => {
             const route = makeLineString(response.body.routes[0].geometry.coordinates);
             setRoute(route);
 
-            // Calculate the distance and update the state
             const distance = calculateDistance(startCoordinates, endCoordinates);
             setDistanceToNode(distance);
         } catch (error) {
@@ -178,25 +178,43 @@ const MapPage = () => {
         }
     };
 
-    const handleMarkerPress = (router, coordinates) => {
+    const handleMarkerPress = async (router, coordinates) => {
         setSelectedRouter(router);
         setPopupPosition({ top: coordinates[1], left: coordinates[0] });
 
         const eventName = 'view_router_details';
 
-        analytics().logEvent(eventName, {
-            router_name: router.name,
-            router_ip: router.ipAddress
-        }).then(() => {
-            console.log(`Firebase Analytics event logged: ${eventName}`);
-        }).catch((error) => {
-            console.error(`Error logging event to Firebase Analytics: ${error}`);
+        const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+        events.push({
+            eventName,
+            timestamp: new Date(),
+            data: {
+                router_name: router.name,
+                router_ip: router.ipAddress,
+            },
         });
+        await AsyncStorage.setItem('analyticsEvents', JSON.stringify(events));
 
-        amplitude.track(eventName, {
-            router_name: router.name,
-            router_ip: router.ipAddress
-        });
+        const state = await NetInfo.fetch();
+        if (state.isConnected) {
+            syncAnalyticsEvents();
+        }
+    };
+
+    const syncAnalyticsEvents = async () => {
+        try {
+            const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+            if (events.length > 0) {
+                for (const event of events) {
+                    await analytics().logEvent(event.eventName, event.data);
+                    await amplitude.track(event.eventName, event.data);
+                }
+                await AsyncStorage.removeItem('analyticsEvents');
+                console.log('Synced analytics events');
+            }
+        } catch (error) {
+            console.error('Error syncing analytics events:', error);
+        }
     };
 
     const renderRouterMarker = (router) => (
@@ -293,7 +311,7 @@ const MapPage = () => {
     };
 
     const handleMapPress = (e) => {
-        if (dragging) return; // Prevent placing pin while dragging
+        if (dragging) return;
         const { geometry } = e;
         setPinLocation(geometry.coordinates);
     };
@@ -301,22 +319,23 @@ const MapPage = () => {
     useEffect(() => {
         const startTime = Date.now();
 
-        return () => {
+        return async () => {
             const duration = Date.now() - startTime;
 
             const eventName = 'map_session_duration';
 
-            analytics().logEvent(eventName, {
-                duration: duration
-            }).then(() => {
-                console.log(`Firebase Analytics event logged: ${eventName}`);
-            }).catch((error) => {
-                console.error(`Error logging event to Firebase Analytics: ${error}`);
+            const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+            events.push({
+                eventName,
+                timestamp: new Date(),
+                data: { duration },
             });
+            await AsyncStorage.setItem('analyticsEvents', JSON.stringify(events));
 
-            amplitude.track(eventName, {
-                duration: duration
-            });
+            const state = await NetInfo.fetch();
+            if (state.isConnected) {
+                syncAnalyticsEvents();
+            }
         };
     }, []);
 
@@ -435,7 +454,7 @@ const styles = StyleSheet.create({
     },
     distanceContainer: {
         position: 'absolute',
-        bottom: 80,  // Positioned above the zoom controls
+        bottom: 80,
         left: 20,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         padding: 10,
