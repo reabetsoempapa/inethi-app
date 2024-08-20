@@ -86,6 +86,8 @@ const AddRecipientScreen = () => {
         </>
       ) : (
         <ScrollView contentContainerStyle={styles.formContainer}>
+          <Text style={styles.headerText}>Add Recipient</Text>
+
           <TextInput
             label="Recipient Name"
             value={recipientName}
@@ -163,6 +165,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingVertical: 10,
     borderRadius: 8,
+    backgroundColor: '#0066ff',
   },
   backButton: {
     marginTop: 10,
@@ -177,7 +180,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
-    marginLeft: 8, // Provides a small gap between the input field and the button
+    marginLeft: 8,
   },
   exitScannerButton: {
     position: 'absolute',
@@ -192,6 +195,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'black',
+    marginBottom: 30,
   },
 });
 
