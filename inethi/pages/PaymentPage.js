@@ -49,6 +49,19 @@ const PaymentPage = () => {
     },
   });
 
+  // Function to open the QR code scanner
+  const openScanner = async () => {
+    const permission = await requestPermission();
+    if (permission) {
+      setIsScannerOpen(true);
+    } else {
+      Alert.alert(
+        'Camera Permission',
+        'Camera permission is required to scan QR codes.',
+      );
+    }
+  };
+
   const handleSendPayment = async () => {
     if (!receiver || !amount) {
       setError('Both fields are required');
