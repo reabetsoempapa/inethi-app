@@ -1,82 +1,78 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator, Alert , ScrollView,Text} from 'react-native';
-import {Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton} from 'react-native-paper';
+import { View, StyleSheet, Image, ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
+import { Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
-import {getToken} from '../utils/tokenUtils';
-import {useBalance} from '../context/BalanceContext'; // Import useBalance
+import { getToken } from '../utils/tokenUtils';
+import { useBalance } from '../context/BalanceContext';
 import ServiceContainer from '../components/ServiceContainer';
 import * as amplitude from '@amplitude/analytics-react-native';
 import analytics from '@react-native-firebase/analytics';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
-
-const HomePage = ({logout}) => {
+const HomePage = ({ logout }) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
-  const nextcloudURL = 'https://nextcloud.inethicloud.net'; // iNethi Nextcloud URL
+  const nextcloudURL = 'https://nextcloud.inethicloud.net';
 
   const [hasWallet, setHasWallet] = useState(false);
   const navigate = useNavigate();
-  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
-    useState(false);
+  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
   const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
-  const {balance, fetchBalance} = useBalance();
+  const { balance, fetchBalance } = useBalance();
 
   const [categories, setCategories] = useState({
     Wallet: [
       {
         name: 'Wallet',
         action: () => navigate('/wallet-categories'),
-        url: '', // Add an empty URL field to maintain structure
+        url: '',
       },
     ],
-    Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],
+    Navigator: [{ name: 'FindHotspot', action: () => handleFindHotspotClick() }],
   });
-  const handleFindHotspotClick = () => {
+
+  const handleFindHotspotClick = async () => {
     const eventName = 'find_hotspot_button_clicked';
 
-    // Log event to Firebase Analytics
-    analytics()
-      .logEvent(eventName, {
+    const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+    events.push({
+      eventName,
+      timestamp: new Date(),
+      data: {
         button: 'FindHotspot',
-      })
-      .then(() => {
-        console.log(`Firebase Analytics event logged: ${eventName}`);
-      })
-      .catch(error => {
-        console.error(`Error logging event to Firebase Analytics: ${error}`);
-      });
-
-    // Log event to Amplitude
-    amplitude.track(eventName, {
-      button: 'FindHotspot',
+      },
     });
-
-    const navigateEventName = 'navigate_to_map';
-
-    // Log event to Firebase Analytics
-    analytics()
-      .logEvent(navigateEventName, {
-        feature: 'Map',
-      })
-      .then(() => {
-        console.log(`Firebase Analytics event logged: ${navigateEventName}`);
-      })
-      .catch(error => {
-        console.error(`Error logging event to Firebase Analytics: ${error}`);
-      });
-
-    // Log event to Amplitude
-    amplitude.track(navigateEventName, {
-      feature: 'Map',
-    });
+    await AsyncStorage.setItem('analyticsEvents', JSON.stringify(events));
 
     navigate('/map');
+
+    const state = await NetInfo.fetch();
+    if (state.isConnected) {
+      syncAnalyticsEvents();
+    }
+  };
+
+  const syncAnalyticsEvents = async () => {
+    try {
+      const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+      if (events.length > 0) {
+        for (const event of events) {
+          await analytics().logEvent(event.eventName, event.data);
+          await amplitude.track(event.eventName, event.data);
+        }
+        await AsyncStorage.removeItem('analyticsEvents');
+        console.log('Synced analytics events');
+      }
+    } catch (error) {
+      console.error('Error syncing analytics events:', error);
+    }
   };
 
   useEffect(() => {
@@ -85,20 +81,21 @@ const HomePage = ({logout}) => {
       await checkInternetConnection();
     };
 
-    checkStatuses(); // Check statuses when the component mounts
+    checkStatuses();
 
     const intervalId = setInterval(() => {
-      checkStatuses(); // Check statuses every 30 seconds
+      checkStatuses();
     }, 30000);
 
-    return () => clearInterval(intervalId); // Cleanup the interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const checkInternetConnection = async () => {
     try {
-      const response = await fetch('https://www.google.com', {method: 'HEAD'});
+      const response = await fetch('https://www.google.com', { method: 'HEAD' });
       if (response.ok) {
         setIsConnectedToInternet(true);
+        syncAnalyticsEvents();
       } else {
         setIsConnectedToInternet(false);
       }
@@ -109,7 +106,7 @@ const HomePage = ({logout}) => {
 
   const checkWirelessConnection = async () => {
     try {
-      const response = await fetch(nextcloudURL, {method: 'HEAD'});
+      const response = await fetch(nextcloudURL, { method: 'HEAD' });
       if (response.ok) {
         setIsConnectedToWireless(true);
       } else {
@@ -137,8 +134,7 @@ const HomePage = ({logout}) => {
       };
 
       const urlLocal = 'https://manage-backend.inethicloud.net';
-      const urlGlobal =
-        'https://manage-backend.inethicloud.net/service/list-by-type/';
+      const urlGlobal = 'https://manage-backend.inethicloud.net/service/list-by-type/';
 
       let servicesDataGlobal = {};
       let servicesDataLocal = {};
@@ -150,7 +146,7 @@ const HomePage = ({logout}) => {
         ]);
         servicesDataGlobal = responseGlobal.data.data;
       } catch (err) {
-        console.error(`Error fetching global data. You may not have Internet.`);
+        console.error('Error fetching global data. You may not have Internet.');
       }
 
       try {
@@ -160,26 +156,24 @@ const HomePage = ({logout}) => {
         ]);
         servicesDataLocal = responseLocal.data.data;
       } catch (err) {
-        console.error(
-          `Error fetching local data. Are you connected to an iNethi network?`,
-        );
+        console.error('Error fetching local data. Are you connected to an iNethi network?');
       }
 
-      const combinedServices = {...servicesDataGlobal};
+      const combinedServices = { ...servicesDataGlobal };
 
       Object.entries(servicesDataLocal).forEach(([category, services]) => {
         combinedServices[category] = services;
       });
 
       const fetchedCategories = {
-        ...categories, // Include the Wallet and App categories
+        ...categories,
       };
 
       Object.entries(combinedServices).forEach(([category, services]) => {
         fetchedCategories[category] = services.map(service => ({
           name: service.name,
           url: service.url,
-          action: () => navigate('/webview', {state: {url: service.url}}),
+          action: () => navigate('/webview', { state: { url: service.url } }),
         }));
       });
 
@@ -205,7 +199,7 @@ const HomePage = ({logout}) => {
   }, []);
 
   const openURL = url => {
-    navigate('/webview', {state: {url}});
+    navigate('/webview', { state: { url } });
   };
 
   const renderButtons = buttons => {
@@ -214,7 +208,7 @@ const HomePage = ({logout}) => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({name, action, url, requiresWallet, disabled}, idx) => {
+          {pair.map(({ name, action, url, requiresWallet, disabled }, idx) => {
             const isDisabled = (requiresWallet && !hasWallet) || disabled;
             return (
               <Button
@@ -238,7 +232,7 @@ const HomePage = ({logout}) => {
                   if (name === 'FindHotspot') {
                     return (
                       <Ionicons name="map-outline" size={20} color="#FFFFFF" />
-                    ); // Replaced icon with map icon
+                    );
                   }
                   return null;
                 }}>
@@ -305,7 +299,7 @@ const HomePage = ({logout}) => {
               <View
                 style={[
                   styles.statusIndicator,
-                  {backgroundColor: isConnectedToWireless ? 'green' : 'red'},
+                  { backgroundColor: isConnectedToWireless ? 'green' : 'red' },
                 ]}
               />
               <Text style={styles.statusText}>
@@ -322,7 +316,7 @@ const HomePage = ({logout}) => {
               <View
                 style={[
                   styles.statusIndicator,
-                  {backgroundColor: isConnectedToInternet ? 'green' : 'red'},
+                  { backgroundColor: isConnectedToInternet ? 'green' : 'red' },
                 ]}
               />
               <Text style={styles.statusText}>
@@ -410,29 +404,11 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
   },
-  input: {
-    marginBottom: 8,
+  buttonDisabled: {
+    backgroundColor: '#A9A9A9',
   },
-  walletAddressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  qrCodeContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  downloadButton: {
-    marginTop: 20,
-  },
-
-  walletAddress: {
-    flex: 1,
-  },
-  icon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
+  buttonTextDisabled: {
+    color: '#FFFFFF',
   },
   internetDataCard: {
     backgroundColor: '#4285F4',

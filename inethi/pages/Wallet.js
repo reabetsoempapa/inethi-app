@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -16,12 +16,18 @@ import {
   Portal,
   IconButton,
 } from 'react-native-paper';
-import {useNavigate} from 'react-router-native';
+import { useNavigate } from 'react-router-native';
 import axios from 'axios';
-import {getToken} from '../utils/tokenUtils';
-import {useBalance} from '../context/BalanceContext';
+import { getToken } from '../utils/tokenUtils';
+import { useBalance } from '../context/BalanceContext';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import * as amplitude from '@amplitude/analytics-react-native';
+import analytics from '@react-native-firebase/analytics';
+
+amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
 const WalletCategoriesPage = () => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -29,12 +35,11 @@ const WalletCategoriesPage = () => {
   const walletOwnershipEndpoint = '/wallet/ownership/';
   const walletDetailsEndpoint = '/wallet/details/';
   const navigate = useNavigate();
-  const {balance, fetchBalance} = useBalance();
+  const { balance, fetchBalance } = useBalance();
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
 
   const [hasWallet, setHasWallet] = useState(false);
-  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
-    useState(false);
+  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
   const [walletName, setWalletName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
@@ -45,12 +50,43 @@ const WalletCategoriesPage = () => {
     checkWalletOwnership();
   }, []);
 
-  const handleCreateWalletClick = () => {
+  const trackButtonClick = async (eventName, data = {}) => {
+    const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+    events.push({
+      eventName,
+      timestamp: new Date(),
+      data,
+    });
+    await AsyncStorage.setItem('analyticsEvents', JSON.stringify(events));
+
+    const state = await NetInfo.fetch();
+    if (state.isConnected) {
+      syncAnalyticsEvents();
+    }
+  };
+
+  const syncAnalyticsEvents = async () => {
+    try {
+      const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+      if (events.length > 0) {
+        for (const event of events) {
+          await analytics().logEvent(event.eventName, event.data);
+          await amplitude.track(event.eventName, event.data);
+        }
+        await AsyncStorage.removeItem('analyticsEvents');
+        console.log('Synced analytics events');
+      }
+    } catch (error) {
+      console.error('Error syncing analytics events:', error);
+    }
+  };
+
+  const handleCreateWalletClick = async () => {
     setIsCreateWalletDialogOpen(true);
+    await trackButtonClick('create_wallet_button_clicked');
   };
 
   const fetchWalletDetails = async () => {
-    console.log('Inside Fetch Wallet details ');
     setIsLoading(true);
     try {
       const token = await getToken();
@@ -94,6 +130,7 @@ const WalletCategoriesPage = () => {
       }
     }
   };
+
   const handleCreateWallet = async () => {
     try {
       const token = await getToken();
@@ -105,7 +142,7 @@ const WalletCategoriesPage = () => {
       };
       const response = await axios.post(
         `${baseURL}${walletCreateEndpoint}`,
-        {wallet_name: walletName},
+        { wallet_name: walletName },
         config,
       );
       setIsCreateWalletDialogOpen(false);
@@ -115,6 +152,7 @@ const WalletCategoriesPage = () => {
           `Wallet created successfully! Address: ${response.data.address}, Name: ${response.data.name}`,
         );
         fetchBalance();
+        await trackButtonClick('wallet_created', { walletName: walletName });
       }
     } catch (error) {
       console.error('Error creating wallet:', error);
@@ -205,8 +243,9 @@ const WalletCategoriesPage = () => {
       setWalletDetails(response.data);
       setIsLoading(false);
       navigate(`/wallet-details`, {
-        state: {walletAddress: response.data.wallet_address},
+        state: { walletAddress: response.data.wallet_address },
       });
+      await trackButtonClick('wallet_details_button_clicked');
     } catch (error) {
       setIsLoading(false);
       if (error.response) {
@@ -237,9 +276,9 @@ const WalletCategoriesPage = () => {
   };
 
   const handleShowQrCode = async () => {
-    console.log('At Handdle: Show Qr Code');
     await fetchWalletDetails();
     setIsQrDialogOpen(true);
+    await trackButtonClick('wallet_qr_code_button_clicked');
   };
 
   const walletCategories = [
@@ -255,22 +294,31 @@ const WalletCategoriesPage = () => {
     },
     {
       name: 'Transfer',
-      action: () => navigate('/payment'),
+      action: async () => {
+        await trackButtonClick('transfer_button_clicked');
+        navigate('/payment');
+      },
       requiresWallet: true,
     },
     {
       name: 'Add Recipients',
-      action: () => navigate('/add-recipient'),
+      action: async () => {
+        await trackButtonClick('add_recipients_button_clicked');
+        navigate('/add-recipient');
+      },
       requiresWallet: true,
     },
     {
       name: 'View Recipients',
-      action: () => navigate('/view-recipients'),
+      action: async () => {
+        await trackButtonClick('view_recipients_button_clicked');
+        navigate('/view-recipients');
+      },
       requiresWallet: true,
     },
     {
       name: 'Wallet QR Code',
-      action: () => handleShowQrCode(),
+      action: handleShowQrCode,
       requiresWallet: true,
     },
   ];
@@ -281,7 +329,7 @@ const WalletCategoriesPage = () => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({name, action, requiresWallet}, idx) => {
+          {pair.map(({ name, action, requiresWallet }, idx) => {
             const isDisabled = requiresWallet && !hasWallet;
             return (
               <Button
@@ -447,7 +495,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 4,
     backgroundColor: '#4285F4',
-    marginBottom: 10, // Add margin for spacing
+    marginBottom: 10,
   },
   buttonDisabled: {
     backgroundColor: '#d3d3d3',
@@ -460,6 +508,15 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 8,
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  walletAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });
 
