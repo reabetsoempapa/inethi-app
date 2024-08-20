@@ -7,8 +7,7 @@ import {
   Platform,
   PermissionsAndroid,
 } from 'react-native';
-import {Button} from 'react-native-paper';
-import {Card, Title, Paragraph} from 'react-native-paper';
+import {Button, Card, Title, Paragraph} from 'react-native-paper';
 import {useLocation, useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
@@ -36,7 +35,7 @@ const WalletDetailsPage = () => {
   }, [walletAddress]);
 
   const fetchWalletDetails = async () => {
-    console.log('Inside Fetch Wallet details');
+    console.log('Fetching Wallet details');
     setIsLoading(true);
     try {
       const token = await getToken();
@@ -148,15 +147,14 @@ const WalletDetailsPage = () => {
   return (
     <View style={styles.container}>
       <Card style={styles.card}>
-        <Card.Content>
-          <Title>Wallet Details</Title>
+        <Card.Content style={styles.cardContent}>
+          <Title style={styles.title}>Wallet Details</Title>
           {walletDetails ? (
             <>
-              <Paragraph>
+              <Paragraph style={styles.paragraph}>
                 Wallet Address: {walletDetails.wallet_address}
               </Paragraph>
               <QRCode
-                //value={`${baseURL}/wallet/${walletDetails.wallet_address}/qr_code/`}
                 value={walletDetails.wallet_address}
                 size={200}
                 getRef={ref => setQrCodeRef(ref)}
@@ -169,7 +167,7 @@ const WalletDetailsPage = () => {
               </Button>
               <Button
                 mode="outlined"
-                onPress={() => navigate(-1)} // Go back to the previous page
+                onPress={() => navigate(-1)}
                 style={styles.backButton}>
                 Back
               </Button>
@@ -189,21 +187,43 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  card: {
-    width: '90%',
-    padding: 10,
+    backgroundColor: '#fff',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  card: {
+    width: '90%',
+    borderRadius: 8,
+    elevation: 3,
+  },
+  cardContent: {
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  paragraph: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
   downloadButton: {
     marginTop: 20,
+    width: '100%',
+    paddingVertical: 10,
+    borderRadius: 8,
   },
   backButton: {
     marginTop: 10,
+    width: '100%',
+    paddingVertical: 10,
+    borderRadius: 8,
   },
 });
 

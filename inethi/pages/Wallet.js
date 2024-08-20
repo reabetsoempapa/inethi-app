@@ -9,11 +9,10 @@ import {
 import {
   Button,
   Card,
-  Title,
-  Paragraph,
   Dialog,
   Portal,
   IconButton,
+  Paragraph,
   TextInput,
 } from 'react-native-paper';
 import {useNavigate} from 'react-router-native';
@@ -298,7 +297,7 @@ const WalletCategoriesPage = () => {
                   <IconButton
                     icon={icon}
                     size={40}
-                    color="white" // Set icon color to white
+                    color="white"
                     style={styles.icon}
                   />
                 )}>
@@ -313,7 +312,7 @@ const WalletCategoriesPage = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Card style={styles.card}>
         <Card.Content>
           {/* <Title style={styles.title}>Wallet Categories</Title> */}
@@ -323,7 +322,7 @@ const WalletCategoriesPage = () => {
       <Button
         mode="contained"
         onPress={() => navigate('/')}
-        style={styles.button}>
+        style={styles.backButton}>
         Go Back
       </Button>
       <Portal>
@@ -347,7 +346,6 @@ const WalletCategoriesPage = () => {
             <Button onPress={handleCreateWallet}>Create</Button>
           </Dialog.Actions>
         </Dialog>
-        {/* QR Code Dialog */}
         <Dialog
           visible={isQrDialogOpen}
           onDismiss={() => setIsQrDialogOpen(false)}>
@@ -437,39 +435,60 @@ const WalletCategoriesPage = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   card: {
-    marginBottom: 10,
-  },
-  title: {
-    marginBottom: 8,
-    color: '#4285F4',
+    marginBottom: 20,
+    width: '100%',
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   button: {
     flex: 1,
     marginHorizontal: 4,
-    backgroundColor: '#4285F4',
-    height: 100, // Ensure the button is square
-    width: 100, // Ensure the button is square
-    justifyContent: 'center', // Center content
+    backgroundColor: '#0066ff',
+    height: 100,
+    justifyContent: 'center',
+    borderRadius: 8,
   },
   buttonDisabled: {
     backgroundColor: '#d3d3d3',
   },
   buttonContent: {
-    flexDirection: 'column', // Stack icon and text vertically
-    justifyContent: 'center', // Center content
-    alignItems: 'center', // Align content horizontally
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   icon: {
-    margin: 0, // Remove any margin around the icon
+    margin: 0,
+  },
+  backButton: {
+    backgroundColor: '#0066ff',
+    marginTop: 20,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    height: 50,
+    borderRadius: 8,
+  },
+  input: {
+    marginBottom: 12,
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+  },
+  walletAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  walletAddress: {
+    flex: 1,
+    fontSize: 14,
   },
 });
 

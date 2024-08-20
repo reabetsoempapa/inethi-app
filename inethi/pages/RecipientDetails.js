@@ -24,9 +24,9 @@ const RecipientDetailsScreen = () => {
         Pay
       </Button>
       <Button
-        mode="contained"
+        mode="outlined"
         onPress={() => navigate(-1)}
-        style={styles.button}>
+        style={[styles.button, styles.backButton]}>
         Go Back
       </Button>
     </View>
@@ -36,23 +36,33 @@ const RecipientDetailsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#fff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center',
+    color: '#333',
   },
   detail: {
     fontSize: 18,
-    marginBottom: 10,
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#555',
   },
   button: {
-    marginTop: 10,
+    marginTop: 20,
     width: '80%',
+    paddingVertical: 10,
+    borderRadius: 8,
     alignSelf: 'center',
+  },
+  backButton: {
+    marginTop: 10,
+    borderColor: '#0066ff',
   },
 });
 
