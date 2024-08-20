@@ -276,6 +276,12 @@ const WalletCategoriesPage = () => {
       requiresWallet: true,
       icon: 'qrcode-scan',
     },
+    {
+      name: 'Pay',
+      action: () => navigate('/view-recipients', {state: {fromPay: true}}),
+      requiresWallet: true,
+      icon: 'cash',
+    },
   ];
   const renderButtons = buttons => {
     const buttonRows = [];
