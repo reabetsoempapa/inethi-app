@@ -9,12 +9,11 @@ import {
 import {
   Button,
   Card,
-  Title,
-  Paragraph,
-  TextInput,
   Dialog,
   Portal,
   IconButton,
+  Paragraph,
+  TextInput,
 } from 'react-native-paper';
 import { useNavigate } from 'react-router-native';
 import axios from 'axios';
@@ -284,13 +283,15 @@ const WalletCategoriesPage = () => {
   const walletCategories = [
     {
       name: 'Create Wallet',
-      action: handleCreateWalletClick,
+      action: _ => navigate('/create-Wallet'),
       disabled: hasWallet,
+      icon: 'wallet-plus-outline',
     },
     {
       name: 'Wallet Details',
       action: handleCheckWalletDetails,
       requiresWallet: true,
+      icon: 'wallet-outline',
     },
     {
       name: 'Transfer',
@@ -299,6 +300,7 @@ const WalletCategoriesPage = () => {
         navigate('/payment');
       },
       requiresWallet: true,
+      icon: 'swap-horizontal',
     },
     {
       name: 'Add Recipients',
@@ -307,6 +309,7 @@ const WalletCategoriesPage = () => {
         navigate('/add-recipient');
       },
       requiresWallet: true,
+      icon: 'account-plus-outline',
     },
     {
       name: 'View Recipients',
@@ -315,21 +318,22 @@ const WalletCategoriesPage = () => {
         navigate('/view-recipients');
       },
       requiresWallet: true,
+      icon: 'account-multiple-outline',
     },
     {
       name: 'Wallet QR Code',
       action: handleShowQrCode,
       requiresWallet: true,
+      icon: 'qrcode-scan',
     },
   ];
-
   const renderButtons = buttons => {
     const buttonRows = [];
     for (let i = 0; i < buttons.length; i += 2) {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({ name, action, requiresWallet }, idx) => {
+          {pair.map(({name, action, requiresWallet, icon}, idx) => {
             const isDisabled = requiresWallet && !hasWallet;
             return (
               <Button
@@ -337,10 +341,16 @@ const WalletCategoriesPage = () => {
                 mode="contained"
                 onPress={action}
                 style={[styles.button, isDisabled && styles.buttonDisabled]}
-                labelStyle={
-                  isDisabled ? styles.buttonTextDisabled : styles.buttonText
-                }
-                disabled={isDisabled}>
+                contentStyle={styles.buttonContent}
+                disabled={isDisabled}
+                icon={() => (
+                  <IconButton
+                    icon={icon}
+                    size={40}
+                    color="white"
+                    style={styles.icon}
+                  />
+                )}>
                 {name}
               </Button>
             );
@@ -352,17 +362,17 @@ const WalletCategoriesPage = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Card style={styles.card}>
         <Card.Content>
-          <Title style={styles.title}>Wallet Categories</Title>
+          {/* <Title style={styles.title}>Wallet Categories</Title> */}
           {renderButtons(walletCategories)}
         </Card.Content>
       </Card>
       <Button
         mode="contained"
         onPress={() => navigate('/')}
-        style={styles.button}>
+        style={styles.backButton}>
         Go Back
       </Button>
       <Portal>
@@ -386,7 +396,6 @@ const WalletCategoriesPage = () => {
             <Button onPress={handleCreateWallet}>Create</Button>
           </Dialog.Actions>
         </Dialog>
-        {/* QR Code Dialog */}
         <Dialog
           visible={isQrDialogOpen}
           onDismiss={() => setIsQrDialogOpen(false)}>
@@ -476,38 +485,60 @@ const WalletCategoriesPage = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   card: {
-    marginBottom: 10,
-  },
-  title: {
-    marginBottom: 8,
-    color: '#4285F4',
+    marginBottom: 20,
+    width: '100%',
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   button: {
     flex: 1,
     marginHorizontal: 4,
-    backgroundColor: '#4285F4',
-    marginBottom: 10,
+    backgroundColor: '#0066ff',
+    height: 100,
+    justifyContent: 'center',
+    borderRadius: 8,
   },
   buttonDisabled: {
     backgroundColor: '#d3d3d3',
   },
-  buttonText: {
-    color: '#FFFFFF',
+  buttonContent: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  buttonTextDisabled: {
-    color: '#A9A9A9',
+  icon: {
+    margin: 0,
+  },
+  backButton: {
+    backgroundColor: '#0066ff',
+    marginTop: 20,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    height: 50,
+    borderRadius: 8,
   },
   input: {
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+  },
+  walletAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  walletAddress: {
+    flex: 1,
+    fontSize: 14,
   },
   qrCodeContainer: {
     alignItems: 'center',

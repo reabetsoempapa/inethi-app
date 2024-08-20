@@ -1,77 +1,30 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, ActivityIndicator, Alert} from 'react-native';
-import {Card, Title, Paragraph} from 'react-native-paper';
-import {useLocation} from 'react-router-native';
+import {
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  PermissionsAndroid,
+} from 'react-native';
+import {Button, Card, Title, Paragraph} from 'react-native-paper';
+import {useLocation, useNavigate} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import QRCode from 'react-native-qrcode-svg';
 import RNFS from 'react-native-fs';
 
-
 const WalletDetailsPage = () => {
   const location = useLocation();
+  const navigate = useNavigate(); // Hook to handle navigation
   const {walletAddress} = location.state || {};
   const baseURL = 'https://manage-backend.inethicloud.net';
-  const walletDetailsEndpoint = `/wallet/${walletAddress}/qr_code/`;
+  const walletDetailsEndpoint = `/wallet/details`;
 
   const [walletDetails, setWalletDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const requestStoragePermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        if (Number(Platform.Version) >= 33) {
-          return true;
-        }
-        const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-            {
-              title: 'Storage Permission',
-              message: 'App needs access to your storage to save the QR code',
-              buttonNeutral: 'Ask Me Later',
-              buttonNegative: 'Cancel',
-              buttonPositive: 'OK',
-            },
-        );
-        console.log(`Results... ${granted}`)
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
-    } else {
-      return true; // iOS does not need this permission
-    }
-  };
+  const [qrCodeRef, setQrCodeRef] = useState(null);
 
-// Function to download the QR code
-  const handleDownloadQrCode = async () => {
-    const hasPermission = await requestStoragePermission();
-
-    if (!hasPermission) {
-      alert('Permission to access storage was denied');
-      return;
-    }
-
-    try {
-      const svg = qrCodeRef;
-
-      if (svg) {
-        const filePath = `${RNFS.DownloadDirectoryPath}/qrcode.png`;
-
-        const svgData = await new Promise((resolve, reject) => {
-          svg.toDataURL((data) => {
-            resolve(data);
-          });
-        });
-
-        await RNFS.writeFile(filePath, svgData, 'base64');
-        alert(`QR code saved to ${filePath}`);
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Failed to save QR code');
-    }
-  };
   useEffect(() => {
     if (walletAddress) {
       fetchWalletDetails();
@@ -82,6 +35,8 @@ const WalletDetailsPage = () => {
   }, [walletAddress]);
 
   const fetchWalletDetails = async () => {
+    console.log('Fetching Wallet details');
+    setIsLoading(true);
     try {
       const token = await getToken();
       const config = {
@@ -125,6 +80,62 @@ const WalletDetailsPage = () => {
     }
   };
 
+  const requestStoragePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        if (Number(Platform.Version) >= 33) {
+          return true;
+        }
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission',
+            message: 'App needs access to your storage to save the QR code',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        console.log(`Results... ${granted}`);
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    } else {
+      return true; // iOS does not need this permission
+    }
+  };
+
+  const handleDownloadQrCode = async () => {
+    const hasPermission = await requestStoragePermission();
+
+    if (!hasPermission) {
+      alert('Permission to access storage was denied');
+      return;
+    }
+
+    try {
+      const svg = qrCodeRef;
+
+      if (svg) {
+        const filePath = `${RNFS.DownloadDirectoryPath}/qrcode.png`;
+
+        const svgData = await new Promise((resolve, reject) => {
+          svg.toDataURL(data => {
+            resolve(data);
+          });
+        });
+
+        await RNFS.writeFile(filePath, svgData, 'base64');
+        alert(`QR code saved to ${filePath}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Failed to save QR code');
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -136,26 +147,30 @@ const WalletDetailsPage = () => {
   return (
     <View style={styles.container}>
       <Card style={styles.card}>
-        <Card.Content>
-          <Title>Wallet Details</Title>
+        <Card.Content style={styles.cardContent}>
+          <Title style={styles.title}>Wallet Details</Title>
           {walletDetails ? (
             <>
-              <Paragraph>
+              <Paragraph style={styles.paragraph}>
                 Wallet Address: {walletDetails.wallet_address}
               </Paragraph>
               <QRCode
-                value={`${baseURL}/wallet/${walletDetails.wallet_address}/qr_code/`}
+                value={walletDetails.wallet_address}
                 size={200}
-                getRef={(ref) => setQrCodeRef(ref)}
-                />
-
-                <Button
-                    mode="contained"
-                    onPress={handleDownloadQrCode}
-                    style={styles.downloadButton}
-                >
-                  Download QR Code
-                </Button>
+                getRef={ref => setQrCodeRef(ref)}
+              />
+              <Button
+                mode="contained"
+                onPress={handleDownloadQrCode}
+                style={styles.downloadButton}>
+                Download QR Code
+              </Button>
+              <Button
+                mode="outlined"
+                onPress={() => navigate(-1)}
+                style={styles.backButton}>
+                Back
+              </Button>
             </>
           ) : (
             <Paragraph>Error loading wallet details.</Paragraph>
@@ -172,15 +187,43 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  card: {
-    width: '90%',
-    padding: 10,
+    backgroundColor: '#fff',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  card: {
+    width: '90%',
+    borderRadius: 8,
+    elevation: 3,
+  },
+  cardContent: {
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  paragraph: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  downloadButton: {
+    marginTop: 20,
+    width: '100%',
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  backButton: {
+    marginTop: 10,
+    width: '100%',
+    paddingVertical: 10,
+    borderRadius: 8,
   },
 });
 
