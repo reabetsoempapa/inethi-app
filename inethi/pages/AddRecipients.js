@@ -79,9 +79,9 @@ const AddRecipientScreen = () => {
             codeScanner={codeScanner}
           />
           <TouchableOpacity
-            style={styles.backButton}
+            style={styles.exitScannerButton}
             onPress={() => setIsScannerOpen(false)}>
-            <Text style={styles.buttonText}>Exit Scanner</Text>
+            <Ionicons name="close" size={30} color="white" />
           </TouchableOpacity>
         </>
       ) : (
@@ -153,7 +153,6 @@ const styles = StyleSheet.create({
   },
   inputWithButtonTextInput: {
     flex: 1,
-    marginRight: 8,
   },
   error: {
     color: 'red',
@@ -178,6 +177,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    marginLeft: 8, // Provides a small gap between the input field and the button
+  },
+  exitScannerButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: '#ff0000',
+    borderRadius: 50,
+    padding: 10,
+    zIndex: 1,
   },
   buttonText: {
     color: 'white',

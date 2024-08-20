@@ -115,15 +115,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 40, // Space between title and input
+    marginBottom: 30, // Space between title and input
     textAlign: 'center',
+    color: '#333',
   },
   input: {
     width: '100%',
     marginBottom: 20, // Space between input and button
     backgroundColor: '#f5f5f5', // Slightly off-white background
+    borderRadius: 8,
   },
   createButton: {
     width: '100%',

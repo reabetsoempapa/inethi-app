@@ -48,7 +48,7 @@ const HomePage = ({logout}) => {
       {
         name: 'Wallet',
         action: () => navigate('/wallet-categories'),
-        url: '', // Add an empty URL field to maintain structure
+        url: '',
       },
     ],
     Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],
