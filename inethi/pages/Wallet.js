@@ -11,10 +11,10 @@ import {
   Card,
   Title,
   Paragraph,
-  TextInput,
   Dialog,
   Portal,
   IconButton,
+  TextInput,
 } from 'react-native-paper';
 import {useNavigate} from 'react-router-native';
 import axios from 'axios';
@@ -50,7 +50,6 @@ const WalletCategoriesPage = () => {
   };
 
   const fetchWalletDetails = async () => {
-    console.log('Inside Fetch Wallet details ');
     setIsLoading(true);
     try {
       const token = await getToken();
@@ -237,7 +236,6 @@ const WalletCategoriesPage = () => {
   };
 
   const handleShowQrCode = async () => {
-    console.log('At Handdle: Show Qr Code');
     await fetchWalletDetails();
     setIsQrDialogOpen(true);
   };
@@ -247,41 +245,46 @@ const WalletCategoriesPage = () => {
       name: 'Create Wallet',
       action: handleCreateWalletClick,
       disabled: hasWallet,
+      icon: 'wallet-plus-outline',
     },
     {
       name: 'Wallet Details',
       action: handleCheckWalletDetails,
       requiresWallet: true,
+      icon: 'wallet-outline',
     },
     {
       name: 'Transfer',
       action: () => navigate('/payment'),
       requiresWallet: true,
+      icon: 'swap-horizontal',
     },
     {
       name: 'Add Recipients',
       action: () => navigate('/add-recipient'),
       requiresWallet: true,
+      icon: 'account-plus-outline',
     },
     {
       name: 'View Recipients',
       action: () => navigate('/view-recipients'),
       requiresWallet: true,
+      icon: 'account-multiple-outline',
     },
     {
       name: 'Wallet QR Code',
-      action: () => navigate('/wallet-details'),
+      action: handleShowQrCode,
       requiresWallet: true,
+      icon: 'qrcode-scan',
     },
   ];
-
   const renderButtons = buttons => {
     const buttonRows = [];
     for (let i = 0; i < buttons.length; i += 2) {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({name, action, requiresWallet}, idx) => {
+          {pair.map(({name, action, requiresWallet, icon}, idx) => {
             const isDisabled = requiresWallet && !hasWallet;
             return (
               <Button
@@ -289,10 +292,16 @@ const WalletCategoriesPage = () => {
                 mode="contained"
                 onPress={action}
                 style={[styles.button, isDisabled && styles.buttonDisabled]}
-                labelStyle={
-                  isDisabled ? styles.buttonTextDisabled : styles.buttonText
-                }
-                disabled={isDisabled}>
+                contentStyle={styles.buttonContent}
+                disabled={isDisabled}
+                icon={() => (
+                  <IconButton
+                    icon={icon}
+                    size={40}
+                    color="white" // Set icon color to white
+                    style={styles.icon}
+                  />
+                )}>
                 {name}
               </Button>
             );
@@ -307,7 +316,7 @@ const WalletCategoriesPage = () => {
     <ScrollView style={styles.container}>
       <Card style={styles.card}>
         <Card.Content>
-          <Title style={styles.title}>Wallet Categories</Title>
+          {/* <Title style={styles.title}>Wallet Categories</Title> */}
           {renderButtons(walletCategories)}
         </Card.Content>
       </Card>
@@ -447,19 +456,20 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 4,
     backgroundColor: '#4285F4',
-    marginBottom: 10, // Add margin for spacing
+    height: 100, // Ensure the button is square
+    width: 100, // Ensure the button is square
+    justifyContent: 'center', // Center content
   },
   buttonDisabled: {
     backgroundColor: '#d3d3d3',
   },
-  buttonText: {
-    color: '#FFFFFF',
+  buttonContent: {
+    flexDirection: 'column', // Stack icon and text vertically
+    justifyContent: 'center', // Center content
+    alignItems: 'center', // Align content horizontally
   },
-  buttonTextDisabled: {
-    color: '#A9A9A9',
-  },
-  input: {
-    marginBottom: 8,
+  icon: {
+    margin: 0, // Remove any margin around the icon
   },
 });
 
