@@ -102,6 +102,12 @@ const CreateWalletPage = () => {
           Create
         </Button>
       )}
+      <Button
+        mode="outlined"
+        onPress={() => navigate(-1)}
+        style={styles.backButton}>
+        Go Back
+      </Button>
     </View>
   );
 };
@@ -115,21 +121,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 30, // Space between title and input
+    marginBottom: 40, // Space between title and input
     textAlign: 'center',
-    color: '#333',
   },
   input: {
     width: '100%',
     marginBottom: 20, // Space between input and button
     backgroundColor: '#f5f5f5', // Slightly off-white background
-    borderRadius: 8,
   },
   createButton: {
     width: '100%',
     backgroundColor: '#0066ff', // Blue background
+    paddingVertical: 15,
+    borderRadius: 8,
+  },
+  backButton: {
+    marginTop: 20, // Space between the create button and back button
+    width: '100%',
     paddingVertical: 15,
     borderRadius: 8,
   },
