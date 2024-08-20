@@ -115,30 +115,32 @@ const CreateWalletPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center', // Centers content vertically
-    alignItems: 'center', // Centers content horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 20,
     backgroundColor: '#fff',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 40, // Space between title and input
+    marginBottom: 40,
     textAlign: 'center',
+    paddingHorizontal: 15, // Added padding to ensure text doesn't get cut
+    flexShrink: 1, // Ensures the text wraps within the available space
   },
   input: {
     width: '100%',
-    marginBottom: 20, // Space between input and button
-    backgroundColor: '#f5f5f5', // Slightly off-white background
+    marginBottom: 20,
+    backgroundColor: '#f5f5f5',
   },
   createButton: {
     width: '100%',
-    backgroundColor: '#0066ff', // Blue background
+    backgroundColor: '#0066ff',
     paddingVertical: 15,
     borderRadius: 8,
   },
   backButton: {
-    marginTop: 20, // Space between the create button and back button
+    marginTop: 20,
     width: '100%',
     paddingVertical: 15,
     borderRadius: 8,
