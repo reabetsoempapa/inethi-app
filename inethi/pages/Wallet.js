@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   StyleSheet,
@@ -15,10 +15,10 @@ import {
   Paragraph,
   TextInput,
 } from 'react-native-paper';
-import { useNavigate } from 'react-router-native';
+import {useNavigate} from 'react-router-native';
 import axios from 'axios';
-import { getToken } from '../utils/tokenUtils';
-import { useBalance } from '../context/BalanceContext';
+import {getToken} from '../utils/tokenUtils';
+import {useBalance} from '../context/BalanceContext';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,11 +34,12 @@ const WalletCategoriesPage = () => {
   const walletOwnershipEndpoint = '/wallet/ownership/';
   const walletDetailsEndpoint = '/wallet/details/';
   const navigate = useNavigate();
-  const { balance, fetchBalance } = useBalance();
+  const {balance, fetchBalance} = useBalance();
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
 
   const [hasWallet, setHasWallet] = useState(false);
-  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
+  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
+    useState(false);
   const [walletName, setWalletName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [walletDetails, setWalletDetails] = useState(null);
@@ -50,7 +51,8 @@ const WalletCategoriesPage = () => {
   }, []);
 
   const trackButtonClick = async (eventName, data = {}) => {
-    const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+    const events =
+      JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
     events.push({
       eventName,
       timestamp: new Date(),
@@ -66,7 +68,8 @@ const WalletCategoriesPage = () => {
 
   const syncAnalyticsEvents = async () => {
     try {
-      const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+      const events =
+        JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
       if (events.length > 0) {
         for (const event of events) {
           await analytics().logEvent(event.eventName, event.data);
@@ -141,7 +144,7 @@ const WalletCategoriesPage = () => {
       };
       const response = await axios.post(
         `${baseURL}${walletCreateEndpoint}`,
-        { wallet_name: walletName },
+        {wallet_name: walletName},
         config,
       );
       setIsCreateWalletDialogOpen(false);
@@ -151,7 +154,7 @@ const WalletCategoriesPage = () => {
           `Wallet created successfully! Address: ${response.data.address}, Name: ${response.data.name}`,
         );
         fetchBalance();
-        await trackButtonClick('wallet_created', { walletName: walletName });
+        await trackButtonClick('wallet_created', {walletName: walletName});
       }
     } catch (error) {
       console.error('Error creating wallet:', error);
@@ -242,7 +245,7 @@ const WalletCategoriesPage = () => {
       setWalletDetails(response.data);
       setIsLoading(false);
       navigate(`/wallet-details`, {
-        state: { walletAddress: response.data.wallet_address },
+        state: {walletAddress: response.data.wallet_address},
       });
       await trackButtonClick('wallet_details_button_clicked');
     } catch (error) {
@@ -331,6 +334,12 @@ const WalletCategoriesPage = () => {
       action: () => navigate('/view-recipients', {state: {fromPay: true}}),
       requiresWallet: true,
       icon: 'cash',
+    },
+    {
+      name: 'History',
+      action: () => navigate('/payment-history'),
+      requiresWallet: true,
+      icon: 'history',
     },
   ];
   const renderButtons = buttons => {

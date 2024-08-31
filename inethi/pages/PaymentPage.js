@@ -21,6 +21,22 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Function to simulate sending a payment
+const mockSendPayment = async paymentData => {
+  const transactions =
+    JSON.parse(await AsyncStorage.getItem('transactions')) || [];
+  const newTransaction = {
+    id: transactions.length + 1,
+    ...paymentData,
+    status: 'Success', // or 'Pending' or 'Failed'
+    date: new Date().toISOString(),
+  };
+  transactions.push(newTransaction);
+  await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
+  return newTransaction;
+};
 
 const PaymentPage = () => {
   const device = useCameraDevice('back');
@@ -72,62 +88,78 @@ const PaymentPage = () => {
     setError('');
 
     try {
-      const token = await getToken();
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
+      //   const token = await getToken();
+      //   if (!token) {
+      //     setIsLoading(false);
+      //     return;
+      //   }
 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      };
+      //   const config = {
+      //     headers: {
+      //       Authorization: `Bearer ${token}`,
+      //       'Content-Type': 'application/json',
+      //     },
+      //   };
 
+      //   const paymentData = {
+      //     payment_method: paymentMethod,
+      //     recipient_address: receiver,
+      //     amount,
+      //   };
+
+      //   const response = await axios.post(
+      //     `${baseURL}${walletSendEndpoint}`,
+      //     paymentData,
+      //     config,
+      //   );
+
+      //   setIsLoading(false);
+      //   Alert.alert('Success', 'Payment sent successfully');
+      //   fetchBalance();
+      // } catch (error) {
+      //   setIsLoading(false);
+      //   console.error('Error sending payment:', error);
+      //   if (error.response) {
+      //     if (error.response.status === 401) {
+      //       Alert.alert('Error', 'Authentication credentials were not provided.');
+      //     } else if (error.response.status === 404) {
+      //       Alert.alert('Error', 'Cannot find user.');
+      //     } else if (error.response.status === 406) {
+      //       Alert.alert(
+      //         'Error',
+      //         'Recipient does not have a wallet on the iNethi system.',
+      //       );
+      //     } else if (error.response.status === 412) {
+      //       Alert.alert('Error', 'Insufficient funds.');
+      //     } else if (error.response.status === 417) {
+      //       Alert.alert('Error', 'You do not have a wallet. Please create one.');
+      //     } else if (error.response.status === 500) {
+      //       Alert.alert(
+      //         'Error',
+      //         'Error sending payment. Check payment details and your gas status alternatively contact iNethi support.',
+      //       );
+      //     } else {
+      //       Alert.alert('Error', `Failed to send payment: ${error.message}`);
+      //     }
+      //   } else {
+      //     Alert.alert('Error', `Failed to send payment: ${error.message}`);
+      //   }
+      // }
+
+      // Replace the real API call with the mockSendPayment function
       const paymentData = {
         payment_method: paymentMethod,
         recipient_address: receiver,
         amount,
       };
 
-      const response = await axios.post(
-        `${baseURL}${walletSendEndpoint}`,
-        paymentData,
-        config,
-      );
-
+      const transaction = await mockSendPayment(paymentData);
       setIsLoading(false);
-      Alert.alert('Success', 'Payment sent successfully');
-      fetchBalance();
+      Alert.alert('Success', `Payment sent successfully: ${transaction.id}`);
+      fetchBalance(); // Assuming you want to update the balance after sending payment
     } catch (error) {
       setIsLoading(false);
-      console.error('Error sending payment:', error);
-      if (error.response) {
-        if (error.response.status === 401) {
-          Alert.alert('Error', 'Authentication credentials were not provided.');
-        } else if (error.response.status === 404) {
-          Alert.alert('Error', 'Cannot find user.');
-        } else if (error.response.status === 406) {
-          Alert.alert(
-            'Error',
-            'Recipient does not have a wallet on the iNethi system.',
-          );
-        } else if (error.response.status === 412) {
-          Alert.alert('Error', 'Insufficient funds.');
-        } else if (error.response.status === 417) {
-          Alert.alert('Error', 'You do not have a wallet. Please create one.');
-        } else if (error.response.status === 500) {
-          Alert.alert(
-            'Error',
-            'Error sending payment. Check payment details and your gas status alternatively contact iNethi support.',
-          );
-        } else {
-          Alert.alert('Error', `Failed to send payment: ${error.message}`);
-        }
-      } else {
-        Alert.alert('Error', `Failed to send payment: ${error.message}`);
-      }
+      Alert.alert('Error', `Failed to send payment: ${error.message}`);
     }
   };
 

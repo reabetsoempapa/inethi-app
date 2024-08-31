@@ -21,6 +21,7 @@ import WalletDetailsPage from './pages/WalletDetails';
 import AddRecipientScreen from './pages/AddRecipients';
 import ViewRecipientsScreen from './pages/ViewRecipients';
 import CreateWalletPage from './pages/CreateWallet';
+import PaymentHistory from './pages/PaymentHistory';
 
 // You may want to wrap this with `if (!__DEV__) { ... }` to only run Vexo in production.
 vexo('707528fb-5be6-49d1-9a78-5afe749580cc');
@@ -61,6 +62,8 @@ const AppRoutes = ({
               element={<RecipientDetailsScreen />}
             />
             <Route path="/wallet-details" element={<WalletDetailsPage />} />
+
+            <Route path="/payment-history" element={<PaymentHistory />} />
           </>
         ) : (
           <>
