@@ -7,7 +7,6 @@ const BalanceContext = createContext();
 export const BalanceProvider = ({children, logout}) => {
   const [balance, setBalance] = useState('Loading...');
   const baseURL = 'https://manage-backend.inethicloud.net';
-
   const balanceEndpoint = '/wallet/balance/';
   const walletOwnershipEndpoint = '/wallet/ownership/';
 
@@ -40,12 +39,17 @@ export const BalanceProvider = ({children, logout}) => {
     }
   };
 
+  // Method to manually update the balance (for testing)
+  const updateBalance = newBalance => {
+    setBalance(newBalance);
+  };
+
   useEffect(() => {
     fetchBalance();
   }, []);
 
   return (
-    <BalanceContext.Provider value={{balance, fetchBalance}}>
+    <BalanceContext.Provider value={{balance, fetchBalance, updateBalance}}>
       {children}
     </BalanceContext.Provider>
   );
