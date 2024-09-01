@@ -1,15 +1,19 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useNavigate} from 'react-router-native';
+import {useNavigate, useLocation} from 'react-router-native';
 
 const PaymentUnsuccessful = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const errorMessage =
+    location.state?.errorMessage || 'Payment was unsuccessful.';
 
   return (
     <View style={styles.container}>
       <Ionicons name="close-circle" size={100} color="red" />
       <Text style={styles.errorText}>Payment Unsuccessful</Text>
+      <Text style={styles.errorDetail}>{errorMessage}</Text>
       <TouchableOpacity style={styles.backButton} onPress={() => navigate('/')}>
         <Text style={styles.buttonText}>Go to Home</Text>
       </TouchableOpacity>
@@ -29,6 +33,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'red',
     marginTop: 20,
+  },
+  errorDetail: {
+    fontSize: 16,
+    color: 'black',
+    marginTop: 10,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   backButton: {
     marginTop: 30,

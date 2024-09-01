@@ -1,3 +1,4 @@
+// pages/PaymentPage.js
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -11,7 +12,7 @@ import {
 import {Picker} from '@react-native-picker/picker';
 import {useNavigate, useLocation} from 'react-router-native';
 import {Dialog} from 'react-native-paper';
-import {useBalance} from '../context/BalanceContext'; // Import useBalance
+import {useBalance} from '../context/BalanceContext';
 import {
   Camera,
   useCameraDevice,
@@ -20,12 +21,13 @@ import {
 } from 'react-native-vision-camera';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Header from '../components/Header';
 
 const PaymentPage = () => {
-  const {balance, fetchBalance, updateBalance} = useBalance(); // Destructure updateBalance
+  const {balance, fetchBalance, updateBalance} = useBalance();
   const device = useCameraDevice('back');
   const navigate = useNavigate();
-  const {state} = useLocation(); // Get the state from navigation
+  const {state} = useLocation();
   const [paymentMethod, setPaymentMethod] = useState('walletAddress');
   const [receiver, setReceiver] = useState(
     state?.recipient?.wallet_address || '',
@@ -65,9 +67,10 @@ const PaymentPage = () => {
     }
 
     if (parseFloat(amount) > parseFloat(balance)) {
-      navigate('/payment-unsuccessful');
-
-      //Alert.alert('Error', 'Insufficient funds.');
+      const errorMsg =
+        'Insufficient funds. Please check your balance and try again.';
+      setError(errorMsg);
+      navigate('/payment-unsuccessful', {state: {errorMessage: errorMsg}});
       return;
     }
 
@@ -83,11 +86,13 @@ const PaymentPage = () => {
 
       const transaction = await mockSendPayment(paymentData);
       setIsLoading(false);
-      updateBalance(balance - amount); // Deduct the amount from the balance
-      navigate('/payment-success'); // Navigate to the success page
+      updateBalance(balance - amount);
+      navigate('/payment-success');
     } catch (error) {
       setIsLoading(false);
-      navigate('/payment-unsuccessful');
+      const errorMsg = 'Failed to send payment. Please try again later.';
+      setError(errorMsg);
+      navigate('/payment-unsuccessful', {state: {errorMessage: errorMsg}});
     }
   };
 
@@ -105,6 +110,7 @@ const PaymentPage = () => {
 
   return (
     <View style={styles.container}>
+      <Header title="Make a Payment" />
       {isScannerOpen && device ? (
         <>
           <Camera
@@ -121,9 +127,6 @@ const PaymentPage = () => {
         </>
       ) : (
         <>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Make a Payment</Text>
-          </View>
           <View style={styles.formContainer}>
             <Picker
               selectedValue={paymentMethod}
@@ -209,15 +212,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#fff',
-  },
-  header: {
-    marginBottom: 20,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: 'black',
   },
   formContainer: {
     padding: 20,
