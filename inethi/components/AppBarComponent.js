@@ -1,18 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { AppState, View, StyleSheet, Image } from 'react-native';
-import { Appbar, Dialog, Portal, Button, Paragraph } from 'react-native-paper';
+import React, {useState, useEffect} from 'react';
+import {AppState, View, StyleSheet, Image} from 'react-native';
+import {Appbar, Dialog, Portal, Button, Paragraph} from 'react-native-paper';
 import NetInfo from '@react-native-community/netinfo';
-import { useBalance } from '../context/BalanceContext';
+import {useBalance} from '../context/BalanceContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useNavigate} from 'react-router-native';
 
-const NETWORK_SERVICE_URL = 'https://nextcloud.inethicloud.net/'; // Replace with your network service URL
+const NETWORK_SERVICE_URL = 'https://nextcloud.inethicloud.net/';
 
-const AppBarComponent = ({ logout }) => {
-  const { balance } = useBalance();
+const AppBarComponent = ({title, logout}) => {
+  console.log('AppBar Title:', title); // Debugging log
+  const {balance} = useBalance();
   const [visible, setVisible] = useState(false);
   const [infoVisible, setInfoVisible] = useState(false);
   const [appState, setAppState] = useState(AppState.currentState);
+  const navigate = useNavigate();
 
   const checkConnection = async () => {
     try {
@@ -21,7 +24,7 @@ const AppBarComponent = ({ logout }) => {
         const response = await fetch(NETWORK_SERVICE_URL);
         if (response.ok) {
           setVisible(false);
-          await AsyncStorage.removeItem('hasShownNetworkDialog'); // Clear dialog state
+          await AsyncStorage.removeItem('hasShownNetworkDialog');
         } else {
           showDialogIfNotShown();
         }
@@ -43,17 +46,20 @@ const AppBarComponent = ({ logout }) => {
 
   useEffect(() => {
     checkConnection();
-    const interval = setInterval(checkConnection, 60000); // Check every 60 seconds
+    const interval = setInterval(checkConnection, 60000);
 
-    const handleAppStateChange = async (nextAppState) => {
+    const handleAppStateChange = async nextAppState => {
       if (appState.match(/inactive|background/) && nextAppState === 'active') {
         await AsyncStorage.removeItem('hasShownNetworkDialog');
-        checkConnection(); // Check connection when app comes back to foreground
+        checkConnection();
       }
       setAppState(nextAppState);
     };
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
 
     return () => {
       clearInterval(interval);
@@ -77,27 +83,32 @@ const AppBarComponent = ({ logout }) => {
   return (
     <>
       <Appbar.Header style={styles.appBar}>
-        <View style={styles.content}>
+        <Appbar.BackAction onPress={() => navigate(-1)} color="#FFFFFF" />
+        <View style={styles.centerContent}>
           <Image
-            source={require('../assets/images/inethitransparent.png')} // Update this path as necessary
+            source={require('../assets/images/inethitransparent.png')}
             style={styles.logo}
           />
-          <View style={styles.iconContainer}>
-            <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
-            <MaterialCommunityIcons 
-              name="information-outline" 
-              size={28} 
-              color="#FFFFFF" 
-              onPress={handleInfoPress} 
-            />
-          </View>
+          <Appbar.Content title={title} titleStyle={styles.title} />
+        </View>
+        <View style={styles.iconContainer}>
+          <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
+          <MaterialCommunityIcons
+            name="information-outline"
+            size={28}
+            color="#FFFFFF"
+            onPress={handleInfoPress}
+          />
         </View>
       </Appbar.Header>
       <Portal>
         <Dialog visible={visible} onDismiss={hideDialog}>
           <Dialog.Title>Internet Connection</Dialog.Title>
           <Dialog.Content>
-            <Paragraph>You are not connected to iNethi Network. Some features may not be available.</Paragraph>
+            <Paragraph>
+              You are not connected to iNethi Network. Some features may not be
+              available.
+            </Paragraph>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={hideDialog}>OK</Button>
@@ -107,7 +118,10 @@ const AppBarComponent = ({ logout }) => {
         <Dialog visible={infoVisible} onDismiss={hideInfoDialog}>
           <Dialog.Title>Information</Dialog.Title>
           <Dialog.Content>
-            <Paragraph>Here you can add some information for the users, like how to use the app or other important details.</Paragraph>
+            <Paragraph>
+              Here you can add some information for the users, like how to use
+              the app or other important details.
+            </Paragraph>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={hideInfoDialog}>OK</Button>
@@ -122,20 +136,26 @@ const styles = StyleSheet.create({
   appBar: {
     backgroundColor: '#4285F4',
   },
-  content: {
+  title: {
+    color: '#FFFFFF', // Ensure the title is visible against the background
+    textAlign: 'center', // Center the title text
+  },
+  centerContent: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'center', // Ensure content is centered
   },
   logo: {
-    width: 120, // Adjust the width as necessary
-    height: 60, // Adjust the height as necessary
+    width: 50, // Reduce the size of the logo to allow space for the title
+    height: 40,
+    marginRight: 10, // Adjust spacing between logo and title
     resizeMode: 'contain',
   },
   iconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end', // Ensure icons are aligned to the right
   },
 });
 

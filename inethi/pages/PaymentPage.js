@@ -195,11 +195,6 @@ const PaymentPage = () => {
               </Dialog>
             )}
           </View>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigate(-1)}>
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
         </>
       )}
     </View>

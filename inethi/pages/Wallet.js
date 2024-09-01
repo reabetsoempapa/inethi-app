@@ -25,7 +25,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import * as amplitude from '@amplitude/analytics-react-native';
 import analytics from '@react-native-firebase/analytics';
-
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
 const WalletCategoriesPage = () => {
@@ -377,124 +376,120 @@ const WalletCategoriesPage = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Card style={styles.card}>
-        <Card.Content>
-          {/* <Title style={styles.title}>Wallet Categories</Title> */}
-          {renderButtons(walletCategories)}
-        </Card.Content>
-      </Card>
-      <Button
-        mode="contained"
-        onPress={() => navigate('/')}
-        style={styles.backButton}>
-        Go Back
-      </Button>
-      <Portal>
-        <Dialog
-          visible={isCreateWalletDialogOpen}
-          onDismiss={() => setIsCreateWalletDialogOpen(false)}>
-          <Dialog.Title>Create Wallet</Dialog.Title>
-          <Dialog.Content>
-            <Paragraph>Please enter a name for your new wallet.</Paragraph>
-            <TextInput
-              label="Wallet Name"
-              value={walletName}
-              onChangeText={text => setWalletName(text)}
-              style={styles.input}
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setIsCreateWalletDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onPress={handleCreateWallet}>Create</Button>
-          </Dialog.Actions>
-        </Dialog>
-        <Dialog
-          visible={isQrDialogOpen}
-          onDismiss={() => setIsQrDialogOpen(false)}>
-          <Dialog.Title>Wallet QR Code</Dialog.Title>
-          <Dialog.Content>
-            {isLoading ? (
-              <ActivityIndicator size="large" />
-            ) : walletDetails ? (
-              <View style={styles.qrCodeContainer}>
-                <QRCode value={walletDetails.wallet_address} size={200} />
-                <View style={styles.walletAddressContainer}>
-                  <Paragraph style={styles.walletAddress}>
-                    Wallet Address: {walletDetails.wallet_address}
-                  </Paragraph>
-                  <IconButton
-                    icon="content-copy"
-                    size={20}
-                    onPress={() => {
-                      Clipboard.setString(walletDetails.wallet_address);
-                      Alert.alert(
-                        'Copied',
-                        'Wallet address copied to clipboard',
-                      );
-                    }}
-                  />
-                </View>
-              </View>
-            ) : detailsError ? (
-              <Paragraph>{detailsError}</Paragraph>
-            ) : (
-              <Paragraph>Failed to load wallet details.</Paragraph>
-            )}
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setIsQrDialogOpen(false)}>Close</Button>
-          </Dialog.Actions>
-        </Dialog>
-        <Dialog
-          visible={isBalanceDialogOpen}
-          onDismiss={() => setIsDetailDialogOpen(false)}>
-          <Dialog.Title>Wallet Details</Dialog.Title>
-          <Dialog.Content>
-            {isLoading ? (
-              <ActivityIndicator size="large" />
-            ) : walletDetails ? (
-              <>
-                <View style={styles.walletAddressContainer}>
-                  <Paragraph style={styles.walletAddress}>
-                    Wallet Address: {walletDetails.wallet_address}
-                  </Paragraph>
-                  <IconButton
-                    icon="content-copy"
-                    size={20}
-                    onPress={() => {
-                      Clipboard.setString(walletDetails.wallet_address);
-                      Alert.alert(
-                        'Copied',
-                        'Wallet address copied to clipboard',
-                      );
-                    }}
-                  />
-                </View>
-                <Paragraph>Balance: {walletDetails.balance}</Paragraph>
-              </>
-            ) : detailsError ? (
-              <Paragraph>{detailsError}</Paragraph>
-            ) : (
-              <Paragraph>Failed to load wallet details.</Paragraph>
-            )}
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setIsDetailDialogOpen(false)}>Close</Button>
-          </Dialog.Actions>
-        </Dialog>
+    <View style={{flex: 1}}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Card style={styles.card}>
+          <Card.Content>{renderButtons(walletCategories)}</Card.Content>
+        </Card>
 
-        {isLoading && (
-          <Dialog visible={true}>
+        <Portal>
+          <Dialog
+            visible={isCreateWalletDialogOpen}
+            onDismiss={() => setIsCreateWalletDialogOpen(false)}>
+            <Dialog.Title>Create Wallet</Dialog.Title>
             <Dialog.Content>
-              <ActivityIndicator size="large" />
+              <Paragraph>Please enter a name for your new wallet.</Paragraph>
+              <TextInput
+                label="Wallet Name"
+                value={walletName}
+                onChangeText={text => setWalletName(text)}
+                style={styles.input}
+              />
             </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={() => setIsCreateWalletDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onPress={handleCreateWallet}>Create</Button>
+            </Dialog.Actions>
           </Dialog>
-        )}
-      </Portal>
-    </ScrollView>
+          <Dialog
+            visible={isQrDialogOpen}
+            onDismiss={() => setIsQrDialogOpen(false)}>
+            <Dialog.Title>Wallet QR Code</Dialog.Title>
+            <Dialog.Content>
+              {isLoading ? (
+                <ActivityIndicator size="large" />
+              ) : walletDetails ? (
+                <View style={styles.qrCodeContainer}>
+                  <QRCode value={walletDetails.wallet_address} size={200} />
+                  <View style={styles.walletAddressContainer}>
+                    <Paragraph style={styles.walletAddress}>
+                      Wallet Address: {walletDetails.wallet_address}
+                    </Paragraph>
+                    <IconButton
+                      icon="content-copy"
+                      size={20}
+                      onPress={() => {
+                        Clipboard.setString(walletDetails.wallet_address);
+                        Alert.alert(
+                          'Copied',
+                          'Wallet address copied to clipboard',
+                        );
+                      }}
+                    />
+                  </View>
+                </View>
+              ) : detailsError ? (
+                <Paragraph>{detailsError}</Paragraph>
+              ) : (
+                <Paragraph>Failed to load wallet details.</Paragraph>
+              )}
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={() => setIsQrDialogOpen(false)}>Close</Button>
+            </Dialog.Actions>
+          </Dialog>
+          <Dialog
+            visible={isBalanceDialogOpen}
+            onDismiss={() => setIsDetailDialogOpen(false)}>
+            <Dialog.Title>Wallet Details</Dialog.Title>
+            <Dialog.Content>
+              {isLoading ? (
+                <ActivityIndicator size="large" />
+              ) : walletDetails ? (
+                <>
+                  <View style={styles.walletAddressContainer}>
+                    <Paragraph style={styles.walletAddress}>
+                      Wallet Address: {walletDetails.wallet_address}
+                    </Paragraph>
+                    <IconButton
+                      icon="content-copy"
+                      size={20}
+                      onPress={() => {
+                        Clipboard.setString(walletDetails.wallet_address);
+                        Alert.alert(
+                          'Copied',
+                          'Wallet address copied to clipboard',
+                        );
+                      }}
+                    />
+                  </View>
+                  <Paragraph>Balance: {walletDetails.balance}</Paragraph>
+                </>
+              ) : detailsError ? (
+                <Paragraph>{detailsError}</Paragraph>
+              ) : (
+                <Paragraph>Failed to load wallet details.</Paragraph>
+              )}
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={() => setIsDetailDialogOpen(false)}>
+                Close
+              </Button>
+            </Dialog.Actions>
+          </Dialog>
+
+          {isLoading && (
+            <Dialog visible={true}>
+              <Dialog.Content>
+                <ActivityIndicator size="large" />
+              </Dialog.Content>
+            </Dialog>
+          )}
+        </Portal>
+      </ScrollView>
+    </View>
   );
 };
 

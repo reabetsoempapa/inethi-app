@@ -165,12 +165,6 @@ const WalletDetailsPage = () => {
                 style={styles.downloadButton}>
                 Download QR Code
               </Button>
-              <Button
-                mode="outlined"
-                onPress={() => navigate(-1)}
-                style={styles.backButton}>
-                Back
-              </Button>
             </>
           ) : (
             <Paragraph>Error loading wallet details.</Paragraph>

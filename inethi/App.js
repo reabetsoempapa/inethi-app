@@ -37,10 +37,37 @@ const AppRoutes = ({
   const location = useLocation();
   const hideAppBarRoutes = ['/map']; // Add routes here where AppBar should not be shown
 
+  const getTitle = pathname => {
+    switch (pathname) {
+      case '/':
+        return 'Home';
+      case '/payment':
+        return 'Payment';
+      case '/appstore':
+        return 'App Store';
+      case '/wallet-categories':
+        return 'Wallet Categories';
+      case '/view-recipients':
+        return 'View Recipients';
+      case '/add-recipient':
+        return 'Add Recipient';
+      case '/create-Wallet':
+        return 'Create Wallet';
+      case '/payment-history':
+        return 'Payment History';
+      case '/payment-success':
+        return 'Payment Success';
+      case '/payment-unsuccessful':
+        return 'Payment Unsuccessful';
+      default:
+        return 'iNethi App'; // Default title for unknown routes
+    }
+  };
+
   return (
     <>
       {!hideAppBarRoutes.includes(location.pathname) && (
-        <AppBarComponent logout={logout} />
+        <AppBarComponent logout={logout} title={getTitle(location.pathname)} />
       )}
       <Routes>
         {userToken ? (

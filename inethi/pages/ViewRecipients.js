@@ -86,12 +86,6 @@ const ViewRecipientsScreen = () => {
           No recipients found.
         </Paragraph>
       )}
-      <Button
-        mode="contained"
-        onPress={() => navigate(-1)}
-        style={styles.backButton}>
-        Go Back
-      </Button>
     </ScrollView>
   );
 };

@@ -122,12 +122,6 @@ const AddRecipientScreen = () => {
             style={styles.addButton}>
             Add Recipient
           </Button>
-          <Button
-            mode="outlined"
-            onPress={() => navigate(-1)}
-            style={styles.backButton}>
-            Go Back
-          </Button>
         </ScrollView>
       )}
     </View>

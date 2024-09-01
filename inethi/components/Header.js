@@ -17,10 +17,12 @@ const Header = ({title}) => {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#4285F4',
+    backgroundColor: '#ffffff', // Matches the white background
   },
   title: {
-    color: 'white',
+    color: '#4285F4', // Matches the blue color
+    fontSize: 20, // Adjust to match the size
+    textAlign: 'center', // Center align the title
   },
 });
 

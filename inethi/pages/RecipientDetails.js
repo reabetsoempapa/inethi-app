@@ -23,12 +23,6 @@ const RecipientDetailsScreen = () => {
       <Button mode="contained" onPress={handlePay} style={styles.button}>
         Pay
       </Button>
-      <Button
-        mode="outlined"
-        onPress={() => navigate(-1)}
-        style={[styles.button, styles.backButton]}>
-        Go Back
-      </Button>
     </View>
   );
 };
