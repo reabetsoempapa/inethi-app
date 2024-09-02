@@ -49,7 +49,14 @@ const HomePage = ({logout}) => {
     Wallet: [
       {
         name: 'Wallet',
-        action: () => navigation.navigate('WalletCategories'), // Updated
+        //     action: () => navigation.navigate('WalletCategories'), // Updated
+        //     url: '',
+        //   },
+        // ],
+        action: () =>
+          navigation.navigate('Wallet', {
+            screen: 'WalletCategories',
+          }), // Updated navigation logic
         url: '',
       },
     ],
