@@ -1,22 +1,50 @@
-import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useNavigate, useLocation} from 'react-router-native';
+import React, {useState, useEffect} from 'react';
+import {View, Text, FlatList, StyleSheet} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const PaymentUnsuccessful = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const errorMessage =
-    location.state?.errorMessage || 'Payment was unsuccessful.';
+const PaymentHistory = () => {
+  const [transactions, setTransactions] = useState([]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const storedTransactions =
+          JSON.parse(await AsyncStorage.getItem('transactions')) || [];
+
+        // Sort transactions by date (most recent first)
+        const sortedTransactions = storedTransactions.sort(
+          (a, b) => new Date(b.date) - new Date(a.date),
+        );
+
+        setTransactions(sortedTransactions);
+      } catch (error) {
+        console.error('Failed to load transactions:', error);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  const renderItem = ({item}) => (
+    <View style={styles.transactionItem}>
+      <Text>To: {item.recipient_address}</Text>
+      <Text>Amount: {item.amount}</Text>
+      <Text>Status: {item.status}</Text>
+      <Text>Date: {new Date(item.date).toLocaleString()}</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <Ionicons name="close-circle" size={100} color="red" />
-      <Text style={styles.errorText}>Payment Unsuccessful</Text>
-      <Text style={styles.errorDetail}>{errorMessage}</Text>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigate('/')}>
-        <Text style={styles.buttonText}>Go to Home</Text>
-      </TouchableOpacity>
+      {transactions.length > 0 ? (
+        <FlatList
+          data={transactions}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+        />
+      ) : (
+        <Text style={styles.emptyText}>No transactions found.</Text>
+      )}
     </View>
   );
 };
@@ -24,35 +52,21 @@ const PaymentUnsuccessful = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    padding: 10,
   },
-  errorText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'red',
-    marginTop: 20,
-  },
-  errorDetail: {
-    fontSize: 16,
-    color: 'black',
-    marginTop: 10,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  backButton: {
-    marginTop: 30,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    backgroundColor: '#0066ff',
+  transactionItem: {
+    padding: 10,
+    marginVertical: 8,
+    borderColor: '#ddd',
+    borderWidth: 1,
     borderRadius: 8,
   },
-  buttonText: {
-    color: 'white',
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#555',
     fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 
-export default PaymentUnsuccessful;
+export default PaymentHistory;

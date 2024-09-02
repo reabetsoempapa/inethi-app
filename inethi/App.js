@@ -275,6 +275,7 @@ const App = () => {
                   name="Login"
                   component={LoginPage}
                   options={{headerShown: false}}
+                  initialParams={{onLoginSuccess: handleLoginSuccess}} // Passing handleLoginSuccess as a prop
                 />
                 <Stack.Screen
                   name="Register"

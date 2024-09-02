@@ -15,7 +15,7 @@ import {
   Paragraph,
   TextInput,
 } from 'react-native-paper';
-import {useNavigate} from 'react-router-native';
+import {useNavigation} from '@react-navigation/native'; // Updated import
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import {useBalance} from '../context/BalanceContext';
@@ -32,7 +32,7 @@ const WalletCategoriesPage = () => {
   const walletCreateEndpoint = '/wallet/create/';
   const walletOwnershipEndpoint = '/wallet/ownership/';
   const walletDetailsEndpoint = '/wallet/details/';
-  const navigate = useNavigate();
+  const navigation = useNavigation(); // Updated to use useNavigation
   const {balance, fetchBalance} = useBalance();
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
 
@@ -243,9 +243,9 @@ const WalletCategoriesPage = () => {
       );
       setWalletDetails(response.data);
       setIsLoading(false);
-      navigate(`/wallet-details`, {
-        state: {walletAddress: response.data.wallet_address},
-      });
+      navigation.navigate('WalletDetails', {
+        walletAddress: response.data.wallet_address,
+      }); // Updated navigation
       await trackButtonClick('wallet_details_button_clicked');
     } catch (error) {
       setIsLoading(false);
@@ -285,7 +285,7 @@ const WalletCategoriesPage = () => {
   const walletCategories = [
     {
       name: 'Create Wallet',
-      action: _ => navigate('/create-Wallet'),
+      action: _ => navigation.navigate('CreateWallet'),
       disabled: hasWallet,
       icon: 'wallet-plus-outline',
     },
@@ -299,7 +299,7 @@ const WalletCategoriesPage = () => {
       name: 'Transfer',
       action: async () => {
         await trackButtonClick('transfer_button_clicked');
-        navigate('/payment');
+        navigation.navigate('Payment');
       },
       requiresWallet: true,
       icon: 'swap-horizontal',
@@ -308,7 +308,7 @@ const WalletCategoriesPage = () => {
       name: 'Add Recipients',
       action: async () => {
         await trackButtonClick('add_recipients_button_clicked');
-        navigate('/add-recipient');
+        navigation.navigate('AddRecipient');
       },
       requiresWallet: true,
       icon: 'account-plus-outline',
@@ -317,7 +317,7 @@ const WalletCategoriesPage = () => {
       name: 'View Recipients',
       action: async () => {
         await trackButtonClick('view_recipients_button_clicked');
-        navigate('/view-recipients');
+        navigation.navigate('ViewRecipients');
       },
       requiresWallet: true,
       icon: 'account-multiple-outline',
@@ -330,13 +330,14 @@ const WalletCategoriesPage = () => {
     },
     {
       name: 'Pay',
-      action: () => navigate('/view-recipients', {state: {fromPay: true}}),
+      action: () =>
+        navigation.navigate('ViewRecipients', {state: {fromPay: true}}),
       requiresWallet: true,
       icon: 'cash',
     },
     {
       name: 'History',
-      action: () => navigate('/payment-history'),
+      action: () => navigation.navigate('PaymentHistory'),
       requiresWallet: true,
       icon: 'history',
     },

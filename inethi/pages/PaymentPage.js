@@ -1,4 +1,3 @@
-// pages/PaymentPage.js
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -10,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import {useNavigate, useLocation} from 'react-router-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {Dialog} from 'react-native-paper';
 import {useBalance} from '../context/BalanceContext';
 import {
@@ -26,8 +25,9 @@ import Header from '../components/Header';
 const PaymentPage = () => {
   const {balance, fetchBalance, updateBalance} = useBalance();
   const device = useCameraDevice('back');
-  const navigate = useNavigate();
-  const {state} = useLocation();
+  const navigation = useNavigation(); // Updated to use useNavigation
+  const route = useRoute();
+  const {state} = route.params || {}; // Updated to use useRoute
   const [paymentMethod, setPaymentMethod] = useState('walletAddress');
   const [receiver, setReceiver] = useState(
     state?.recipient?.wallet_address || '',
@@ -70,7 +70,7 @@ const PaymentPage = () => {
       const errorMsg =
         'Insufficient funds. Please check your balance and try again.';
       setError(errorMsg);
-      navigate('/payment-unsuccessful', {state: {errorMessage: errorMsg}});
+      navigation.navigate('PaymentUnsuccessful', {errorMessage: errorMsg});
       return;
     }
 
@@ -84,15 +84,15 @@ const PaymentPage = () => {
         amount,
       };
 
-      const transaction = await mockSendPayment(paymentData);
+      const transaction = await mockSendPayment(paymentData); // Replace with actual payment API
       setIsLoading(false);
       updateBalance(balance - amount);
-      navigate('/payment-success');
+      navigation.navigate('PaymentSuccess');
     } catch (error) {
       setIsLoading(false);
       const errorMsg = 'Failed to send payment. Please try again later.';
       setError(errorMsg);
-      navigate('/payment-unsuccessful', {state: {errorMessage: errorMsg}});
+      navigation.navigate('PaymentUnsuccessful', {errorMessage: errorMsg});
     }
   };
 

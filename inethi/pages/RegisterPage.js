@@ -11,20 +11,19 @@ import {
   Alert,
 } from 'react-native';
 import axios from 'axios';
-import {useNavigate} from 'react-router-native';
+import {useNavigation} from '@react-navigation/native';
 import {handleLogin} from '../utils/utils';
 import {Dialog} from 'react-native-paper';
 
 const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
-  //const baseURL = 'https://manage-backend.inethicloud.net';
   const registerEndpoint = '/user/keycloak/register/';
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const navigation = useNavigation(); // Updated to use useNavigation
   const [loading, setLoading] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
@@ -57,7 +56,7 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
           onLoginSuccess,
           setError,
           setLoading,
-          navigate,
+          navigation, // Updated to use navigation
         );
       } else {
         setError('Failed to register');
@@ -84,13 +83,13 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
     }
   };
 
-    useEffect(() => {
-        if (password && username && confirmPassword) {
-            setIsButtonDisabled(false);
-        } else {
-            setIsButtonDisabled(true);
-        }
-    }, [password, confirmPassword, username]);
+  useEffect(() => {
+    if (password && username && confirmPassword) {
+      setIsButtonDisabled(false);
+    } else {
+      setIsButtonDisabled(true);
+    }
+  }, [password, confirmPassword, username]);
 
   return (
     <View style={styles.container}>
@@ -134,7 +133,7 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
           </Dialog.Content>
         </Dialog>
       )}
-      <TouchableOpacity onPress={() => navigate('/login')}>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
         <Text style={styles.loginLink}>
           Already have an account? Login here
         </Text>

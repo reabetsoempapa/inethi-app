@@ -1,16 +1,18 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useNavigate} from 'react-router-native';
+import {useNavigation} from '@react-navigation/native';
 
 const PaymentSuccess = () => {
-  const navigate = useNavigate();
+  const navigation = useNavigation(); // Updated to use useNavigation
 
   return (
     <View style={styles.container}>
       <Ionicons name="checkmark-circle" size={100} color="green" />
       <Text style={styles.successText}>Payment Successful!</Text>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigate('/')}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.navigate('Home')}>
         <Text style={styles.buttonText}>Go to Home</Text>
       </TouchableOpacity>
     </View>

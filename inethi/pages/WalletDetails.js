@@ -8,7 +8,7 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import {Button, Card, Title, Paragraph} from 'react-native-paper';
-import {useLocation, useNavigate} from 'react-router-native';
+import {useLocation} from 'react-router-native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
 import QRCode from 'react-native-qrcode-svg';
@@ -16,7 +16,6 @@ import RNFS from 'react-native-fs';
 
 const WalletDetailsPage = () => {
   const location = useLocation();
-  const navigate = useNavigate(); // Hook to handle navigation
   const {walletAddress} = location.state || {};
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletDetailsEndpoint = `/wallet/details`;

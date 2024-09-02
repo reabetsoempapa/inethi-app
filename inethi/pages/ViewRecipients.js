@@ -7,15 +7,16 @@ import {
   ActivityIndicator,
   Card,
 } from 'react-native-paper';
-import {useNavigate, useLocation} from 'react-router-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {fetchRecipients} from '../service/recipient';
 
 const ViewRecipientsScreen = () => {
   const [recipients, setRecipients] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
-  const {state} = useLocation(); // Get the state from the navigation
+  const navigation = useNavigation();
+  const route = useRoute();
+  const {state} = route.params || {}; // Get the state from the navigation
 
   const groupRecipientsByAlphabet = recipients => {
     return recipients.reduce((groups, recipient) => {
@@ -66,8 +67,8 @@ const ViewRecipientsScreen = () => {
                   style={styles.card}
                   onPress={() =>
                     state?.fromPay
-                      ? navigate('/payment', {state: {recipient}})
-                      : navigate('/recipient-details', {state: {recipient}})
+                      ? navigation.navigate('Payment', {recipient})
+                      : navigation.navigate('RecipientDetails', {recipient})
                   }>
                   <Card.Content>
                     <Paragraph style={styles.recipientText}>

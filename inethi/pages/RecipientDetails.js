@@ -1,15 +1,15 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {useNavigate, useLocation} from 'react-router-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {Button} from 'react-native-paper';
 
 const RecipientDetailsScreen = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const {recipient} = location.state;
+  const navigation = useNavigation();
+  const route = useRoute();
+  const {recipient} = route.params;
 
   const handlePay = () => {
-    navigate('/payment', {state: {walletAddress: recipient.wallet_address}});
+    navigation.navigate('Payment', {walletAddress: recipient.wallet_address});
   };
 
   return (

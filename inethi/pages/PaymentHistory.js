@@ -7,9 +7,19 @@ const PaymentHistory = () => {
 
   useEffect(() => {
     const fetchTransactions = async () => {
-      const storedTransactions =
-        JSON.parse(await AsyncStorage.getItem('transactions')) || [];
-      setTransactions(storedTransactions);
+      try {
+        const storedTransactions =
+          JSON.parse(await AsyncStorage.getItem('transactions')) || [];
+
+        // Sort transactions by date (most recent first)
+        const sortedTransactions = storedTransactions.sort(
+          (a, b) => new Date(b.date) - new Date(a.date),
+        );
+
+        setTransactions(sortedTransactions);
+      } catch (error) {
+        console.error('Failed to load transactions:', error);
+      }
     };
 
     fetchTransactions();
@@ -25,21 +35,37 @@ const PaymentHistory = () => {
   );
 
   return (
-    <FlatList
-      data={transactions}
-      keyExtractor={item => item.id.toString()}
-      renderItem={renderItem}
-    />
+    <View style={styles.container}>
+      {transactions.length > 0 ? (
+        <FlatList
+          data={transactions}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+        />
+      ) : (
+        <Text style={styles.emptyText}>No transactions found.</Text>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+  },
   transactionItem: {
     padding: 10,
     marginVertical: 8,
     borderColor: '#ddd',
     borderWidth: 1,
     borderRadius: 8,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#555',
+    fontSize: 16,
   },
 });
 

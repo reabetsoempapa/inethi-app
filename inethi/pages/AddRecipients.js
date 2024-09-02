@@ -8,7 +8,7 @@ import {
   Text,
 } from 'react-native';
 import {Button, TextInput, Paragraph} from 'react-native-paper';
-import {useNavigate} from 'react-router-native';
+import {useNavigation} from '@react-navigation/native'; // Correct navigation hook
 import {addRecipient} from '../service/recipient';
 import {
   Camera,
@@ -25,7 +25,7 @@ const AddRecipientScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const navigate = useNavigate();
+  const navigation = useNavigation(); // Use the correct hook
 
   const device = useCameraDevice('back');
   const {hasPermission, requestPermission} = useCameraPermission();
@@ -48,7 +48,7 @@ const AddRecipientScreen = () => {
         recipientWalletName,
       );
       Alert.alert('Recipient added successfully');
-      navigate(-1); // Navigate back to the previous screen
+      navigation.goBack(); // Navigate back to the previous screen
     } catch (error) {
       setError(`Error adding recipient: ${error.message}`);
     } finally {
