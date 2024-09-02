@@ -1,15 +1,15 @@
 // components/Header.js
 import React from 'react';
 import {Appbar} from 'react-native-paper';
-import {useNavigate} from 'react-router-native';
+import {useNavigation} from '@react-navigation/native';
 import {StyleSheet} from 'react-native';
 
 const Header = ({title}) => {
-  const navigate = useNavigate();
+  const navigation = useNavigation();
 
   return (
     <Appbar.Header style={styles.header}>
-      <Appbar.BackAction onPress={() => navigate(-1)} />
+      <Appbar.BackAction onPress={() => navigation.goBack()} />
       <Appbar.Content title={title} titleStyle={styles.title} />
     </Appbar.Header>
   );

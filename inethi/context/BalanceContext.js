@@ -30,6 +30,7 @@ export const BalanceProvider = ({children, logout}) => {
           config,
         );
         setBalance(balanceResponse.data.balance);
+        console.log('Balance:', balanceResponse.data.balance);
       } else {
         setBalance(0);
       }

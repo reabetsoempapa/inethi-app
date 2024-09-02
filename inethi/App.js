@@ -146,6 +146,46 @@ const WalletPageStack = () => {
           ),
         }}
       />
+      {/* Add Payment and PaymentHistory to Wallet Stack */}
+      <Stack.Screen
+        name="Payment"
+        component={PaymentPage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Payment" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="PaymentHistory"
+        component={PaymentHistory}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Payment History" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="PaymentSuccess"
+        component={PaymentSuccess}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Payment Success" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="PaymentUnsuccessful"
+        component={PaymentUnsuccessful}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent
+              title="Payment Unsuccessful"
+              logout={options.logout}
+            />
+          ),
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -271,12 +311,11 @@ const App = () => {
               <AppRoutes logout={logout} userToken={userToken} />
             ) : (
               <Stack.Navigator>
-                <Stack.Screen
-                  name="Login"
-                  component={LoginPage}
-                  options={{headerShown: false}}
-                  initialParams={{onLoginSuccess: handleLoginSuccess}} // Passing handleLoginSuccess as a prop
-                />
+                <Stack.Screen name="Login" options={{headerShown: false}}>
+                  {props => (
+                    <LoginPage {...props} onLoginSuccess={handleLoginSuccess} />
+                  )}
+                </Stack.Screen>
                 <Stack.Screen
                   name="Register"
                   component={RegisterPage}

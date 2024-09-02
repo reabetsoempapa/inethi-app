@@ -19,25 +19,24 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/Header';
 
 const PaymentPage = () => {
   const {balance, fetchBalance, updateBalance} = useBalance();
-  const device = useCameraDevice('back');
-  const navigation = useNavigation(); // Updated to use useNavigation
+  const navigation = useNavigation();
   const route = useRoute();
-  const {state} = route.params || {}; // Updated to use useRoute
+  const {recipient} = route.params || {}; // Get recipient from params, if available
+
   const [paymentMethod, setPaymentMethod] = useState('walletAddress');
-  const [receiver, setReceiver] = useState(
-    state?.recipient?.wallet_address || '',
-  );
+  const [receiver, setReceiver] = useState(recipient?.wallet_address || '');
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const device = useCameraDevice('back');
   const {hasPermission, requestPermission} = useCameraPermission();
+
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
     onCodeScanned: codes => {
@@ -84,28 +83,36 @@ const PaymentPage = () => {
         amount,
       };
 
-      const transaction = await mockSendPayment(paymentData); // Replace with actual payment API
-      setIsLoading(false);
-      updateBalance(balance - amount);
-      navigation.navigate('PaymentSuccess');
+      // Mocked send payment function, replace with actual API call
+      const transaction = await mockSendPayment(paymentData);
+
+      // Example of using the transaction result
+      if (transaction.success) {
+        setIsLoading(false);
+        updateBalance(balance - parseFloat(amount));
+        navigation.navigate('PaymentSuccess');
+      } else {
+        throw new Error('Payment failed');
+      }
     } catch (error) {
       setIsLoading(false);
-      const errorMsg = 'Failed to send payment. Please try again later.';
+      const errorMsg =
+        error.message || 'Failed to send payment. Please try again later.';
       setError(errorMsg);
       navigation.navigate('PaymentUnsuccessful', {errorMessage: errorMsg});
     }
   };
 
   useEffect(() => {
+    // Update balance to R500 for testing purposes
+    updateBalance(500);
+
+    // Fetch balance from API or mock
     fetchBalance();
-  }, [fetchBalance]);
+  }, [fetchBalance, updateBalance]);
 
   useEffect(() => {
-    if (receiver && amount) {
-      setIsButtonDisabled(false);
-    } else {
-      setIsButtonDisabled(true);
-    }
+    setIsButtonDisabled(!(receiver && amount));
   }, [receiver, amount]);
 
   return (
@@ -199,6 +206,14 @@ const PaymentPage = () => {
       )}
     </View>
   );
+};
+
+const mockSendPayment = async paymentData => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({success: true}); // Mocking a successful payment
+    }, 1000);
+  });
 };
 
 const styles = StyleSheet.create({
