@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {View, StyleSheet, TouchableOpacity, Image, Text} from 'react-native';
-import {useNavigate} from 'react-router-native';
+import {useNavigation} from '@react-navigation/native'; // Updated import
 import {Appbar, Dialog, Portal, Button, Paragraph} from 'react-native-paper';
 import MapboxGL from '@rnmapbox/maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,7 +27,7 @@ const directionsClient = MapboxDirectionsFactory({
 });
 
 const MapPage = () => {
-  const navigate = useNavigate();
+  const navigation = useNavigation(); // Updated to use useNavigation
   const [selectedRouter, setSelectedRouter] = useState(null);
   const [popupPosition, setPopupPosition] = useState({top: 0, left: 0});
   const [routers, setRouters] = useState([]);
@@ -373,7 +373,7 @@ const MapPage = () => {
   return (
     <View style={styles.container}>
       <Appbar.Header>
-        <Appbar.BackAction onPress={() => navigate('/')} />
+        <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content
           title="Find Nearest Hotspot"
           titleStyle={styles.appbarTitle}
