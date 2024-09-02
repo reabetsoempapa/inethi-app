@@ -1,9 +1,11 @@
-/* eslint-disable prettier/prettier */
 import React, {useState, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {NativeRouter, Route, Routes, useLocation} from 'react-router-native';
 import {Provider as PaperProvider} from 'react-native-paper';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
@@ -14,7 +16,6 @@ import {BalanceProvider} from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
 import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
-import {vexo} from 'vexo-analytics';
 import WalletCategoriesPage from './pages/Wallet';
 import RecipientDetailsScreen from './pages/RecipientDetails';
 import WalletDetailsPage from './pages/WalletDetails';
@@ -23,101 +24,215 @@ import ViewRecipientsScreen from './pages/ViewRecipients';
 import CreateWalletPage from './pages/CreateWallet';
 import PaymentHistory from './pages/PaymentHistory';
 import PaymentSuccess from './pages/PaymentSuccess';
-import PaymentUnsuccessful from './pages/PaymentUnsucessful';
+import PaymentUnsuccessful from './pages/PaymentFail';
 
-// You may want to wrap this with `if (!__DEV__) { ... }` to only run Vexo in production.
-vexo('707528fb-5be6-49d1-9a78-5afe749580cc');
-
-const AppRoutes = ({
-  logout,
-  userToken,
-  handleLoginSuccess,
-  handleRegisterSuccess,
-}) => {
-  const location = useLocation();
-  const hideAppBarRoutes = ['/map']; // Add routes here where AppBar should not be shown
-
-  const getTitle = pathname => {
-    switch (pathname) {
-      case '/':
-        return 'Home';
-      case '/payment':
-        return 'Payment';
-      case '/appstore':
-        return 'App Store';
-      case '/wallet-categories':
-        return 'Wallet Categories';
-      case '/view-recipients':
-        return 'View Recipients';
-      case '/add-recipient':
-        return 'Add Recipient';
-      case '/create-Wallet':
-        return 'Create Wallet';
-      case '/payment-history':
-        return 'Payment History';
-      case '/payment-success':
-        return 'Payment Success';
-      case '/payment-unsuccessful':
-        return 'Payment Unsuccessful';
-      default:
-        return 'iNethi App'; // Default title for unknown routes
-    }
-  };
-
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+const HomePageStack = () => {
   return (
-    <>
-      {!hideAppBarRoutes.includes(location.pathname) && (
-        <AppBarComponent logout={logout} title={getTitle(location.pathname)} />
-      )}
-      <Routes>
-        {userToken ? (
-          <>
-            <Route exact path="/" element={<HomePage logout={logout} />} />
-            <Route path="/payment" element={<PaymentPage logout={logout} />} />
-            <Route path="/webview" element={<WebViewComponent />} />
-            <Route path="/container" element={<ServiceContainer />} />
-            <Route path="/appstore" element={<AppList />} />
-            <Route path="/map" element={<MapPage />} />
-            <Route
-              path="/wallet-categories"
-              element={<WalletCategoriesPage />}
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Home"
+        component={HomePage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Home" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="AppStore"
+        component={AppList}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="App Store" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="WebView"
+        component={WebViewComponent}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Web View" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="ServiceContainer"
+        component={ServiceContainer}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent
+              title="Service Container"
+              logout={options.logout}
             />
-            <Route path="/view-recipients" element={<ViewRecipientsScreen />} />
-            <Route path="/add-recipient" element={<AddRecipientScreen />} />
-            <Route path="/create-Wallet" element={<CreateWalletPage />} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="Map"
+        component={MapPage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Map" logout={options.logout} />
+          ),
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
 
-            <Route
-              path="/recipient-details"
-              element={<RecipientDetailsScreen />}
+const WalletPageStack = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="WalletCategories"
+        component={WalletCategoriesPage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent
+              title="Wallet Categories"
+              logout={options.logout}
             />
-            <Route path="/wallet-details" element={<WalletDetailsPage />} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="WalletDetails"
+        component={WalletDetailsPage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Wallet Details" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="AddRecipient"
+        component={AddRecipientScreen}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Add Recipient" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="ViewRecipients"
+        component={ViewRecipientsScreen}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="View Recipients" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="CreateWallet"
+        component={CreateWalletPage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Create Wallet" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="RecipientDetails"
+        component={RecipientDetailsScreen}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent
+              title="Recipient Details"
+              logout={options.logout}
+            />
+          ),
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
 
-            <Route path="/payment-history" element={<PaymentHistory />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route
-              path="/payment-unsuccessful"
-              element={<PaymentUnsuccessful />}
+const PaymentPageStack = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Payment"
+        component={PaymentPage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Payment" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="PaymentHistory"
+        component={PaymentHistory}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Payment History" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="PaymentSuccess"
+        component={PaymentSuccess}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Payment Success" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="PaymentUnsuccessful"
+        component={PaymentUnsuccessful}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent
+              title="Payment Unsuccessful"
+              logout={options.logout}
             />
-          </>
-        ) : (
-          <>
-            <Route
-              path="*"
-              element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
-            />
-            <Route
-              path="/register"
-              element={
-                <RegisterPage
-                  onLoginSuccess={handleLoginSuccess}
-                  onRegisterSuccess={handleRegisterSuccess}
-                />
-              }
-            />
-          </>
-        )}
-      </Routes>
-    </>
+          ),
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+const AppRoutes = ({logout, userToken}) => {
+  return (
+    <Tab.Navigator
+      screenOptions={({route}) => ({
+        tabBarIcon: ({color, size}) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = 'home-outline';
+          } else if (route.name === 'Wallet') {
+            iconName = 'wallet-outline';
+          } else if (route.name === 'Payments') {
+            iconName = 'cash-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#4285F4',
+        tabBarInactiveTintColor: 'gray',
+        tabBarStyle: [{display: 'flex'}, null],
+      })}>
+      <Tab.Screen
+        name="Home"
+        component={HomePageStack}
+        options={{headerShown: false}}
+      />
+      <Tab.Screen
+        name="Wallet"
+        component={WalletPageStack}
+        options={{headerShown: false}}
+      />
+      <Tab.Screen
+        name="Payments"
+        component={PaymentPageStack}
+        options={{headerShown: false}}
+      />
+    </Tab.Navigator>
   );
 };
 
@@ -147,22 +262,28 @@ const App = () => {
     setUserToken(token);
   };
 
-  const handleRegisterSuccess = () => {
-    alert('Registration successful!');
-  };
-
   return (
     <PaperProvider>
       <SafeAreaProvider>
         <BalanceProvider logout={logout}>
-          <NativeRouter>
-            <AppRoutes
-              logout={logout}
-              userToken={userToken}
-              handleLoginSuccess={handleLoginSuccess}
-              handleRegisterSuccess={handleRegisterSuccess}
-            />
-          </NativeRouter>
+          <NavigationContainer>
+            {userToken ? (
+              <AppRoutes logout={logout} userToken={userToken} />
+            ) : (
+              <Stack.Navigator>
+                <Stack.Screen
+                  name="Login"
+                  component={LoginPage}
+                  options={{headerShown: false}}
+                />
+                <Stack.Screen
+                  name="Register"
+                  component={RegisterPage}
+                  options={{headerTitle: 'Register'}}
+                />
+              </Stack.Navigator>
+            )}
+          </NavigationContainer>
         </BalanceProvider>
       </SafeAreaProvider>
     </PaperProvider>

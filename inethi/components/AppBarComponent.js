@@ -5,17 +5,16 @@ import NetInfo from '@react-native-community/netinfo';
 import {useBalance} from '../context/BalanceContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useNavigate} from 'react-router-native';
+import {useNavigation} from '@react-navigation/native';
 
 const NETWORK_SERVICE_URL = 'https://nextcloud.inethicloud.net/';
 
 const AppBarComponent = ({title, logout}) => {
-  console.log('AppBar Title:', title); // Debugging log
   const {balance} = useBalance();
   const [visible, setVisible] = useState(false);
   const [infoVisible, setInfoVisible] = useState(false);
   const [appState, setAppState] = useState(AppState.currentState);
-  const navigate = useNavigate();
+  const navigation = useNavigation();
 
   const checkConnection = async () => {
     try {
@@ -49,13 +48,12 @@ const AppBarComponent = ({title, logout}) => {
     const interval = setInterval(checkConnection, 60000);
 
     const handleAppStateChange = async nextAppState => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+      if (nextAppState === 'active' && appState.match(/inactive|background/)) {
         await AsyncStorage.removeItem('hasShownNetworkDialog');
         checkConnection();
       }
       setAppState(nextAppState);
     };
-
     const subscription = AppState.addEventListener(
       'change',
       handleAppStateChange,
@@ -82,25 +80,30 @@ const AppBarComponent = ({title, logout}) => {
 
   return (
     <>
-      <Appbar.Header style={styles.appBar}>
-        <Appbar.BackAction onPress={() => navigate(-1)} color="#FFFFFF" />
-        <View style={styles.centerContent}>
-          <Image
-            source={require('../assets/images/inethitransparent.png')}
-            style={styles.logo}
-          />
-          <Appbar.Content title={title} titleStyle={styles.title} />
-        </View>
-        <View style={styles.iconContainer}>
-          <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
-          <MaterialCommunityIcons
-            name="information-outline"
-            size={28}
+      {title ? (
+        <Appbar.Header style={styles.appBar}>
+          <Appbar.BackAction
+            onPress={() => navigation.goBack()}
             color="#FFFFFF"
-            onPress={handleInfoPress}
           />
-        </View>
-      </Appbar.Header>
+          <View style={styles.centerContent}>
+            <Image
+              source={require('../assets/images/inethitransparent.png')}
+              style={styles.logo}
+            />
+            <Appbar.Content title={title} titleStyle={styles.title} />
+          </View>
+          <View style={styles.iconContainer}>
+            <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
+            <MaterialCommunityIcons
+              name="information-outline"
+              size={28}
+              color="#FFFFFF"
+              onPress={handleInfoPress}
+            />
+          </View>
+        </Appbar.Header>
+      ) : null}
       <Portal>
         <Dialog visible={visible} onDismiss={hideDialog}>
           <Dialog.Title>Internet Connection</Dialog.Title>
@@ -137,19 +140,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#4285F4',
   },
   title: {
-    color: '#FFFFFF', // Ensure the title is visible against the background
-    textAlign: 'center', // Center the title text
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   centerContent: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center', // Ensure content is centered
+    justifyContent: 'center',
   },
   logo: {
-    width: 50, // Reduce the size of the logo to allow space for the title
+    width: 50,
     height: 40,
-    marginRight: 10, // Adjust spacing between logo and title
+    marginRight: 10,
     resizeMode: 'contain',
   },
   iconContainer: {

@@ -1,10 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
-import { Button, Card, Title, Dialog, Portal, TextInput, Paragraph, IconButton } from 'react-native-paper';
-import { useNavigate } from 'react-router-native';
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+} from 'react-native';
+import {
+  Button,
+  Card,
+  Title,
+  Dialog,
+  Portal,
+  TextInput,
+  Paragraph,
+  IconButton,
+} from 'react-native-paper';
+import {useNavigation} from '@react-navigation/native'; // Updated import
 import axios from 'axios';
-import { getToken } from '../utils/tokenUtils';
-import { useBalance } from '../context/BalanceContext';
+import {getToken} from '../utils/tokenUtils';
+import {useBalance} from '../context/BalanceContext';
 import ServiceContainer from '../components/ServiceContainer';
 import * as amplitude from '@amplitude/analytics-react-native';
 import analytics from '@react-native-firebase/analytics';
@@ -14,34 +31,36 @@ import NetInfo from '@react-native-community/netinfo';
 
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
-const HomePage = ({ logout }) => {
+const HomePage = ({logout}) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
   const nextcloudURL = 'https://nextcloud.inethicloud.net';
 
   const [hasWallet, setHasWallet] = useState(false);
-  const navigate = useNavigate();
-  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] = useState(false);
+  const navigation = useNavigation(); // Updated to use useNavigation
+  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
+    useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
   const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
-  const { balance, fetchBalance } = useBalance();
+  const {balance, fetchBalance} = useBalance();
 
   const [categories, setCategories] = useState({
     Wallet: [
       {
         name: 'Wallet',
-        action: () => navigate('/wallet-categories'),
+        action: () => navigation.navigate('WalletCategories'), // Updated
         url: '',
       },
     ],
-    Navigator: [{ name: 'FindHotspot', action: () => handleFindHotspotClick() }],
+    Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],
   });
 
   const handleFindHotspotClick = async () => {
     const eventName = 'find_hotspot_button_clicked';
 
-    const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+    const events =
+      JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
     events.push({
       eventName,
       timestamp: new Date(),
@@ -51,7 +70,7 @@ const HomePage = ({ logout }) => {
     });
     await AsyncStorage.setItem('analyticsEvents', JSON.stringify(events));
 
-    navigate('/map');
+    navigation.navigate('Map'); // Updated
 
     const state = await NetInfo.fetch();
     if (state.isConnected) {
@@ -61,7 +80,8 @@ const HomePage = ({ logout }) => {
 
   const syncAnalyticsEvents = async () => {
     try {
-      const events = JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
+      const events =
+        JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
       if (events.length > 0) {
         for (const event of events) {
           await analytics().logEvent(event.eventName, event.data);
@@ -92,7 +112,7 @@ const HomePage = ({ logout }) => {
 
   const checkInternetConnection = async () => {
     try {
-      const response = await fetch('https://www.google.com', { method: 'HEAD' });
+      const response = await fetch('https://www.google.com', {method: 'HEAD'});
       if (response.ok) {
         setIsConnectedToInternet(true);
         syncAnalyticsEvents();
@@ -106,7 +126,7 @@ const HomePage = ({ logout }) => {
 
   const checkWirelessConnection = async () => {
     try {
-      const response = await fetch(nextcloudURL, { method: 'HEAD' });
+      const response = await fetch(nextcloudURL, {method: 'HEAD'});
       if (response.ok) {
         setIsConnectedToWireless(true);
       } else {
@@ -134,7 +154,8 @@ const HomePage = ({ logout }) => {
       };
 
       const urlLocal = 'https://manage-backend.inethicloud.net';
-      const urlGlobal = 'https://manage-backend.inethicloud.net/service/list-by-type/';
+      const urlGlobal =
+        'https://manage-backend.inethicloud.net/service/list-by-type/';
 
       let servicesDataGlobal = {};
       let servicesDataLocal = {};
@@ -156,10 +177,12 @@ const HomePage = ({ logout }) => {
         ]);
         servicesDataLocal = responseLocal.data.data;
       } catch (err) {
-        console.error('Error fetching local data. Are you connected to an iNethi network?');
+        console.error(
+          'Error fetching local data. Are you connected to an iNethi network?',
+        );
       }
 
-      const combinedServices = { ...servicesDataGlobal };
+      const combinedServices = {...servicesDataGlobal};
 
       Object.entries(servicesDataLocal).forEach(([category, services]) => {
         combinedServices[category] = services;
@@ -173,7 +196,8 @@ const HomePage = ({ logout }) => {
         fetchedCategories[category] = services.map(service => ({
           name: service.name,
           url: service.url,
-          action: () => navigate('/webview', { state: { url: service.url } }),
+          action: () =>
+            navigation.navigate('WebView', {state: {url: service.url}}), // Updated
         }));
       });
 
@@ -199,7 +223,7 @@ const HomePage = ({ logout }) => {
   }, []);
 
   const openURL = url => {
-    navigate('/webview', { state: { url } });
+    navigation.navigate('WebView', {state: {url}}); // Updated
   };
 
   const renderButtons = buttons => {
@@ -208,7 +232,7 @@ const HomePage = ({ logout }) => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({ name, action, url, requiresWallet, disabled }, idx) => {
+          {pair.map(({name, action, url, requiresWallet, disabled}, idx) => {
             const isDisabled = (requiresWallet && !hasWallet) || disabled;
             return (
               <Button
@@ -299,7 +323,7 @@ const HomePage = ({ logout }) => {
               <View
                 style={[
                   styles.statusIndicator,
-                  { backgroundColor: isConnectedToWireless ? 'green' : 'red' },
+                  {backgroundColor: isConnectedToWireless ? 'green' : 'red'},
                 ]}
               />
               <Text style={styles.statusText}>
@@ -316,7 +340,7 @@ const HomePage = ({ logout }) => {
               <View
                 style={[
                   styles.statusIndicator,
-                  { backgroundColor: isConnectedToInternet ? 'green' : 'red' },
+                  {backgroundColor: isConnectedToInternet ? 'green' : 'red'},
                 ]}
               />
               <Text style={styles.statusText}>
