@@ -49,14 +49,10 @@ const HomePage = ({logout}) => {
     Wallet: [
       {
         name: 'Wallet',
-        //     action: () => navigation.navigate('WalletCategories'), // Updated
-        //     url: '',
-        //   },
-        // ],
         action: () =>
           navigation.navigate('Wallet', {
             screen: 'WalletCategories',
-          }), // Updated navigation logic
+          }),
         url: '',
       },
     ],
@@ -148,7 +144,6 @@ const HomePage = ({logout}) => {
     new Promise((_, reject) =>
       setTimeout(() => reject(new Error('timeout')), ms),
     );
-
   const fetchServices = async () => {
     try {
       const token = await getToken();
@@ -203,8 +198,7 @@ const HomePage = ({logout}) => {
         fetchedCategories[category] = services.map(service => ({
           name: service.name,
           url: service.url,
-          action: () =>
-            navigation.navigate('WebView', {state: {url: service.url}}), // Updated
+          action: () => openURL(service.url), // Use openURL function
         }));
       });
 
@@ -230,8 +224,26 @@ const HomePage = ({logout}) => {
   }, []);
 
   const openURL = url => {
-    navigation.navigate('WebView', {state: {url}}); // Updated
+    navigation.navigate('WebView', {url}); // Removed state wrapper
   };
+
+  useEffect(() => {
+    const initialize = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([fetchServices(), fetchBalance()]);
+      } catch (err) {
+        console.error('Initialization error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    initialize();
+  }, []);
+
+  // const openURL = url => {
+  //   navigation.navigate('WebView', {state: {url}}); // Updated
+  // };
 
   const renderButtons = buttons => {
     const buttonRows = [];

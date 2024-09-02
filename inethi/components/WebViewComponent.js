@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { WebView } from 'react-native-webview';
-import { useLocation, useNavigate } from 'react-router-native';
-import { Button } from 'react-native-paper';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import React, {useState} from 'react';
+import {WebView} from 'react-native-webview';
+import {useNavigation, useRoute} from '@react-navigation/native'; // Updated imports
+import {Button} from 'react-native-paper';
+import {View, ActivityIndicator, Text, StyleSheet} from 'react-native';
+
 const WebViewComponent = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { url } = location.state || {};
+  const navigation = useNavigation(); // Replacing useNavigate
+  const route = useRoute(); // Replacing useLocation
+  const {url} = route.params || {}; // Extracting URL from route params
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -14,9 +15,8 @@ const WebViewComponent = () => {
     <>
       <Button
         icon="arrow-left"
-        onPress={() => navigate(-1)}
-        style={{ margin: 10 }}
-      >
+        onPress={() => navigation.goBack()} // Updated navigation
+        style={{margin: 10}}>
         Go Back
       </Button>
       {error ? (
@@ -25,11 +25,15 @@ const WebViewComponent = () => {
         </View>
       ) : (
         <WebView
-          source={{ uri: url }}
-          onError={(e) => setError(e.nativeEvent)}
+          source={{uri: url}}
+          onError={e => setError(e.nativeEvent)}
           startInLoadingState={true}
           renderLoading={() => (
-            <ActivityIndicator size="large" color="#0000ff" style={styles.centered} />
+            <ActivityIndicator
+              size="large"
+              color="#0000ff"
+              style={styles.centered}
+            />
           )}
           onLoad={() => setIsLoading(false)}
         />
@@ -49,7 +53,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-
 
 export default WebViewComponent;
