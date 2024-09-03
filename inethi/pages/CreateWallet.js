@@ -1,11 +1,6 @@
-import React, {useState, useEffect} from 'react';
-import {View, StyleSheet, Alert} from 'react-native';
-import {
-  Button,
-  TextInput,
-  Paragraph,
-  ActivityIndicator,
-} from 'react-native-paper';
+import React, {useState} from 'react';
+import {View, StyleSheet, Alert, ScrollView, Text} from 'react-native';
+import {Button, TextInput, Paragraph} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native'; // Correct navigation hook
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
@@ -18,6 +13,7 @@ const CreateWalletPage = () => {
   const {fetchBalance} = useBalance();
   const [walletName, setWalletName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleCreateWallet = async () => {
     if (!walletName) {
@@ -41,7 +37,6 @@ const CreateWalletPage = () => {
         config,
       );
 
-      setIsLoading(false);
       if (response.status === 201) {
         Alert.alert(
           'Success',
@@ -51,57 +46,52 @@ const CreateWalletPage = () => {
         navigation.goBack(); // Navigate back after successful creation
       }
     } catch (error) {
-      setIsLoading(false);
       console.error('Error creating wallet:', error);
       if (error.response) {
         if (error.response.status === 400) {
-          Alert.alert(
-            'Error',
+          setError(
             'Cannot connect to the iNethi server. Please check your Internet connection.',
           );
         } else if (error.response.status === 401) {
-          Alert.alert('Error', 'Authentication credentials were not provided.');
+          setError('Authentication credentials were not provided.');
         } else if (error.response.status === 403) {
-          Alert.alert(
-            'Error',
-            'You do not have permission to create a wallet.',
-          );
+          setError('You do not have permission to create a wallet.');
         } else if (error.response.status === 409) {
-          Alert.alert('Error', 'You already have a wallet.');
+          setError('You already have a wallet.');
         } else if (error.response.status === 500) {
-          Alert.alert(
-            'Error',
-            'Error creating wallet. Please contact iNethi support.',
-          );
+          setError('Error creating wallet. Please contact iNethi support.');
         } else {
-          Alert.alert('Error', `Failed to create wallet: ${error.message}`);
+          setError(`Failed to create wallet: ${error.message}`);
         }
       } else {
-        Alert.alert('Error', `Failed to create wallet: ${error.message}`);
+        setError(`Failed to create wallet: ${error.message}`);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Paragraph style={styles.title}>Create Wallet</Paragraph>
-      <TextInput
-        label="Wallet Name"
-        value={walletName}
-        onChangeText={text => setWalletName(text)}
-        style={styles.input}
-        mode="outlined"
-      />
-      {isLoading ? (
-        <ActivityIndicator size="large" />
-      ) : (
+      <ScrollView contentContainerStyle={styles.formContainer}>
+        <Text style={styles.headerText}>Create Wallet</Text>
+
+        <TextInput
+          label="Wallet Name"
+          value={walletName}
+          onChangeText={text => setWalletName(text)}
+          style={styles.input}
+          mode="outlined"
+        />
+        {error && <Paragraph style={styles.error}>{error}</Paragraph>}
         <Button
           mode="contained"
           onPress={handleCreateWallet}
+          loading={isLoading}
           style={styles.createButton}>
-          Create
+          Create Wallet
         </Button>
-      )}
+      </ScrollView>
     </View>
   );
 };
@@ -110,34 +100,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
     backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 40,
-    textAlign: 'center',
-    paddingHorizontal: 15, // Added padding to ensure text doesn't get cut
-    flexShrink: 1, // Ensures the text wraps within the available space
+  formContainer: {
+    flexGrow: 1,
+    padding: 20,
+    justifyContent: 'center',
   },
   input: {
-    width: '100%',
-    marginBottom: 20,
-    backgroundColor: '#f5f5f5',
+    marginBottom: 16,
+  },
+  error: {
+    color: 'red',
+    marginBottom: 16,
+    textAlign: 'center',
   },
   createButton: {
-    width: '100%',
-    backgroundColor: '#0066ff',
-    paddingVertical: 15,
-    borderRadius: 8,
-  },
-  backButton: {
     marginTop: 20,
-    width: '100%',
-    paddingVertical: 15,
+    paddingVertical: 10,
     borderRadius: 8,
+    backgroundColor: '#0066ff',
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'black',
+    marginBottom: 30,
   },
 });
 

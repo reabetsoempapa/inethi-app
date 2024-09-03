@@ -19,7 +19,6 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Header from '../components/Header';
 
 const PaymentPage = () => {
   const {balance, fetchBalance, updateBalance} = useBalance();
@@ -109,7 +108,7 @@ const PaymentPage = () => {
 
     // Fetch balance from API or mock
     fetchBalance();
-  }, [fetchBalance, updateBalance]);
+  }, []);
 
   useEffect(() => {
     setIsButtonDisabled(!(receiver && amount));
@@ -117,7 +116,6 @@ const PaymentPage = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Make a Payment" />
       {isScannerOpen && device ? (
         <>
           <Camera
@@ -134,74 +132,68 @@ const PaymentPage = () => {
         </>
       ) : (
         <>
-          <View style={styles.formContainer}>
-            <Picker
-              selectedValue={paymentMethod}
-              style={styles.picker}
-              onValueChange={itemValue => setPaymentMethod(itemValue)}>
-              <Picker.Item label="Username" value="username" />
-              <Picker.Item label="Wallet Address" value="walletAddress" />
-            </Picker>
-            {paymentMethod === 'walletAddress' && (
-              <TouchableOpacity style={styles.scanButton} onPress={openScanner}>
-                <Ionicons name="qr-code-outline" size={24} color="white" />
-                <Text style={styles.scanButtonText}>Scan QR Code</Text>
-              </TouchableOpacity>
-            )}
-            <View style={styles.inputContainer}>
-              <Ionicons
-                name={
-                  paymentMethod === 'username'
-                    ? 'person-outline'
-                    : 'wallet-outline'
-                }
-                size={20}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                onChangeText={setReceiver}
-                value={receiver}
-                placeholder={
-                  paymentMethod === 'username'
-                    ? 'Username of receiver'
-                    : 'Wallet address'
-                }
-                placeholderTextColor="#aaa"
-              />
-            </View>
-            <View style={styles.inputContainer}>
-              <Ionicons
-                name="cash-outline"
-                size={20}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                onChangeText={setAmount}
-                value={amount}
-                placeholder="Amount"
-                keyboardType="numeric"
-                placeholderTextColor="#aaa"
-              />
-            </View>
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                isButtonDisabled && styles.disabledButton,
-              ]}
-              onPress={handleSendPayment}
-              disabled={isButtonDisabled}>
-              <Text style={styles.buttonText}>Send Payment</Text>
+          <Picker
+            selectedValue={paymentMethod}
+            style={styles.picker}
+            onValueChange={itemValue => setPaymentMethod(itemValue)}>
+            <Picker.Item label="Username" value="username" />
+            <Picker.Item label="Wallet Address" value="walletAddress" />
+          </Picker>
+          {paymentMethod === 'walletAddress' && (
+            <TouchableOpacity style={styles.scanButton} onPress={openScanner}>
+              <Ionicons name="qr-code-outline" size={24} color="white" />
+              <Text style={styles.scanButtonText}>Scan QR Code</Text>
             </TouchableOpacity>
-            {isLoading && (
-              <Dialog visible={true}>
-                <Dialog.Content>
-                  <ActivityIndicator size="large" />
-                </Dialog.Content>
-              </Dialog>
-            )}
+          )}
+          <View style={styles.inputContainer}>
+            <Ionicons
+              name={
+                paymentMethod === 'username'
+                  ? 'person-outline'
+                  : 'wallet-outline'
+              }
+              size={20}
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.input}
+              onChangeText={setReceiver}
+              value={receiver}
+              placeholder={
+                paymentMethod === 'username'
+                  ? 'Username of receiver'
+                  : 'Wallet address'
+              }
+              placeholderTextColor="#aaa"
+            />
           </View>
+          <View style={styles.inputContainer}>
+            <Ionicons name="cash-outline" size={20} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              onChangeText={setAmount}
+              value={amount}
+              placeholder="Amount"
+              keyboardType="numeric"
+              placeholderTextColor="#aaa"
+            />
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              isButtonDisabled && styles.disabledButton,
+            ]}
+            onPress={handleSendPayment}
+            disabled={isButtonDisabled}>
+            <Text style={styles.buttonText}>Send Payment</Text>
+          </TouchableOpacity>
+          {isLoading && (
+            <Dialog visible={true}>
+              <Dialog.Content>
+                <ActivityIndicator size="large" />
+              </Dialog.Content>
+            </Dialog>
+          )}
         </>
       )}
     </View>
@@ -220,16 +212,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
     backgroundColor: '#fff',
-  },
-  formContainer: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 10,
+    paddingHorizontal: 20, // Added padding to compensate for removing the form container
   },
   inputContainer: {
     flexDirection: 'row',

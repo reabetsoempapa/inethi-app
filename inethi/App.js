@@ -194,53 +194,6 @@ const WalletPageStack = () => {
   );
 };
 
-// Payment Page Stack
-const PaymentPageStack = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="Payment"
-        component={PaymentPage}
-        options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Payment" logout={options.logout} />
-          ),
-        }}
-      />
-      <Stack.Screen
-        name="PaymentHistory"
-        component={PaymentHistory}
-        options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Payment History" logout={options.logout} />
-          ),
-        }}
-      />
-      <Stack.Screen
-        name="PaymentSuccess"
-        component={PaymentSuccess}
-        options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Payment Success" logout={options.logout} />
-          ),
-        }}
-      />
-      <Stack.Screen
-        name="PaymentUnsuccessful"
-        component={PaymentUnsuccessful}
-        options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent
-              title="Payment Unsuccessful"
-              logout={options.logout}
-            />
-          ),
-        }}
-      />
-    </Stack.Navigator>
-  );
-};
-
 // Help Page Stack
 const HelpPageStack = () => {
   return (

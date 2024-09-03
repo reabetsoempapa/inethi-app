@@ -7,15 +7,16 @@ import {
   Platform,
   PermissionsAndroid,
 } from 'react-native';
-import {Button, Card, Title, Paragraph} from 'react-native-paper';
-import {useRoute} from '@react-navigation/native'; // Updated import
+import {Button, Title, Paragraph, IconButton} from 'react-native-paper';
+import {useRoute} from '@react-navigation/native';
 import axios from 'axios';
-import {getToken} from '../utils/tokenUtils';
+import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import RNFS from 'react-native-fs';
+import {getToken} from '../utils/tokenUtils';
 
 const WalletDetailsPage = () => {
-  const route = useRoute(); // Use React Navigation's route prop
+  const route = useRoute();
   const {walletAddress} = route.params || {};
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletDetailsEndpoint = `/wallet/details`;
@@ -135,6 +136,11 @@ const WalletDetailsPage = () => {
     }
   };
 
+  const handleCopyAddress = () => {
+    Clipboard.setString(walletDetails.wallet_address);
+    Alert.alert('Copied', 'Wallet address copied to clipboard');
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -145,31 +151,34 @@ const WalletDetailsPage = () => {
 
   return (
     <View style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Content style={styles.cardContent}>
-          <Title style={styles.title}>Wallet Details</Title>
-          {walletDetails ? (
-            <>
-              <Paragraph style={styles.paragraph}>
-                Wallet Address: {walletDetails.wallet_address}
-              </Paragraph>
-              <QRCode
-                value={walletDetails.wallet_address}
-                size={200}
-                getRef={ref => setQrCodeRef(ref)}
-              />
-              <Button
-                mode="contained"
-                onPress={handleDownloadQrCode}
-                style={styles.downloadButton}>
-                Download QR Code
-              </Button>
-            </>
-          ) : (
-            <Paragraph>Error loading wallet details.</Paragraph>
-          )}
-        </Card.Content>
-      </Card>
+      <Title style={styles.title}>Wallet Details</Title>
+      {walletDetails ? (
+        <View style={styles.qrCodeContainer}>
+          <QRCode
+            value={walletDetails.wallet_address}
+            size={200}
+            getRef={ref => setQrCodeRef(ref)}
+          />
+          <View style={styles.walletAddressContainer}>
+            <Paragraph style={styles.walletAddress}>
+              Wallet Address: {walletDetails.wallet_address}
+            </Paragraph>
+            <IconButton
+              icon="content-copy"
+              size={20}
+              onPress={handleCopyAddress}
+            />
+          </View>
+          <Button
+            mode="contained"
+            onPress={handleDownloadQrCode}
+            style={styles.downloadButton}>
+            Download QR Code
+          </Button>
+        </View>
+      ) : (
+        <Paragraph>Error loading wallet details.</Paragraph>
+      )}
     </View>
   );
 };
@@ -177,22 +186,14 @@ const WalletDetailsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff', // Change this to white
+    padding: 20, // Consistent padding
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  card: {
-    width: '90%',
-    borderRadius: 8,
-    elevation: 3,
-  },
-  cardContent: {
     alignItems: 'center',
   },
   title: {
@@ -200,23 +201,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    color: '#333333', // Consistent text color
   },
-  paragraph: {
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  walletAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    width: '100%',
+  },
+  walletAddress: {
+    flex: 1,
     fontSize: 16,
-    marginBottom: 20,
     textAlign: 'center',
+    color: '#333333', // Consistent text color
   },
   downloadButton: {
     marginTop: 20,
     width: '100%',
     paddingVertical: 10,
     borderRadius: 8,
-  },
-  backButton: {
-    marginTop: 10,
-    width: '100%',
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: '#0066ff', // Consistent button color
   },
 });
 
