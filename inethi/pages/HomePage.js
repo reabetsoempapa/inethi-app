@@ -37,8 +37,7 @@ const HomePage = ({logout}) => {
 
   const [hasWallet, setHasWallet] = useState(false);
   const navigation = useNavigation(); // Updated to use useNavigation
-  const [isCreateWalletDialogOpen, setIsCreateWalletDialogOpen] =
-    useState(false);
+
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
@@ -50,7 +49,7 @@ const HomePage = ({logout}) => {
       {
         name: 'Wallet',
         action: () =>
-          navigation.navigate('Wallet', {
+          navigation.navigate('WalletPageStack', {
             screen: 'WalletCategories',
           }),
         url: '',
@@ -240,10 +239,6 @@ const HomePage = ({logout}) => {
     };
     initialize();
   }, []);
-
-  // const openURL = url => {
-  //   navigation.navigate('WebView', {state: {url}}); // Updated
-  // };
 
   const renderButtons = buttons => {
     const buttonRows = [];
