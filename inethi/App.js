@@ -25,9 +25,13 @@ import CreateWalletPage from './pages/CreateWallet';
 import PaymentHistory from './pages/PaymentHistory';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentUnsuccessful from './pages/PaymentFail';
+import HelpPage from './pages/HelpPage';
+import SettingsPage from './pages/Settings';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// Home Page Stack
 const HomePageStack = () => {
   return (
     <Stack.Navigator>
@@ -83,6 +87,7 @@ const HomePageStack = () => {
   );
 };
 
+// Wallet Page Stack
 const WalletPageStack = () => {
   return (
     <Stack.Navigator>
@@ -146,7 +151,6 @@ const WalletPageStack = () => {
           ),
         }}
       />
-      {/* Add Payment and PaymentHistory to Wallet Stack */}
       <Stack.Screen
         name="Payment"
         component={PaymentPage}
@@ -190,6 +194,7 @@ const WalletPageStack = () => {
   );
 };
 
+// Payment Page Stack
 const PaymentPageStack = () => {
   return (
     <Stack.Navigator>
@@ -236,6 +241,41 @@ const PaymentPageStack = () => {
   );
 };
 
+// Help Page Stack
+const HelpPageStack = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Help"
+        component={HelpPage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Help" logout={options.logout} />
+          ),
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+// Settings Page Stack
+const SettingsPageStack = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Settings"
+        component={SettingsPage}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Settings" logout={options.logout} />
+          ),
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+// Main App Routes with Bottom Tabs for Authenticated Users
 const AppRoutes = ({logout, userToken}) => {
   return (
     <Tab.Navigator
@@ -245,10 +285,10 @@ const AppRoutes = ({logout, userToken}) => {
 
           if (route.name === 'Home') {
             iconName = 'home-outline';
-          } else if (route.name === 'Wallet') {
-            iconName = 'wallet-outline';
-          } else if (route.name === 'Payments') {
-            iconName = 'cash-outline';
+          } else if (route.name === 'Help') {
+            iconName = 'help-circle-outline';
+          } else if (route.name === 'Settings') {
+            iconName = 'settings-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -263,19 +303,20 @@ const AppRoutes = ({logout, userToken}) => {
         options={{headerShown: false}}
       />
       <Tab.Screen
-        name="Wallet"
-        component={WalletPageStack}
+        name="Help"
+        component={HelpPageStack}
         options={{headerShown: false}}
       />
       <Tab.Screen
-        name="Payments"
-        component={PaymentPageStack}
+        name="Settings"
+        component={SettingsPageStack}
         options={{headerShown: false}}
       />
     </Tab.Navigator>
   );
 };
 
+// Main App Component
 const App = () => {
   const [userToken, setUserToken] = useState(null);
 
@@ -308,7 +349,20 @@ const App = () => {
         <BalanceProvider logout={logout}>
           <NavigationContainer>
             {userToken ? (
-              <AppRoutes logout={logout} userToken={userToken} />
+              <Stack.Navigator>
+                {/* Main App Routes */}
+                <Stack.Screen
+                  name="AppRoutes"
+                  component={AppRoutes}
+                  options={{headerShown: false}}
+                />
+                {/* Wallet Stack for Authenticated Users */}
+                <Stack.Screen
+                  name="WalletPageStack"
+                  component={WalletPageStack}
+                  options={{headerShown: false}}
+                />
+              </Stack.Navigator>
             ) : (
               <Stack.Navigator>
                 <Stack.Screen name="Login" options={{headerShown: false}}>
