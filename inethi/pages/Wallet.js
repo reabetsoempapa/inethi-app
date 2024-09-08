@@ -123,11 +123,6 @@ const WalletCategoriesPage = () => {
       icon: 'account-multiple-outline',
     },
     {
-      name: 'Wallet QR Code',
-      action: handleShowQrCode,
-      icon: 'qrcode-scan',
-    },
-    {
       name: 'Pay',
       action: () =>
         navigation.navigate('ViewRecipients', {state: {fromPay: true}}),
@@ -139,127 +134,27 @@ const WalletCategoriesPage = () => {
       icon: 'history',
     },
   ];
-
-  // const renderButtons = buttons => {
-  //   return (
-  //     <View style={styles.buttonContainer}>
-  //       {buttons.map(({name, action, icon}, idx) => (
-  //         <View key={idx} style={styles.buttonWrapper}>
-  //           <IconButton
-  //             icon={icon}
-  //             size={30} // Adjust icon size
-  //             color="#0066ff" // Icon color
-  //             style={styles.icon}
-  //             onPress={action}
-  //           />
-  //           <Text style={styles.buttonLabel}>{name}</Text>
-  //         </View>
-  //       ))}
-  //     </View>
-  //   );
-  // };
-  const renderButtons = () => {
+  const renderButtons = buttons => {
     return (
       <View style={styles.buttonContainer}>
-        <View style={styles.buttonRow}>
-          <View style={styles.buttonWrapper}>
-            <IconButton
-              icon="wallet-plus-outline"
-              size={30}
-              color="#0066ff"
-              style={styles.icon}
-              onPress={() => navigation.navigate('CreateWallet')}
-            />
-            <Text style={styles.buttonLabel}>Create Wallet</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <IconButton
-              icon="wallet-outline"
-              size={30}
-              color="#0066ff"
-              style={styles.icon}
-              onPress={handleCheckWalletDetails}
-            />
-            <Text style={styles.buttonLabel}>Wallet Details</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <IconButton
-              icon="swap-horizontal"
-              size={30}
-              color="#0066ff"
-              style={styles.icon}
-              onPress={async () => {
-                await trackButtonClick('transfer_button_clicked');
-                navigation.navigate('Payment');
-              }}
-            />
-            <Text style={styles.buttonLabel}>Transfer</Text>
-          </View>
-        </View>
-
-        <View style={styles.buttonRow}>
-          <View style={styles.buttonWrapper}>
-            <IconButton
-              icon="account-plus-outline"
-              size={30}
-              color="#0066ff"
-              style={styles.icon}
-              onPress={async () => {
-                await trackButtonClick('add_recipients_button_clicked');
-                navigation.navigate('AddRecipient');
-              }}
-            />
-            <Text style={styles.buttonLabel}>Add Recipients</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <IconButton
-              icon="account-multiple-outline"
-              size={30}
-              color="#0066ff"
-              style={styles.icon}
-              onPress={async () => {
-                await trackButtonClick('view_recipients_button_clicked');
-                navigation.navigate('ViewRecipients');
-              }}
-            />
-            <Text style={styles.buttonLabel}>View Recipients</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <IconButton
-              icon="qrcode-scan"
-              size={30}
-              color="#0066ff"
-              style={styles.icon}
-              onPress={handleShowQrCode}
-            />
-            <Text style={styles.buttonLabel}>Wallet QR Code</Text>
-          </View>
-        </View>
-
-        <View style={styles.buttonRow}>
-          <View style={styles.buttonWrapper}>
-            <IconButton
-              icon="cash"
-              size={30}
-              color="#0066ff"
-              style={styles.icon}
-              onPress={() =>
-                navigation.navigate('ViewRecipients', {state: {fromPay: true}})
-              }
-            />
-            <Text style={styles.buttonLabel}>Pay</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <IconButton
-              icon="history"
-              size={30}
-              color="#0066ff"
-              style={styles.icon}
-              onPress={() => navigation.navigate('PaymentHistory')}
-            />
-            <Text style={styles.buttonLabel}>History</Text>
-          </View>
-        </View>
+        {buttons.map(({name, action, requiresWallet, icon}, idx) => {
+          const isDisabled = requiresWallet && !hasWallet;
+          return (
+            <View key={idx} style={styles.buttonWrapper}>
+              <View style={styles.buttonBackground}>
+                <IconButton
+                  icon={icon}
+                  size={40} // Icon size
+                  color="#0066ff" // Icon color
+                  style={styles.icon}
+                  onPress={action}
+                  disabled={isDisabled}
+                />
+                <Text style={styles.buttonLabel}>{name}</Text>
+              </View>
+            </View>
+          );
+        })}
       </View>
     );
   };
@@ -286,36 +181,41 @@ const WalletCategoriesPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e8e9eb',
+    backgroundColor: '#f2f4f5', // Very faint light blue background
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-start', // Start higher up on the page
     alignItems: 'center',
     padding: 16,
-    paddingTop: 60,
+    paddingTop: 40, // Start a bit higher up on the page
   },
   buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    marginBottom: 20,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between', // Ensure spacing is equal on both sides
   },
   buttonWrapper: {
+    width: '30%', // Ensures three buttons per row
     alignItems: 'center',
-    width: '30%',
+    marginBottom: 20, // Space between the rows
   },
   icon: {
-    marginBottom: 8,
+    marginBottom: 8, // Space between the icon and the label
   },
   buttonLabel: {
-    fontSize: 14,
-    color: '#333333',
-    textAlign: 'center',
+    fontSize: 14, // Adjust label size
+    color: '#333333', // Label color
+    textAlign: 'center', // Center the label text
+  },
+  buttonBackground: {
+    backgroundColor: '#ffffff', // Set to white
+    borderRadius: 8, // Optional: add border radius for rounded corners
+    padding: 20, // Adjust padding as needed
+    width: 110, // Fixed width for all buttons
+    height: 105, // Fixed height for all buttons
+    justifyContent: 'center', // Center content vertically
+    alignItems: 'center', // Center content horizontally
   },
 });
 

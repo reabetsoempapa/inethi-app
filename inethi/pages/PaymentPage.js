@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     backgroundColor: '#fff',
-    paddingHorizontal: 20, // Added padding to compensate for removing the form container
+    paddingHorizontal: 20,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -238,6 +238,11 @@ const styles = StyleSheet.create({
     height: 50,
     width: '100%',
     marginBottom: 20,
+    borderWidth: 1, // Add a border to make the picker stand out
+    borderColor: '#0066ff', // Use the primary color for the border
+    borderRadius: 8, // Match the border radius with other inputs
+    backgroundColor: '#f0f0f0', // Light background to make it distinct
+    paddingLeft: 10, // Add some padding
   },
   scanButton: {
     flexDirection: 'row',
