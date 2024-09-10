@@ -9,13 +9,13 @@ import {
 } from 'react-native';
 import {IconButton, Dialog, Portal} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
-import {useBalance} from '../context/BalanceContext';
+import {useBalance} from '../../context/BalanceContext';
 import {
   createWallet,
   checkWalletOwnership,
   fetchWalletDetails,
   trackButtonClick,
-} from '../service/Wallet';
+} from '../../service/Wallet';
 
 const WalletCategoriesPage = () => {
   const navigation = useNavigation();

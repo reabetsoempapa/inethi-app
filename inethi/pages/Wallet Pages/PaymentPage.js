@@ -11,7 +11,7 @@ import {
 import {Picker} from '@react-native-picker/picker';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {Dialog} from 'react-native-paper';
-import {useBalance} from '../context/BalanceContext';
+import {useBalance} from '../../context/BalanceContext';
 import {
   Camera,
   useCameraDevice,
