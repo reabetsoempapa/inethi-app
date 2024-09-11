@@ -10,23 +10,26 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
-import PaymentPage from './pages/PaymentPage';
+import PaymentPage from './pages/Wallet Pages/PaymentPage';
 import RegisterPage from './pages/RegisterPage';
 import {BalanceProvider} from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
 import AppList from './components/AppList';
 import MapPage from './pages/MapPage';
-import WalletCategoriesPage from './pages/Wallet';
-import RecipientDetailsScreen from './pages/RecipientDetails';
-import WalletDetailsPage from './pages/WalletDetails';
-import AddRecipientScreen from './pages/AddRecipients';
-import ViewRecipientsScreen from './pages/ViewRecipients';
-import CreateWalletPage from './pages/CreateWallet';
-import PaymentHistory from './pages/PaymentHistory';
-import PaymentSuccess from './pages/PaymentSuccess';
-import PaymentUnsuccessful from './pages/PaymentFail';
+import WalletCategoriesPage from './pages/Wallet Pages/Wallet';
+import RecipientDetailsScreen from './pages/Wallet Pages/RecipientDetails';
+import WalletDetailsPage from './pages/Wallet Pages/WalletDetails';
+import AddRecipientScreen from './pages/Wallet Pages/AddRecipients';
+import ViewRecipientsScreen from './pages/Wallet Pages/ViewRecipients';
+import CreateWalletPage from './pages/Wallet Pages/CreateWallet';
+import PaymentHistory from './pages/Wallet Pages/PaymentHistory';
+import PaymentSuccess from './pages/Wallet Pages/PaymentSuccess';
+import PaymentUnsuccessful from './pages/Wallet Pages/PaymentFail';
 import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
+
+// Import CopilotProvider
+import {CopilotProvider} from 'react-native-copilot';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -235,7 +238,6 @@ const AppRoutes = ({logout, userToken}) => {
       screenOptions={({route}) => ({
         tabBarIcon: ({color, size}) => {
           let iconName;
-
           if (route.name === 'Home') {
             iconName = 'home-outline';
           } else if (route.name === 'Help') {
@@ -243,7 +245,6 @@ const AppRoutes = ({logout, userToken}) => {
           } else if (route.name === 'Settings') {
             iconName = 'settings-outline';
           }
-
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#4285F4',
@@ -257,9 +258,18 @@ const AppRoutes = ({logout, userToken}) => {
       />
       <Tab.Screen
         name="Help"
-        component={HelpPageStack}
-        options={{headerShown: false}}
+        component={HelpPage}
+        listeners={({navigation}) => ({
+          tabPress: e => {
+            e.preventDefault(); // Prevent default tab press behavior
+            console.log('Tutorial passing');
+            // Navigate to Home and pass the `startTutorial: true` flag
+            navigation.navigate('Home', {startTutorial: true});
+            console.log('Tutorial passed');
+          },
+        })}
       />
+
       <Tab.Screen
         name="Settings"
         component={SettingsPageStack}
@@ -300,37 +310,40 @@ const App = () => {
     <PaperProvider>
       <SafeAreaProvider>
         <BalanceProvider logout={logout}>
-          <NavigationContainer>
-            {userToken ? (
-              <Stack.Navigator>
-                {/* Main App Routes */}
-                <Stack.Screen
-                  name="AppRoutes"
-                  component={AppRoutes}
-                  options={{headerShown: false}}
-                />
-                {/* Wallet Stack for Authenticated Users */}
-                <Stack.Screen
-                  name="WalletPageStack"
-                  component={WalletPageStack}
-                  options={{headerShown: false}}
-                />
-              </Stack.Navigator>
-            ) : (
-              <Stack.Navigator>
-                <Stack.Screen name="Login" options={{headerShown: false}}>
-                  {props => (
-                    <LoginPage {...props} onLoginSuccess={handleLoginSuccess} />
-                  )}
-                </Stack.Screen>
-                <Stack.Screen
-                  name="Register"
-                  component={RegisterPage}
-                  options={{headerTitle: 'Register'}}
-                />
-              </Stack.Navigator>
-            )}
-          </NavigationContainer>
+          <CopilotProvider overlay="svg">
+            <NavigationContainer>
+              {userToken ? (
+                <Stack.Navigator>
+                  <Stack.Screen
+                    name="AppRoutes"
+                    component={AppRoutes}
+                    options={{headerShown: false}}
+                  />
+                  <Stack.Screen
+                    name="WalletPageStack"
+                    component={WalletPageStack}
+                    options={{headerShown: false}}
+                  />
+                </Stack.Navigator>
+              ) : (
+                <Stack.Navigator>
+                  <Stack.Screen name="Login" options={{headerShown: false}}>
+                    {props => (
+                      <LoginPage
+                        {...props}
+                        onLoginSuccess={handleLoginSuccess}
+                      />
+                    )}
+                  </Stack.Screen>
+                  <Stack.Screen
+                    name="Register"
+                    component={RegisterPage}
+                    options={{headerTitle: 'Register'}}
+                  />
+                </Stack.Navigator>
+              )}
+            </NavigationContainer>
+          </CopilotProvider>
         </BalanceProvider>
       </SafeAreaProvider>
     </PaperProvider>

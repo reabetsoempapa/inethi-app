@@ -3,8 +3,8 @@ import {View, StyleSheet, Alert, ScrollView, Text} from 'react-native';
 import {Button, TextInput, Paragraph} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native'; // Correct navigation hook
 import axios from 'axios';
-import {getToken} from '../utils/tokenUtils';
-import {useBalance} from '../context/BalanceContext';
+import {getToken} from '../../utils/tokenUtils';
+import {useBalance} from '../../context/BalanceContext';
 
 const CreateWalletPage = () => {
   const baseURL = 'https://manage-backend.inethicloud.net';

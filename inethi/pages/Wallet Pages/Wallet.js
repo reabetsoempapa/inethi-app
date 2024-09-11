@@ -6,16 +6,20 @@ import {
   Alert,
   ActivityIndicator,
   Text,
+  Button,
 } from 'react-native';
 import {IconButton, Dialog, Portal} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
-import {useBalance} from '../context/BalanceContext';
+import {useBalance} from '../../context/BalanceContext';
 import {
-  createWallet,
   checkWalletOwnership,
   fetchWalletDetails,
   trackButtonClick,
-} from '../service/Wallet';
+} from '../../service/Wallet';
+import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot'; // Copilot integration
+
+// Make IconButton walkthroughable
+const WalkthroughableIconButton = walkthroughable(IconButton);
 
 const WalletCategoriesPage = () => {
   const navigation = useNavigation();
@@ -23,6 +27,9 @@ const WalletCategoriesPage = () => {
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Access the start function from useCopilot
+  const {start} = useCopilot();
 
   useEffect(() => {
     handleCheckWalletOwnership();
@@ -86,7 +93,7 @@ const WalletCategoriesPage = () => {
   const walletCategories = [
     {
       name: 'Create Wallet',
-      action: _ => navigation.navigate('CreateWallet'),
+      action: () => navigation.navigate('CreateWallet'),
       disabled: hasWallet,
       icon: 'wallet-plus-outline',
     },
@@ -134,24 +141,28 @@ const WalletCategoriesPage = () => {
       icon: 'history',
     },
   ];
+
   const renderButtons = buttons => {
     return (
       <View style={styles.buttonContainer}>
         {buttons.map(({name, action, requiresWallet, icon}, idx) => {
           const isDisabled = requiresWallet && !hasWallet;
+
           return (
             <View key={idx} style={styles.buttonWrapper}>
-              <View style={styles.buttonBackground}>
-                <IconButton
+              <CopilotStep
+                text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
+                order={idx + 1}
+                name={`step_${idx + 1}`}>
+                <WalkthroughableIconButton
                   icon={icon}
-                  size={40} // Icon size
-                  color="#0066ff" // Icon color
-                  style={styles.icon}
+                  size={40}
                   onPress={action}
                   disabled={isDisabled}
+                  style={styles.icon}
                 />
-                <Text style={styles.buttonLabel}>{name}</Text>
-              </View>
+              </CopilotStep>
+              <Text style={styles.buttonLabel}>{name}</Text>
             </View>
           );
         })}
@@ -174,6 +185,8 @@ const WalletCategoriesPage = () => {
           )}
         </Portal>
       </ScrollView>
+
+      <Button title="Start Tutorial" onPress={() => start()} />
     </View>
   );
 };
@@ -181,41 +194,32 @@ const WalletCategoriesPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f4f5', // Very faint light blue background
+    backgroundColor: '#f2f4f5',
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'flex-start', // Start higher up on the page
+    justifyContent: 'flex-start',
     alignItems: 'center',
     padding: 16,
-    paddingTop: 40, // Start a bit higher up on the page
+    paddingTop: 40,
   },
   buttonContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between', // Ensure spacing is equal on both sides
+    justifyContent: 'space-between',
   },
   buttonWrapper: {
-    width: '30%', // Ensures three buttons per row
+    width: '30%',
     alignItems: 'center',
-    marginBottom: 20, // Space between the rows
+    marginBottom: 20,
   },
   icon: {
-    marginBottom: 8, // Space between the icon and the label
+    marginBottom: 8,
   },
   buttonLabel: {
-    fontSize: 14, // Adjust label size
-    color: '#333333', // Label color
-    textAlign: 'center', // Center the label text
-  },
-  buttonBackground: {
-    backgroundColor: '#ffffff', // Set to white
-    borderRadius: 8, // Optional: add border radius for rounded corners
-    padding: 20, // Adjust padding as needed
-    width: 110, // Fixed width for all buttons
-    height: 105, // Fixed height for all buttons
-    justifyContent: 'center', // Center content vertically
-    alignItems: 'center', // Center content horizontally
+    fontSize: 14,
+    color: '#333333',
+    textAlign: 'center',
   },
 });
 

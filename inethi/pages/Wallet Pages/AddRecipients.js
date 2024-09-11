@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {Button, TextInput, Paragraph} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native'; // Correct navigation hook
-import {addRecipient} from '../service/recipient';
+import {addRecipient} from '../../service/recipient';
 import {
   Camera,
   useCameraDevice,
