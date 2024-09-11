@@ -8,7 +8,7 @@ import {
   Card,
 } from 'react-native-paper';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {fetchRecipients} from '../service/recipient';
+import {fetchRecipients} from '../../service/recipient';
 
 const ViewRecipientsScreen = () => {
   const [recipients, setRecipients] = useState([]);

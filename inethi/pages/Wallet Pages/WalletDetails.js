@@ -13,7 +13,7 @@ import axios from 'axios';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import RNFS from 'react-native-fs';
-import {getToken} from '../utils/tokenUtils';
+import {getToken} from '../../utils/tokenUtils';
 
 const WalletDetailsPage = () => {
   const route = useRoute();
