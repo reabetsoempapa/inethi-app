@@ -301,7 +301,7 @@ const App = () => {
     <PaperProvider>
       <SafeAreaProvider>
         <BalanceProvider logout={logout}>
-          <CopilotProvider>
+          <CopilotProvider overlay="svg">
             <NavigationContainer>
               {userToken ? (
                 <Stack.Navigator>

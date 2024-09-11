@@ -16,9 +16,7 @@ import {
   fetchWalletDetails,
   trackButtonClick,
 } from '../../service/Wallet';
-
-// Import react-native-copilot components
-import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot'; // Remove CopilotProvider
+import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot'; // Copilot integration
 
 // Make IconButton walkthroughable
 const WalkthroughableIconButton = walkthroughable(IconButton);
@@ -61,6 +59,7 @@ const WalletCategoriesPage = () => {
       handleError(error, 'Failed to check wallet details');
     }
   };
+
   const handleShowQrCode = async () => {
     await handleCheckWalletDetails();
     setIsQrDialogOpen(true);
@@ -152,10 +151,9 @@ const WalletCategoriesPage = () => {
           return (
             <View key={idx} style={styles.buttonWrapper}>
               <CopilotStep
-                text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`} // Tooltip text
-                order={idx + 1} // Step order
-                name={`step_${idx + 1}`} // Unique step name
-              >
+                text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
+                order={idx + 1}
+                name={`step_${idx + 1}`}>
                 <WalkthroughableIconButton
                   icon={icon}
                   size={40}
@@ -188,7 +186,6 @@ const WalletCategoriesPage = () => {
         </Portal>
       </ScrollView>
 
-      {/* Button to start the tutorial */}
       <Button title="Start Tutorial" onPress={() => start()} />
     </View>
   );
