@@ -1,11 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, PermissionsAndroid, Platform, Alert, Linking } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  PermissionsAndroid,
+  Platform,
+  Alert,
+  Linking,
+} from 'react-native';
 import RNFS from 'react-native-fs';
-import { useNavigate } from 'react-router-native';
-import { getApps } from '../service/api.js';
+import {useNavigation} from '@react-navigation/native'; // Use useNavigation from React Navigation
+import {getApps} from '../service/api.js';
 import * as Progress from 'react-native-progress'; // Import react-native-progress
 import DeviceInfo from 'react-native-device-info'; // Import device info
-import { recordAppDownloaded } from '../service/Metric.js';
+import {recordAppDownloaded} from '../service/Metric.js';
 
 const requestStoragePermission = async () => {
   if (Platform.OS === 'android') {
@@ -25,38 +36,49 @@ const requestStoragePermission = async () => {
         ];
       }
 
-      const granted = await PermissionsAndroid.requestMultiple(
-        permissions,
-        {
-          title: 'Storage Permission',
-          message: 'This app needs access to your storage to download files',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
-      );
+      const granted = await PermissionsAndroid.requestMultiple(permissions, {
+        title: 'Storage Permission',
+        message: 'This app needs access to your storage to download files',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      });
 
-      console.log("Permission status:", granted);
+      console.log('Permission status:', granted);
 
       if (sdkInt >= 33) {
-        const allPermissionsGranted = permissions.every(permission => granted[permission] === PermissionsAndroid.RESULTS.GRANTED);
+        const allPermissionsGranted = permissions.every(
+          permission =>
+            granted[permission] === PermissionsAndroid.RESULTS.GRANTED,
+        );
         if (allPermissionsGranted) {
           console.log('You can use the media storage');
           return true;
         }
       } else {
-        if (granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED &&
-          granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED) {
+        if (
+          granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] ===
+            PermissionsAndroid.RESULTS.GRANTED &&
+          granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] ===
+            PermissionsAndroid.RESULTS.GRANTED
+        ) {
           console.log('You can use the storage');
           return true;
         }
       }
 
-      if (granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      if (
+        granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+        granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+        granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
+      ) {
         Alert.alert(
           'Permission Required',
           'Storage permission is required to download files. Please enable it in the app settings.',
@@ -70,12 +92,15 @@ const requestStoragePermission = async () => {
               style: 'cancel',
             },
           ],
-          { cancelable: false }
+          {cancelable: false},
         );
         return false;
       } else {
         console.log('Storage permission denied');
-        Alert.alert('Permission Denied', 'Storage permission is required to download files.');
+        Alert.alert(
+          'Permission Denied',
+          'Storage permission is required to download files.',
+        );
         return false;
       }
     } catch (err) {
@@ -90,24 +115,22 @@ export default function AppList() {
   const [apps, setApps] = useState([]);
   const [installedApps, setInstalledApps] = useState({});
   const [downloadProgress, setDownloadProgress] = useState(0); // State for download progress
-  const navigate = useNavigate();
-  const [featureClicked, setFeatureClicked] = useState("");
+  const navigation = useNavigation(); // Use useNavigation hook
+  const [featureClicked, setFeatureClicked] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       const hasPermission = await requestStoragePermission();
-      console.log("permission", hasPermission);
+      console.log('permission', hasPermission);
       if (hasPermission) {
         try {
-          console.log("feature before set:", featureClicked);
+          console.log('feature before set:', featureClicked);
           // setFeatureClicked("AppStore")
 
           const data = await getApps();
-          console.log("data received:", data);
+          console.log('data received:', data);
           setApps(data);
           checkInstalledApps(data);
-
-
         } catch (error) {
           console.error('Error fetching apps:', error);
         }
@@ -118,7 +141,7 @@ export default function AppList() {
   }, []);
   // console.log("feature after set:", featureClicked);
 
-  const checkInstalledApps = async (apps) => {
+  const checkInstalledApps = async apps => {
     const installedStatus = {};
     for (const app of apps) {
       const isInstalled = await DeviceInfo.isAppInstalled(app.packageName); // Use packageName to check if the app is installed
@@ -136,22 +159,22 @@ export default function AppList() {
     return downloadDirectory;
   };
 
-  const downloadApp = async (url) => {
+  const downloadApp = async url => {
     try {
       const downloadDirectory = await createDownloadDirectory();
       const appname = url.split('/').pop();
-      console.log("app name :", appname);
+      console.log('app name :', appname);
 
       const downloadDest = `${downloadDirectory}/${url.split('/').pop()}`;
-      console.log("Download destination:", downloadDest);
+      console.log('Download destination:', downloadDest);
 
       const downloadOptions = {
         fromUrl: `http://10.0.2.2:81${url}`,
         toFile: downloadDest,
-        begin: (res) => {
+        begin: res => {
           console.log('Download has begun', res);
         },
-        progress: (res) => {
+        progress: res => {
           if (res.bytesWritten && res.contentLength) {
             let progressPercent = (res.bytesWritten / res.contentLength) * 100;
             console.log(`Progress: ${progressPercent}%`);
@@ -168,10 +191,9 @@ export default function AppList() {
         console.log('File downloaded to:', downloadDest);
         recordAppDownloaded(appname);
 
-
         const fileExists = await RNFS.exists(downloadDest);
         if (fileExists) {
-          console.log("file exists!!")
+          console.log('file exists!!');
           Alert.alert(
             'Download Complete',
             'The Application has been downloaded successfully. Opening the Files app now..',
@@ -179,7 +201,9 @@ export default function AppList() {
               {
                 text: 'Open Files',
                 onPress: () => {
-                  Linking.openURL('content://com.android.externalstorage.documents/root/primary');
+                  Linking.openURL(
+                    'content://com.android.externalstorage.documents/root/primary',
+                  );
                 },
               },
               {
@@ -187,7 +211,7 @@ export default function AppList() {
                 style: 'cancel',
               },
             ],
-            { cancelable: true }
+            {cancelable: true},
           );
           setDownloadProgress(0); // Reset progress after successful download
         } else {
@@ -204,9 +228,12 @@ export default function AppList() {
     }
   };
 
-  const renderAppItem = ({ item }) => (
+  const renderAppItem = ({item}) => (
     <View style={styles.appItem} key={item.url}>
-      <Image source={{ uri: `http://10.0.2.2:81${item.icon}` }} style={styles.icon} />
+      <Image
+        source={{uri: `http://10.0.2.2:81${item.icon}`}}
+        style={styles.icon}
+      />
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.description}>{item.description}</Text>
       {installedApps[item.packageName] ? (
@@ -214,8 +241,7 @@ export default function AppList() {
       ) : (
         <TouchableOpacity
           style={styles.downloadButton}
-          onPress={() => downloadApp(item.url)}
-        >
+          onPress={() => downloadApp(item.url)}>
           <Text style={styles.downloadButtonText}>Download</Text>
         </TouchableOpacity>
       )}
@@ -236,20 +262,19 @@ export default function AppList() {
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => navigate('/')}
+        onPress={() => navigation.goBack()} // Update the navigation to use goBack
       >
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
       <FlatList
         data={apps}
         renderItem={renderAppItem}
-        keyExtractor={(item) => item.url} // Use URL as a unique key
+        keyExtractor={item => item.url} // Use URL as a unique key
         contentContainerStyle={styles.listContainer}
       />
-
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
