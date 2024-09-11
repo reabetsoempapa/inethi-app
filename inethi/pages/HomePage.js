@@ -1,12 +1,12 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
-  StyleSheet,
   Image,
-  ActivityIndicator,
   Alert,
   ScrollView,
   Text,
+  ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
 import {
   Button,
@@ -18,20 +18,28 @@ import {
   Paragraph,
   IconButton,
 } from 'react-native-paper';
-import {useNavigation} from '@react-navigation/native'; // Updated import
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import axios from 'axios';
 import {getToken} from '../utils/tokenUtils';
-import {useBalance} from '../context/BalanceContext';
+import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot'; // Import Copilot components
+
 import ServiceContainer from '../components/ServiceContainer';
+import {useBalance} from '../context/BalanceContext';
 import * as amplitude from '@amplitude/analytics-react-native';
 import analytics from '@react-native-firebase/analytics';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
+// Make components walkthroughable
+const WalkthroughableView = walkthroughable(View);
+const WalkthroughableText = walkthroughable(Text);
+const WalkthroughableButton = walkthroughable(Button);
+
 const HomePage = ({logout}) => {
+  const {start} = useCopilot(); // Get the start function from useCopilot
+  const route = useRoute(); // Access route to get parameters
   const baseURL = 'https://manage-backend.inethicloud.net';
   const nextcloudURL = 'https://nextcloud.inethicloud.net';
 
@@ -40,10 +48,21 @@ const HomePage = ({logout}) => {
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
+
   const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
   const {balance, fetchBalance} = useBalance();
-
+  useEffect(() => {
+    // Check if the route contains the `startTutorial` parameter
+    if (route.params?.startTutorial) {
+      console.log('detected');
+      start(); // Start the tutorial
+      // Remove the parameter to prevent restarting the tutorial on re-render
+      navigation.setParams({startTutorial: false});
+      console.log('finished');
+    }
+  }, [route.params]);
   const [categories, setCategories] = useState({
     Wallet: [
       {
@@ -57,7 +76,6 @@ const HomePage = ({logout}) => {
     ],
     Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],
   });
-
   const handleFindHotspotClick = async () => {
     const eventName = 'find_hotspot_button_clicked';
 
@@ -101,17 +119,17 @@ const HomePage = ({logout}) => {
     const checkStatuses = async () => {
       await checkWirelessConnection();
       await checkInternetConnection();
+
+      // Logic for checking connection statuses...
     };
 
     checkStatuses();
-
     const intervalId = setInterval(() => {
       checkStatuses();
     }, 30000);
 
     return () => clearInterval(intervalId);
   }, []);
-
   const checkInternetConnection = async () => {
     try {
       const response = await fetch('https://www.google.com', {method: 'HEAD'});
@@ -248,34 +266,44 @@ const HomePage = ({logout}) => {
         <View key={i} style={styles.buttonRow}>
           {pair.map(({name, action, url, requiresWallet, disabled}, idx) => {
             const isDisabled = (requiresWallet && !hasWallet) || disabled;
+
             return (
-              <Button
+              <CopilotStep
                 key={idx}
-                mode="contained"
-                onPress={() => {
-                  if (action && !isDisabled) {
-                    action();
-                  } else if (url && !isDisabled) {
-                    openURL(url);
-                  } else {
-                    console.error('Button has no action or URL');
+                text={`This is the ${name} button.`}
+                order={i + idx + 1} // Adjust order based on the loop index
+                name={`step_${i + idx + 1}`}>
+                <WalkthroughableButton
+                  mode="contained"
+                  onPress={() => {
+                    if (action && !isDisabled) {
+                      action();
+                    } else if (url && !isDisabled) {
+                      openURL(url);
+                    } else {
+                      console.error('Button has no action or URL');
+                    }
+                  }}
+                  style={[styles.button, isDisabled && styles.buttonDisabled]}
+                  labelStyle={
+                    isDisabled ? styles.buttonTextDisabled : styles.buttonText
                   }
-                }}
-                style={[styles.button, isDisabled && styles.buttonDisabled]}
-                labelStyle={
-                  isDisabled ? styles.buttonTextDisabled : styles.buttonText
-                }
-                disabled={isDisabled}
-                icon={() => {
-                  if (name === 'FindHotspot') {
-                    return (
-                      <Ionicons name="map-outline" size={20} color="#FFFFFF" />
-                    );
-                  }
-                  return null;
-                }}>
-                {name}
-              </Button>
+                  disabled={isDisabled}
+                  icon={() => {
+                    if (name === 'FindHotspot') {
+                      return (
+                        <Ionicons
+                          name="map-outline"
+                          size={20}
+                          color="#FFFFFF"
+                        />
+                      );
+                    }
+                    return null;
+                  }}>
+                  {name}
+                </WalkthroughableButton>
+              </CopilotStep>
             );
           })}
         </View>,
@@ -328,47 +356,81 @@ const HomePage = ({logout}) => {
 
   return (
     <ScrollView style={styles.container}>
+      {/* Status Cards */}
       <View style={styles.statusContainer}>
-        <Card style={styles.statusCard}>
-          <View style={styles.statusContent}>
-            <Ionicons name="wifi" size={30} color="#FFFFFF" />
-            <Text style={styles.statusTitle}>iNethi Wireless</Text>
-            <View style={styles.statusIndicatorContainer}>
-              <View
-                style={[
-                  styles.statusIndicator,
-                  {backgroundColor: isConnectedToWireless ? 'green' : 'red'},
-                ]}
-              />
-              <Text style={styles.statusText}>
-                {isConnectedToWireless ? 'Connected' : 'Disconnected'}
-              </Text>
+        {/* iNethi Wireless Card */}
+        <CopilotStep
+          text="This shows the iNethi Wireless connection status."
+          order={1}
+          name="step_1">
+          <WalkthroughableView style={styles.statusCard}>
+            <View style={styles.statusContent}>
+              <Ionicons name="wifi" size={30} color="#FFFFFF" />
+              <Text style={styles.statusTitle}>iNethi Wireless</Text>
+              <View style={styles.statusIndicatorContainer}>
+                <View
+                  style={[
+                    styles.statusIndicator,
+                    {backgroundColor: isConnectedToWireless ? 'green' : 'red'},
+                  ]}
+                />
+                <Text style={styles.statusText}>
+                  {isConnectedToWireless ? 'Connected' : 'Disconnected'}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Card>
-        <Card style={styles.statusCard}>
-          <View style={styles.statusContent}>
-            <Ionicons name="globe" size={30} color="#FFFFFF" />
-            <Text style={styles.statusTitle}>Internet</Text>
-            <View style={styles.statusIndicatorContainer}>
-              <View
-                style={[
-                  styles.statusIndicator,
-                  {backgroundColor: isConnectedToInternet ? 'green' : 'red'},
-                ]}
-              />
-              <Text style={styles.statusText}>
-                {isConnectedToInternet ? 'Connected' : 'Disconnected'}
-              </Text>
+          </WalkthroughableView>
+        </CopilotStep>
+
+        {/* Internet Status Card */}
+        <CopilotStep
+          text="This shows the Internet connection status."
+          order={2}
+          name="step_2">
+          <WalkthroughableView style={styles.statusCard}>
+            <View style={styles.statusContent}>
+              <Ionicons name="globe" size={30} color="#FFFFFF" />
+              <Text style={styles.statusTitle}>Internet</Text>
+              <View style={styles.statusIndicatorContainer}>
+                <View
+                  style={[
+                    styles.statusIndicator,
+                    {backgroundColor: isConnectedToInternet ? 'green' : 'red'},
+                  ]}
+                />
+                <Text style={styles.statusText}>
+                  {isConnectedToInternet ? 'Connected' : 'Disconnected'}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Card>
+          </WalkthroughableView>
+        </CopilotStep>
       </View>
-      <InternetDataCard />
-      {renderCategoryCards(categories)}
+
+      {/* Internet Data Card */}
+      <CopilotStep
+        text="Here you can view your remaining Internet data."
+        order={3}
+        name="step_3">
+        <WalkthroughableView>
+          <InternetDataCard />
+        </WalkthroughableView>
+      </CopilotStep>
+
+      {/* Category Cards */}
+      <CopilotStep
+        text="Here are the available categories. Tap one to explore."
+        order={4}
+        name="step_4">
+        <WalkthroughableView>{renderCategoryCards()}</WalkthroughableView>
+      </CopilotStep>
+
+      {/* Service Container */}
       <View style={styles.card}>
         <ServiceContainer />
       </View>
+
+      {/* Loading Dialog */}
       <Portal>
         {isLoading && (
           <Dialog visible={true}>
@@ -378,6 +440,9 @@ const HomePage = ({logout}) => {
           </Dialog>
         )}
       </Portal>
+
+      {/* Button to Start Tutorial */}
+      {/* <Button title="Start Tutorial" onPress={() => start()} /> */}
     </ScrollView>
   );
 };
@@ -422,31 +487,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
   },
+  button: {
+    backgroundColor: '#4285F4',
+    marginVertical: 5,
+  },
   card: {
     marginBottom: 10,
   },
   title: {
     marginBottom: 8,
     color: '#4285F4',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  button: {
-    flex: 1,
-    marginHorizontal: 4,
-    backgroundColor: '#4285F4',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-  },
-  buttonDisabled: {
-    backgroundColor: '#A9A9A9',
-  },
-  buttonTextDisabled: {
-    color: '#FFFFFF',
   },
   internetDataCard: {
     backgroundColor: '#4285F4',

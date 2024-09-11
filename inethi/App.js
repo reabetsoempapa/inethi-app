@@ -258,9 +258,18 @@ const AppRoutes = ({logout, userToken}) => {
       />
       <Tab.Screen
         name="Help"
-        component={HelpPageStack}
-        options={{headerShown: false}}
+        component={HelpPage}
+        listeners={({navigation}) => ({
+          tabPress: e => {
+            e.preventDefault(); // Prevent default tab press behavior
+            console.log('Tutorial passing');
+            // Navigate to Home and pass the `startTutorial: true` flag
+            navigation.navigate('Home', {startTutorial: true});
+            console.log('Tutorial passed');
+          },
+        })}
       />
+
       <Tab.Screen
         name="Settings"
         component={SettingsPageStack}
