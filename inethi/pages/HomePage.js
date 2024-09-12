@@ -53,6 +53,16 @@ const HomePage = ({ logout }) => {
 
   const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
   const { balance, fetchBalance } = useBalance();
+
+
+  const handleAppstoreClick = () => {
+    console.log("appstore clicked")
+    analytics().logEvent('navigate_to_AppStore', { feature: 'App Store' });
+    navigation.navigate("AppStore");
+
+  }
+
+
   useEffect(() => {
     // Check if the route contains the `startTutorial` parameter
     if (route.params?.startTutorial) {
@@ -75,6 +85,7 @@ const HomePage = ({ logout }) => {
       },
     ],
     Navigator: [{ name: 'FindHotspot', action: () => handleFindHotspotClick() }],
+    Appstore: [{ name: 'AppStore', action: () => handleAppstoreClick() }]
   });
   const handleFindHotspotClick = async () => {
     const eventName = 'find_hotspot_button_clicked';
