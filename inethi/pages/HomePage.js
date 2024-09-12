@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Image,
@@ -19,13 +19,13 @@ import {
   IconButton,
 } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
-import {getToken} from '../utils/tokenUtils';
-import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot'; // Import Copilot components
+import { getToken } from '../utils/tokenUtils';
+import { CopilotStep, walkthroughable, useCopilot } from 'react-native-copilot'; // Import Copilot components
 
 import ServiceContainer from '../components/ServiceContainer';
-import {useBalance} from '../context/BalanceContext';
+import { useBalance } from '../context/BalanceContext';
 import * as amplitude from '@amplitude/analytics-react-native';
 import analytics from '@react-native-firebase/analytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,8 +37,8 @@ const WalkthroughableView = walkthroughable(View);
 const WalkthroughableText = walkthroughable(Text);
 const WalkthroughableButton = walkthroughable(Button);
 
-const HomePage = ({logout}) => {
-  const {start} = useCopilot(); // Get the start function from useCopilot
+const HomePage = ({ logout }) => {
+  const { start } = useCopilot(); // Get the start function from useCopilot
   const route = useRoute(); // Access route to get parameters
   const baseURL = 'https://manage-backend.inethicloud.net';
   const nextcloudURL = 'https://nextcloud.inethicloud.net';
@@ -52,14 +52,14 @@ const HomePage = ({logout}) => {
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
 
   const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
-  const {balance, fetchBalance} = useBalance();
+  const { balance, fetchBalance } = useBalance();
   useEffect(() => {
     // Check if the route contains the `startTutorial` parameter
     if (route.params?.startTutorial) {
       console.log('detected');
       start(); // Start the tutorial
       // Remove the parameter to prevent restarting the tutorial on re-render
-      navigation.setParams({startTutorial: false});
+      navigation.setParams({ startTutorial: false });
       console.log('finished');
     }
   }, [route.params]);
@@ -74,7 +74,7 @@ const HomePage = ({logout}) => {
         url: '',
       },
     ],
-    Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],
+    Navigator: [{ name: 'FindHotspot', action: () => handleFindHotspotClick() }],
   });
   const handleFindHotspotClick = async () => {
     const eventName = 'find_hotspot_button_clicked';
@@ -132,7 +132,7 @@ const HomePage = ({logout}) => {
   }, []);
   const checkInternetConnection = async () => {
     try {
-      const response = await fetch('https://www.google.com', {method: 'HEAD'});
+      const response = await fetch('https://www.google.com', { method: 'HEAD' });
       if (response.ok) {
         setIsConnectedToInternet(true);
         syncAnalyticsEvents();
@@ -146,7 +146,7 @@ const HomePage = ({logout}) => {
 
   const checkWirelessConnection = async () => {
     try {
-      const response = await fetch(nextcloudURL, {method: 'HEAD'});
+      const response = await fetch(nextcloudURL, { method: 'HEAD' });
       if (response.ok) {
         setIsConnectedToWireless(true);
       } else {
@@ -201,7 +201,7 @@ const HomePage = ({logout}) => {
         );
       }
 
-      const combinedServices = {...servicesDataGlobal};
+      const combinedServices = { ...servicesDataGlobal };
 
       Object.entries(servicesDataLocal).forEach(([category, services]) => {
         combinedServices[category] = services;
@@ -241,7 +241,7 @@ const HomePage = ({logout}) => {
   }, []);
 
   const openURL = url => {
-    navigation.navigate('WebView', {url}); // Removed state wrapper
+    navigation.navigate('WebView', { url }); // Removed state wrapper
   };
 
   useEffect(() => {
@@ -264,7 +264,7 @@ const HomePage = ({logout}) => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({name, action, url, requiresWallet, disabled}, idx) => {
+          {pair.map(({ name, action, url, requiresWallet, disabled }, idx) => {
             const isDisabled = (requiresWallet && !hasWallet) || disabled;
 
             return (
@@ -371,7 +371,7 @@ const HomePage = ({logout}) => {
                 <View
                   style={[
                     styles.statusIndicator,
-                    {backgroundColor: isConnectedToWireless ? 'green' : 'red'},
+                    { backgroundColor: isConnectedToWireless ? 'green' : 'red' },
                   ]}
                 />
                 <Text style={styles.statusText}>
@@ -395,7 +395,7 @@ const HomePage = ({logout}) => {
                 <View
                   style={[
                     styles.statusIndicator,
-                    {backgroundColor: isConnectedToInternet ? 'green' : 'red'},
+                    { backgroundColor: isConnectedToInternet ? 'green' : 'red' },
                   ]}
                 />
                 <Text style={styles.statusText}>

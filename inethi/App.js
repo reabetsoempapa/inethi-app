@@ -1,10 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {Provider as PaperProvider} from 'react-native-paper';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -12,9 +12,9 @@ import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
 import PaymentPage from './pages/Wallet Pages/PaymentPage';
 import RegisterPage from './pages/RegisterPage';
-import {BalanceProvider} from './context/BalanceContext';
+import { BalanceProvider } from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
-import AppList from './components/AppList';
+import FdroidAppstore from './components/FdroidAppstore';
 import MapPage from './pages/MapPage';
 import WalletCategoriesPage from './pages/Wallet Pages/Wallet';
 import RecipientDetailsScreen from './pages/Wallet Pages/RecipientDetails';
@@ -42,16 +42,16 @@ const HomePageStack = () => {
         name="Home"
         component={HomePage}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Home" logout={options.logout} />
           ),
         }}
       />
       <Stack.Screen
         name="AppStore"
-        component={AppList}
+        component={FdroidAppstore}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="App Store" logout={options.logout} />
           ),
         }}
@@ -60,28 +60,28 @@ const HomePageStack = () => {
         name="WebView"
         component={WebViewComponent}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Web View" logout={options.logout} />
           ),
         }}
       />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="ServiceContainer"
         component={ServiceContainer}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent
               title="Service Container"
               logout={options.logout}
             />
           ),
         }}
-      />
+      /> */}
       <Stack.Screen
         name="Map"
         component={MapPage}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Map" logout={options.logout} />
           ),
         }}
@@ -98,7 +98,7 @@ const WalletPageStack = () => {
         name="WalletCategories"
         component={WalletCategoriesPage}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent
               title="Wallet Categories"
               logout={options.logout}
@@ -110,7 +110,7 @@ const WalletPageStack = () => {
         name="WalletDetails"
         component={WalletDetailsPage}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Wallet Details" logout={options.logout} />
           ),
         }}
@@ -119,7 +119,7 @@ const WalletPageStack = () => {
         name="AddRecipient"
         component={AddRecipientScreen}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Add Recipient" logout={options.logout} />
           ),
         }}
@@ -128,7 +128,7 @@ const WalletPageStack = () => {
         name="ViewRecipients"
         component={ViewRecipientsScreen}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="View Recipients" logout={options.logout} />
           ),
         }}
@@ -137,7 +137,7 @@ const WalletPageStack = () => {
         name="CreateWallet"
         component={CreateWalletPage}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Create Wallet" logout={options.logout} />
           ),
         }}
@@ -146,7 +146,7 @@ const WalletPageStack = () => {
         name="RecipientDetails"
         component={RecipientDetailsScreen}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent
               title="Recipient Details"
               logout={options.logout}
@@ -158,7 +158,7 @@ const WalletPageStack = () => {
         name="Payment"
         component={PaymentPage}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Payment" logout={options.logout} />
           ),
         }}
@@ -167,7 +167,7 @@ const WalletPageStack = () => {
         name="PaymentHistory"
         component={PaymentHistory}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Payment History" logout={options.logout} />
           ),
         }}
@@ -176,7 +176,7 @@ const WalletPageStack = () => {
         name="PaymentSuccess"
         component={PaymentSuccess}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Payment Success" logout={options.logout} />
           ),
         }}
@@ -185,7 +185,7 @@ const WalletPageStack = () => {
         name="PaymentUnsuccessful"
         component={PaymentUnsuccessful}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent
               title="Payment Unsuccessful"
               logout={options.logout}
@@ -205,7 +205,7 @@ const HelpPageStack = () => {
         name="Help"
         component={HelpPage}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Help" logout={options.logout} />
           ),
         }}
@@ -222,7 +222,7 @@ const SettingsPageStack = () => {
         name="Settings"
         component={SettingsPage}
         options={{
-          header: ({navigation, route, options}) => (
+          header: ({ navigation, route, options }) => (
             <AppBarComponent title="Settings" logout={options.logout} />
           ),
         }}
@@ -232,11 +232,11 @@ const SettingsPageStack = () => {
 };
 
 // Main App Routes with Bottom Tabs for Authenticated Users
-const AppRoutes = ({logout, userToken}) => {
+const AppRoutes = ({ logout, userToken }) => {
   return (
     <Tab.Navigator
-      screenOptions={({route}) => ({
-        tabBarIcon: ({color, size}) => {
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === 'Home') {
             iconName = 'home-outline';
@@ -249,12 +249,12 @@ const AppRoutes = ({logout, userToken}) => {
         },
         tabBarActiveTintColor: '#4285F4',
         tabBarInactiveTintColor: 'gray',
-        tabBarStyle: [{display: 'flex'}, null],
+        tabBarStyle: [{ display: 'flex' }, null],
       })}>
       <Tab.Screen
         name="Home"
         component={HomePageStack}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
       <Tab.Screen
         name="Help"
@@ -273,7 +273,7 @@ const AppRoutes = ({logout, userToken}) => {
       <Tab.Screen
         name="Settings"
         component={SettingsPageStack}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
     </Tab.Navigator>
   );
