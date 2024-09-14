@@ -1,35 +1,37 @@
 import axios from 'axios';
-import RNFS from 'react-native-fs'; // Make sure RNFS is correctly imported
+import RNFS from 'react-native-fs'; // Correctly import RNFS
 
-const BASE_URL = 'http://192.168.0.168:3005';
+const BASE_URL = 'http://196.24.153.56:3005';
 const INDEX_URL = `${BASE_URL}/repo/index-v2.json`;
 
-// Utility to create a timeout promise
 const timeout = (ms, errorMessage) => {
     return new Promise((_, reject) => {
         setTimeout(() => reject(new Error(errorMessage)), ms);
     });
 };
 
-// Fetch the list of apps with a 5-second timeout
 export const getApps = async () => {
     try {
-        // Wrap the axios request in Promise.race to implement the timeout
         const response = await Promise.race([
-            axios.get(INDEX_URL), // Axios request
-            timeout(5000, 'Server is down or taking too long to respond'), // 5-second timeout
+            axios.get(INDEX_URL, {
+                timeout: 5000, // Set axios timeout to 5 seconds
+                headers: {
+                    'Cache-Control': 'no-cache', // Disable caching
+                    'Pragma': 'no-cache',
+                    'Expires': '0',
+                },
+            }),
+            timeout(5000, 'Server is down or taking too long to respond'),
         ]);
 
-        // Check if the response is a string and parse it
         let apps = response.data;
+        console.log("data", apps);
+
         if (typeof apps === 'string') {
-            console.log('Parsing JSON string');
             apps = JSON.parse(apps);
         }
 
-        // Ensure it's an array before mapping
         if (!Array.isArray(apps)) {
-            console.error('Error: Expected an array but got something else:', apps);
             throw new Error('Expected an array but got something else');
         }
 
@@ -43,15 +45,13 @@ export const getApps = async () => {
         }));
 
         console.log("Filtered:", appList);
-
         return appList;
     } catch (error) {
         console.error('Error fetching app list:', error);
-        throw error; // Pass the error back for handling elsewhere
+        throw error;
     }
 };
 
-// Download directory setup
 const createDownloadDirectory = async () => {
     const downloadDirectory = `${RNFS.DownloadDirectoryPath}/MyAppDownloads`;
     const exists = await RNFS.exists(downloadDirectory);
@@ -63,14 +63,12 @@ const createDownloadDirectory = async () => {
     return downloadDirectory;
 };
 
-// Download a specific app by package name
 export async function download(packageName, progressCallback) {
     try {
-        // Destructure the tuple returned by getURL
         const [url, apkname] = await getURL(packageName);
-
         const downloadDirectory = await createDownloadDirectory();
         const downloadDest = `${downloadDirectory}/${apkname}.apk`;
+
         console.log("download dest:", downloadDest);
         console.log("url", url);
 
@@ -85,7 +83,6 @@ export async function download(packageName, progressCallback) {
                     let progressPercent = (res.bytesWritten / res.contentLength);
                     console.log(`Progress: ${progressPercent * 100}%`);
 
-                    // Call the progress callback with the current progress
                     if (progressCallback) {
                         progressCallback(progressPercent);
                     }
@@ -100,28 +97,24 @@ export async function download(packageName, progressCallback) {
 
         if (fileExists) {
             console.log('File downloaded successfully:', downloadDest);
-            return response;  // You can return more information here if needed
+            return response;
         } else {
             throw new Error('File download failed, file does not exist.');
         }
     } catch (error) {
         console.error('Error downloading file:', error);
-        throw error;  // Rethrow the error if you want to handle it higher up the call stack
+        throw error;
     }
-}
+};
 
-// Fetch the app URL based on the package name
 const getURL = async (packageName) => {
     try {
-        // Wrap the axios request in Promise.race to implement the timeout
         const response = await Promise.race([
-            axios.get(INDEX_URL), // Axios request
-            timeout(5000, 'Server is down or taking too long to respond'), // 5-second timeout
+            axios.get(INDEX_URL),
+            timeout(5000, 'Server is down or taking too long to respond'),
         ]);
 
         const apps = response.data;
-
-        // Find the app that matches the given package name
         const app = apps.find(app => app.packageName === packageName);
         console.log("App to download:", app);
 
@@ -129,7 +122,6 @@ const getURL = async (packageName) => {
             throw new Error('App not found');
         }
 
-        // Return an array containing the URL and app name
         return [app.url, app.appName];
     } catch (error) {
         console.error('Error downloading app:', error);

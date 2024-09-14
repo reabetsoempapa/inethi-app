@@ -436,12 +436,6 @@ const HomePage = ({ logout }) => {
         <WalkthroughableView>{renderCategoryCards()}</WalkthroughableView>
       </CopilotStep>
 
-      {/* Service Container */}
-      <View style={styles.card}>
-        <ServiceContainer />
-      </View>
-
-      {/* Loading Dialog */}
       <Portal>
         {isLoading && (
           <Dialog visible={true}>

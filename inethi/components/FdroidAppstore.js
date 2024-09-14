@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, Button, Alert, Linking, ActivityIndicator, ToastAndroid, Platform } from 'react-native';
+
+import { View, Text, Image, StyleSheet, ScrollView, Button, TextInput, Alert, Linking, ActivityIndicator, ToastAndroid, Platform } from 'react-native';
 import { PermissionsAndroid } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Progress from 'react-native-progress';
@@ -40,8 +41,7 @@ const requestStoragePermission = async () => {
             );
 
             if (sdkInt >= 33) {
-                const allPermissionsGranted = permissions.every(permission => granted[permission] === PermissionsAndroid.RESULTS.GRANTED);
-                return allPermissionsGranted;
+                return permissions.every(permission => granted[permission] === PermissionsAndroid.RESULTS.GRANTED);
             } else {
                 return granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED &&
                     granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
@@ -57,36 +57,34 @@ const requestStoragePermission = async () => {
 export default function FdroidAppstore() {
     const navigation = useNavigation();
     const [apps, setApps] = useState([]);
+    const [filteredApps, setFilteredApps] = useState([]);  // State to store filtered apps
+    const [searchQuery, setSearchQuery] = useState('');    // State for search input
     const [isMoreInfor, setMoreInfor] = useState({});
     const [downloadProgress, setDownloadProgress] = useState({});
-    const [isServerDown, setIsServerDown] = useState(false); // State to track server availability
-    const [isLoading, setIsLoading] = useState(true); // For showing the loading spinner
+    const [isServerDown, setIsServerDown] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchAndCopyApps = async () => {
             const hasPermission = await requestStoragePermission();
             if (hasPermission) {
-                setIsLoading(true); // Start the loading spinner
+                setIsLoading(true);
                 try {
-                    // Set a timeout for 5 seconds to simulate server downtime
                     const appList = await Promise.race([
                         getApps(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Server timeout')), 2000))
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Server timeout')), 3000))
                     ]);
                     setApps(appList);
+                    setFilteredApps(appList);  // Initially display all apps
                     setMoreInfor(mapAppsInfor(appList));
                     setIsServerDown(false);
                 } catch (error) {
                     setIsServerDown(true);
                     await copyAssetsToLocal();
-                    if (Platform.OS === 'android') {
-                        ToastAndroid.show('Server is down, loading pre-installed apps', ToastAndroid.LONG);
-                    } else {
-                        Alert.alert('Server is down', 'Loading pre-installed apps');
-                    }
+                    showServerDownMessage();
                     console.error('Error fetching apps:', error);
                 } finally {
-                    setIsLoading(false); // Stop the loading spinner
+                    setIsLoading(false);
                 }
             }
         };
@@ -104,7 +102,27 @@ export default function FdroidAppstore() {
             });
             return appInfoMap;
         }
+
     }, [isServerDown]);
+
+    // Handle search input change and filter apps
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+
+        // Filter the apps based on the search query (case-insensitive)
+        const filtered = apps.filter(app =>
+            app.appName.toLowerCase().includes(query.toLowerCase())
+        );
+        setFilteredApps(filtered);
+    };
+
+    const showServerDownMessage = () => {
+        if (Platform.OS === 'android') {
+            ToastAndroid.show('Server is down, loading pre-installed apps', ToastAndroid.LONG);
+        } else {
+            Alert.alert('Server is down', 'Loading pre-installed apps');
+        }
+    };
 
     const copyFileFromAssets = async (assetFile, destPath) => {
         const tempPath = `${destPath}.temp`;
@@ -112,14 +130,14 @@ export default function FdroidAppstore() {
         try {
             const fileExists = await RNFS.exists(destPath);
             if (fileExists) {
-                await RNFS.unlink(destPath); // Delete the existing file
+                await RNFS.unlink(destPath);
             }
 
-            await RNFS.copyFileAssets(assetFile, tempPath); // Copy to a temporary file
-            await RNFS.moveFile(tempPath, destPath); // Move to the final path
+            await RNFS.copyFileAssets(assetFile, tempPath);
+            await RNFS.moveFile(tempPath, destPath);
         } catch (error) {
             if (await RNFS.exists(tempPath)) {
-                await RNFS.unlink(tempPath); // Clean up temp file
+                await RNFS.unlink(tempPath);
             }
             console.error(`Error copying ${assetFile}:`, error);
         }
@@ -129,11 +147,10 @@ export default function FdroidAppstore() {
         const exists = await RNFS.exists(path);
         if (!exists) {
             await RNFS.mkdir(path);
-            return false;  // Directory was just created, so it didn't exist before
+            return false;
         }
-        // Check if the directory is empty
         const files = await RNFS.readDir(path);
-        return files.length > 0;  // Return true if there are files in the directory
+        return files.length > 0;
     };
 
     const copyAssetsToLocal = async () => {
@@ -141,7 +158,6 @@ export default function FdroidAppstore() {
 
         const directoryHasFiles = await ensureDirectoryExists(downloadDirectory);
 
-        // Define asset files
         const assetFiles = [
             { name: 'ovibrations_radio_station.apk', icon: 'ovibrations_radio_station.png' },
             { name: 'extirpater.apk', icon: 'extirpater.png' },
@@ -149,7 +165,6 @@ export default function FdroidAppstore() {
             { name: 'motionlock.apk', icon: 'motionlock.png' },
             { name: 'hypatia.apk', icon: 'hypatia.png' },
         ];
-
 
         const appsWithIcons = assetFiles.map(file => ({
             appName: file.name.split('.')[0],
@@ -159,19 +174,14 @@ export default function FdroidAppstore() {
             url: `${downloadDirectory}/${file.name}`,
         }));
 
-
-        // If the directory already has files, skip copying and set apps
         if (directoryHasFiles) {
             console.log('Files already exist in the directory, skipping copy.');
-
-            
-            // Set apps and additional info
             setApps(appsWithIcons);
+            setFilteredApps(appsWithIcons);
             setMoreInfor(mapAppsInfor(appsWithIcons));
-            return;  // Early exit if files already exist
+            return;
         }
 
-        // If directory was empty, copy files from assets
         for (const file of assetFiles) {
             const appDestPath = `${downloadDirectory}/${file.name}`;
             const iconDestPath = `${downloadDirectory}/${file.icon}`;
@@ -179,11 +189,11 @@ export default function FdroidAppstore() {
             await copyFileFromAssets(file.name, appDestPath);
         }
 
-        // Create app info after copying
-        
         setApps(appsWithIcons);
+        setFilteredApps(appsWithIcons);
         setMoreInfor(mapAppsInfor(appsWithIcons));
     };
+
     const handleDownloadOrInstall = async (packageName, isServerDown, appUrl) => {
         if (isServerDown) {
             Alert.alert(
@@ -245,34 +255,41 @@ export default function FdroidAppstore() {
                     <Text style={styles.loadingText}>Loading apps...</Text>
                 </View>
             ) : (
-                <ScrollView style={styles.container}>
-                    <Button title="Back to Home" onPress={() => navigation.goBack()} />
-                    <Text style={styles.title}>App Store</Text>
-                    {apps.map(app => (
-                        <View key={app.packageName} style={styles.appContainer}>
-                            <Image source={{ uri: app.icon }} style={styles.icon} />
-                            <Text style={styles.appTitle}>{app.appName}</Text>
-                            <Text style={styles.summary}>
-                                {app.summary}.{"\n\n"}
-                                {!isServerDown && (
-                                    <Text style={styles.link} onPress={() => handleViewClick(app.packageName)}>
-                                        {" "}view description
-                                    </Text>
+                <View style={styles.container}>
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search for apps..."
+                        value={searchQuery}
+                        onChangeText={handleSearch}
+                    />
+                    <ScrollView>
+
+                        {filteredApps.map(app => (
+                            <View key={app.packageName} style={styles.appContainer}>
+                                <Image source={{ uri: app.icon }} style={styles.icon} />
+                                <Text style={styles.appTitle}>{app.appName}</Text>
+                                <Text style={styles.summary}>
+                                    {app.summary}.{"\n\n"}
+                                    {!isServerDown && (
+                                        <Text style={styles.link} onPress={() => handleViewClick(app.packageName)}>
+                                            {" "}view description
+                                        </Text>
+                                    )}
+                                </Text>
+                                {isMoreInfor[app.packageName]?.Clicked && (
+                                    <Text style={styles.description}>{app.description}</Text>
                                 )}
-                            </Text>
-                            {isMoreInfor[app.packageName]?.Clicked && (
-                                <Text style={styles.description}>{app.description}</Text>
-                            )}
-                            <Button
-                                title={isServerDown ? "Install" : "Download"}
-                                onPress={() => handleDownloadOrInstall(app.packageName, isServerDown, app.url)}
-                            />
-                            {downloadProgress[app.packageName] !== undefined && !isServerDown && (
-                                <Progress.Bar progress={downloadProgress[app.packageName]} width={null} style={styles.progressBar} />
-                            )}
-                        </View>
-                    ))}
-                </ScrollView>
+                                <Button
+                                    title={isServerDown ? "Install" : "Download"}
+                                    onPress={() => handleDownloadOrInstall(app.packageName, isServerDown, app.url)}
+                                />
+                                {downloadProgress[app.packageName] !== undefined && !isServerDown && (
+                                    <Progress.Bar progress={downloadProgress[app.packageName]} width={null} style={styles.progressBar} />
+                                )}
+                            </View>
+                        ))}
+                    </ScrollView>
+                </View>
             )}
         </View>
     );
@@ -283,6 +300,14 @@ const styles = StyleSheet.create({
         padding: 20,
         backgroundColor: '#f8f8f8',
     },
+    searchInput: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+        marginBottom: 20,
+    },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
@@ -290,7 +315,7 @@ const styles = StyleSheet.create({
     },
     summary: {
         fontSize: 15,
-        marginBottom: 20,
+        marginBottom: 10,
     },
     link: {
         color: 'blue',
