@@ -43,21 +43,20 @@ const HomePage = ({ logout }) => {
         url: '',
       },
     ],
-    Navigator: [{ name: 'FindHotspot', action: () => handleFindHotspotClick() }],
+    Navigator: [
+      { name: 'Hotspot Services', action: () => handleHotspotOptionsClick() },
+    ],
     Appstore: [{ name: 'AppStore', action: () => handleAppstoreClick() }],
   });
 
   const handleAppstoreClick = () => {
-    console.log('appstore clicked');
     logAnalyticsEvent('navigate_to_AppStore', { feature: 'App Store' });
     navigation.navigate('AppStore');
   };
 
-  const handleFindHotspotClick = async () => {
-    await logAnalyticsEvent('find_hotspot_button_clicked', {
-      button: 'FindHotspot',
-    });
-    navigation.navigate('Map');
+  const handleHotspotOptionsClick = () => {
+    logAnalyticsEvent('navigate_to_HotspotOptions', { feature: 'Hotspot Options' });
+    navigation.navigate('HotspotOptions'); // Navigates to HotspotOptionsPage
   };
 
   useEffect(() => {
@@ -107,44 +106,30 @@ const HomePage = ({ logout }) => {
 
   const renderButtons = buttons => {
     const buttonRows = [];
-    for (let i = 0; i < buttons.length; i += 2) {
-      const pair = buttons.slice(i, i + 2);
+    for (let i = 0; i < buttons.length; i++) {
+      const { name, action, url } = buttons[i];
       buttonRows.push(
-        <View key={i} style={styles.buttonRow}>
-          {pair.map(({ name, action, url, requiresWallet, disabled }, idx) => {
-            const isDisabled = (requiresWallet && !hasWallet) || disabled;
-
-            return (
-              <Button
-                key={idx}
-                mode="contained"
-                onPress={() => {
-                  if (action && !isDisabled) {
-                    action();
-                  } else if (url && !isDisabled) {
-                    navigation.navigate('WebView', { url });
-                  } else {
-                    console.error('Button has no action or URL');
-                  }
-                }}
-                style={[styles.button, isDisabled && styles.buttonDisabled]}
-                labelStyle={
-                  isDisabled ? styles.buttonTextDisabled : styles.buttonText
-                }
-                disabled={isDisabled}
-                icon={() => {
-                  if (name === 'FindHotspot') {
-                    return (
-                      <Ionicons name="map-outline" size={20} color="#FFFFFF" />
-                    );
-                  }
-                  return null;
-                }}>
-                {name}
-              </Button>
-            );
-          })}
-        </View>,
+        <Button
+          key={i}
+          mode="contained"
+          onPress={() => {
+            if (action) {
+              action();
+            } else if (url) {
+              navigation.navigate('WebView', { url });
+            }
+          }}
+          style={styles.button}
+          labelStyle={styles.buttonText}
+          icon={() => {
+            if (name === 'Hotspot Services') {
+              return <Ionicons name="map-outline" size={20} color="#FFFFFF" />;
+            }
+            return null;
+          }}
+        >
+          {name}
+        </Button>,
       );
     }
     return buttonRows;

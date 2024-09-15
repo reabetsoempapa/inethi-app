@@ -13,7 +13,6 @@ import WebViewComponent from './components/WebViewComponent';
 import PaymentPage from './pages/Wallet Pages/PaymentPage';
 import RegisterPage from './pages/RegisterPage';
 import {BalanceProvider} from './context/BalanceContext';
-import ServiceContainer from './components/ServiceContainer';
 import FdroidAppstore from './components/FdroidAppstore';
 import MapPage from './pages/MapPage';
 import WalletCategoriesPage from './pages/Wallet Pages/Wallet';
@@ -28,51 +27,56 @@ import PaymentUnsuccessful from './pages/Wallet Pages/PaymentFail';
 import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
 import SetupPIN from './pages/Wallet Pages/PinScreen';
+import HotspotOptionsPage from './pages/HotspotOptionsPage';
+import RequestNodePage from './pages/RequestNodePage'; // Ensure this is imported
 
-// Import CopilotProvider
-import { CopilotProvider } from 'react-native-copilot';
+import {CopilotProvider} from 'react-native-copilot';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Home Page Stack
-const HomePageStack = ({logout}) => {
+const HomePageStack = ({ logout }) => {
   return (
     <Stack.Navigator>
       <Stack.Screen
         name="HomeScreen"
         options={{
-          header: ({navigation}) => (
+          header: ({ navigation }) => (
             <AppBarComponent title="Home" logout={logout} />
           ),
-        }}>
+        }}
+      >
         {props => <HomePage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
-        name="AppStore"
+        name="RequestNode"
         options={{
-          header: ({navigation}) => (
-            <AppBarComponent title="App Store" logout={logout} />
+          header: ({ navigation }) => (
+            <AppBarComponent title="Request Node" logout={logout} />
           ),
-        }}>
-        {props => <FdroidAppstore {...props} logout={logout} />}
+        }}
+      >
+        {props => <RequestNodePage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
-        name="WebView"
+        name="HotspotOptions"
         options={{
-          header: ({navigation}) => (
-            <AppBarComponent title="Web View" logout={logout} />
+          header: ({ navigation }) => (
+            <AppBarComponent title="Hotspot Options" logout={logout} />
           ),
-        }}>
-        {props => <WebViewComponent {...props} logout={logout} />}
+        }}
+      >
+        {props => <HotspotOptionsPage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
         name="Map"
         options={{
-          header: ({navigation}) => (
+          header: ({ navigation }) => (
             <AppBarComponent title="Map" logout={logout} />
           ),
-        }}>
+        }}
+      >
         {props => <MapPage {...props} logout={logout} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -260,8 +264,6 @@ const App = () => {
     await AsyncStorage.setItem('userToken', token);
     await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());
     await AsyncStorage.setItem('refreshToken', refresh_token);
-
-    console.log("token :", token)
     setUserToken(token);
   };
 
