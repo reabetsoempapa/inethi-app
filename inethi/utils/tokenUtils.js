@@ -21,11 +21,13 @@ export const getToken = async logout => {
   return token;
 };
 
-export const storeToken = async (token, expiresIn) => {
+export const storeToken = async (token, expiresIn, username) => {
   const expiryDate = new Date().getTime() + expiresIn * 1000;
   await AsyncStorage.setItem('userToken', token);
   await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());
+  await AsyncStorage.setItem('username', username); // Store username
 };
+
 
 export const isTokenExpired = async () => {
   const expiryDate = await AsyncStorage.getItem('tokenExpiry');

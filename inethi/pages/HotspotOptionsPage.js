@@ -10,7 +10,7 @@ const HotspotOptionsPage = ({ logout }) => {
 
   return (
     <>
-      <AppBarComponent title="Hotspot Options" logout={logout} hideKrone={true} />
+      <AppBarComponent title="HotSpot" logout={logout} hideKrone={true} />
       <View style={styles.container}>
         <Card style={styles.card}>
           <Card.Content>

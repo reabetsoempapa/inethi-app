@@ -53,7 +53,7 @@ const HomePageStack = ({ logout }) => {
         name="RequestNode"
         options={{
           header: ({ navigation }) => (
-            <AppBarComponent title="Request Node" logout={logout} />
+            <AppBarComponent title="Installation" logout={logout} />
           ),
         }}
       >
@@ -62,9 +62,7 @@ const HomePageStack = ({ logout }) => {
       <Stack.Screen
         name="HotspotOptions"
         options={{
-          header: ({ navigation }) => (
-            <AppBarComponent title="Hotspot Options" logout={logout} />
-          ),
+          headerShown: false, // Disable header here
         }}
       >
         {props => <HotspotOptionsPage {...props} logout={logout} />}
