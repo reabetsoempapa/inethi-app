@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import {
   View,
   StyleSheet,
@@ -6,7 +6,6 @@ import {
   Alert,
   Platform,
   PermissionsAndroid,
-  NetInfo,
 } from 'react-native';
 import {Button, IconButton, Text} from 'react-native-paper';
 import {useRoute} from '@react-navigation/native';
@@ -16,69 +15,102 @@ import QRCode from 'react-native-qrcode-svg';
 import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getToken} from '../../utils/tokenUtils';
+import NetInfo from '@react-native-community/netinfo';
 
 const WalletDetailsPage = () => {
   const route = useRoute();
-  const {walletAddress} = route.params || {};
+  const {walletAddress: routeWalletAddress} = route.params || {};
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletDetailsEndpoint = `/wallet/details`;
 
   const [walletDetails, setWalletDetails] = useState(null);
+  const [walletAddress, setWalletAddress] = useState(routeWalletAddress);
   const [isLoading, setIsLoading] = useState(true);
-  const [qrCodeRef, setQrCodeRef] = useState(null);
   const [isOnline, setIsOnline] = useState(true);
+  const qrCodeRef = useRef();
 
   useEffect(() => {
+    console.log('WalletDetailsPage mounted');
     checkNetworkStatus();
-    if (walletAddress) {
-      fetchWalletDetails();
-    } else {
-      Alert.alert('Error', 'No wallet address provided.');
-      setIsLoading(false);
-    }
-  }, [walletAddress]);
+    initializeWalletAddress();
+    return () => {
+      console.log('WalletDetailsPage unmounted');
+    };
+  }, []);
 
-  const checkNetworkStatus = async () => {
-    const state = await NetInfo.fetch();
-    setIsOnline(state.isConnected);
+  const initializeWalletAddress = async () => {
+    console.log('Initializing wallet address');
+    if (routeWalletAddress) {
+      console.log('Wallet address provided in route:', routeWalletAddress);
+      setWalletAddress(routeWalletAddress);
+      await AsyncStorage.setItem('@wallet_address', routeWalletAddress);
+    } else {
+      const storedAddress = await AsyncStorage.getItem('@wallet_address');
+      if (storedAddress) {
+        console.log('Retrieved stored wallet address:', storedAddress);
+        setWalletAddress(storedAddress);
+      } else {
+        console.log('No wallet address available');
+        Alert.alert('Error', 'No wallet address available.');
+      }
+    }
+    fetchWalletDetails();
   };
 
-  const fetchWalletDetails = async () => {
+  const checkNetworkStatus = useCallback(async () => {
+    const state = await NetInfo.fetch();
+    console.log('Network status:', state.isConnected ? 'Online' : 'Offline');
+    setIsOnline(state.isConnected);
+  }, []);
+
+  const fetchWalletDetails = useCallback(async () => {
     console.log('Fetching Wallet details');
     setIsLoading(true);
     try {
       if (isOnline) {
         const token = await getToken();
+        console.log('Token retrieved');
         const config = {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         };
+        console.log(
+          'Sending request to:',
+          `${baseURL}${walletDetailsEndpoint}`,
+        );
         const response = await axios.get(
           `${baseURL}${walletDetailsEndpoint}`,
           config,
         );
+        console.log('Wallet details received:', response.data);
         setWalletDetails(response.data);
         await AsyncStorage.setItem(
           '@wallet_details',
           JSON.stringify(response.data),
         );
+        console.log('Wallet details cached');
       } else {
+        console.log('Offline: Retrieving cached wallet details');
         const cachedData = await AsyncStorage.getItem('@wallet_details');
         if (cachedData) {
+          console.log('Cached wallet details found');
           setWalletDetails(JSON.parse(cachedData));
         } else {
+          console.log('No cached wallet details available');
           Alert.alert('Offline', 'No cached data available');
         }
       }
     } catch (error) {
+      console.error('Error fetching wallet details:', error);
       handleError(error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isOnline]);
 
+  // ... (keep the rest of the functions like handleError, requestStoragePermission, handleDownloadQrCode, and handleCopyAddress)
   const handleError = error => {
     if (error.response) {
       switch (error.response.status) {
@@ -163,13 +195,12 @@ const WalletDetailsPage = () => {
       Alert.alert('Error', 'Failed to save QR code');
     }
   };
-
   const handleCopyAddress = () => {
     Clipboard.setString(walletDetails.wallet_address);
     Alert.alert('Copied', 'Wallet address copied to clipboard');
   };
-
   if (isLoading) {
+    console.log('Rendering loading state');
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -177,6 +208,7 @@ const WalletDetailsPage = () => {
     );
   }
 
+  console.log('Rendering wallet details');
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
@@ -189,13 +221,13 @@ const WalletDetailsPage = () => {
             {walletDetails?.balance || '0.0'} Krone
           </Text>
         </View>
-        {walletDetails && (
+        {walletAddress && (
           <>
             <View style={styles.qrCodeContainer}>
               <QRCode
-                value={walletDetails.wallet_address}
+                value={walletAddress}
                 size={200}
-                getRef={ref => setQrCodeRef(ref)}
+                getRef={ref => (qrCodeRef.current = ref)}
               />
             </View>
             <View style={styles.walletAddressContainer}>
@@ -203,7 +235,7 @@ const WalletDetailsPage = () => {
                 style={styles.walletAddress}
                 numberOfLines={1}
                 ellipsizeMode="middle">
-                {walletDetails.wallet_address}
+                {walletAddress}
               </Text>
               <IconButton
                 icon="content-copy"
@@ -227,6 +259,8 @@ const WalletDetailsPage = () => {
     </View>
   );
 };
+
+// ... (keep the styles as they were)
 
 const styles = StyleSheet.create({
   container: {
