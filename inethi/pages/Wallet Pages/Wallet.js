@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback, useRef} from 'react';
-import {View, StyleSheet, ScrollView, Alert, Text} from 'react-native';
+import {View, StyleSheet, ScrollView, Alert} from 'react-native';
 import {
   IconButton,
   Card,

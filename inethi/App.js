@@ -185,23 +185,6 @@ const WalletPageStack = ({logout}) => {
   );
 };
 
-// Settings Page Stack
-const SettingsPageStack = ({logout}) => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="SettingsPage"
-        options={{
-          header: ({navigation}) => (
-            <AppBarComponent title="Settings" logout={logout} />
-          ),
-        }}>
-        {props => <SettingsPage {...props} logout={logout} />}
-      </Stack.Screen>
-    </Stack.Navigator>
-  );
-};
-
 // Main Tabs
 const MainTabs = ({navigation, logout}) => {
   return (
@@ -246,20 +229,6 @@ const MainTabs = ({navigation, logout}) => {
         {props => <HelpPage {...props} />}
       </Tab.Screen>
     </Tab.Navigator>
-  );
-};
-
-// Main App Routes
-const AppRoutes = ({logout}) => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="MainTabs" options={{headerShown: false}}>
-        {props => <MainTabs {...props} logout={logout} />}
-      </Stack.Screen>
-      <Stack.Screen name="WalletPageStack" options={{headerShown: false}}>
-        {props => <WalletPageStack {...props} logout={logout} />}
-      </Stack.Screen>
-    </Stack.Navigator>
   );
 };
 

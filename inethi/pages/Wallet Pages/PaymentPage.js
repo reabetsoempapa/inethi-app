@@ -26,6 +26,7 @@ import {
 } from 'react-native-vision-camera';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {isValidWalletAddress} from './Helpers/WalletAdressValidator';
 
 const PaymentPage = () => {
   const {balance, fetchBalance, updateBalance} = useBalance();
@@ -45,7 +46,43 @@ const PaymentPage = () => {
   const device = useCameraDevice('back');
   const {hasPermission, requestPermission} = useCameraPermission();
   const [isPinSet, setIsPinSet] = useState(false);
+  useEffect(() => {
+    setIsButtonDisabled(
+      !(
+        receiver &&
+        amount &&
+        (paymentMethod === 'username' || isValidWalletAddress(receiver))
+      ),
+    );
+  }, [receiver, amount, paymentMethod]);
 
+  const handleSendPayment = () => {
+    if (!receiver || !amount) {
+      setError('Both fields are required');
+      return;
+    }
+
+    if (paymentMethod === 'walletAddress' && !isValidWalletAddress(receiver)) {
+      setError('Invalid wallet address format');
+      return;
+    }
+
+    if (!isPinSet) {
+      Alert.alert(
+        'PIN Not Set',
+        'Please set up a PIN before making a payment.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('SetupPIN'),
+          },
+        ],
+      );
+      return;
+    }
+    setError('');
+    setIsPinModalVisible(true);
+  };
   useEffect(() => {
     checkPinStatus();
     updateBalance(500);
@@ -67,31 +104,6 @@ const PaymentPage = () => {
       console.error('Error checking PIN status:', error);
       Alert.alert('Error', 'Failed to check PIN status. Please try again.');
     }
-  };
-
-  const handleSendPayment = () => {
-    if (!receiver || !amount) {
-      setError('Both fields are required');
-      return;
-    }
-
-    if (!isPinSet) {
-      Alert.alert(
-        'PIN Not Set',
-        'Please set up a PIN before making a payment.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('SetupPIN'),
-          },
-        ],
-      );
-      return;
-    }
-
-    // Clear any previous errors and open the PIN modal
-    setError('');
-    setIsPinModalVisible(true);
   };
 
   const verifyPinAndProceed = async () => {
@@ -231,7 +243,10 @@ const PaymentPage = () => {
                 : 'Wallet address'
             }
             value={receiver}
-            onChangeText={setReceiver}
+            onChangeText={text => {
+              setReceiver(text);
+              setError(''); // Clear error when input changes
+            }}
             style={styles.input}
             left={
               <TextInput.Icon
@@ -244,7 +259,19 @@ const PaymentPage = () => {
                 )}
               />
             }
+            error={
+              paymentMethod === 'walletAddress' &&
+              !isValidWalletAddress(receiver) &&
+              receiver !== ''
+            }
           />
+          {paymentMethod === 'walletAddress' &&
+            !isValidWalletAddress(receiver) &&
+            receiver !== '' && (
+              <Paragraph style={styles.errorText}>
+                Invalid wallet address format
+              </Paragraph>
+            )}
           <TextInput
             label="Amount"
             value={amount}
