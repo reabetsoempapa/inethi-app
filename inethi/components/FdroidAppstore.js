@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, Image, Alert, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
-
 import { useNavigation } from '@react-navigation/native';
 import * as Progress from 'react-native-progress';
 import RNFS from 'react-native-fs';
@@ -9,8 +8,8 @@ import * as amplitude from '@amplitude/analytics-react-native';
 import AppRating from './AppRating';
 import _ from 'lodash';
 import Ionicons from 'react-native-vector-icons/Ionicons'; // For minimize icon
-import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
-import {requestStoragePermission} from "../service/Permissions"
+import { requestStoragePermission } from "../service/Permissions"
+import { getDownloadedAppsCache, setDownloadedAppsCache, isCacheValid } from '../service/Cache'; // Updated cache service
 
 amplitude.init('d584a34a7957c1300fa733ee33a3a960');
 
@@ -26,6 +25,8 @@ export default function FdroidAppstore() {
     const [isLoading, setIsLoading] = useState(true);
     const [user_id, setUserId] = useState("");
     const [isExpanded, setIsExpanded] = useState({});
+    const [downloadedApps, setDownloadedApps] = useState([]); // Cache for downloaded apps
+
 
 
     useEffect(() => {
@@ -36,12 +37,19 @@ export default function FdroidAppstore() {
                 try {
                     const appList = await Promise.race([
                         getApps(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Server timeout')), 3000))
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Server timeout')), 5000))
                     ]);
+
                     setApps(appList);
                     setFilteredApps(appList);  // Initially display all apps
                     setMoreInfor(mapAppsInfor(appList));
                     setIsServerDown(false);
+
+                    // Load downloaded apps from cache
+                    const cachedApps = await getDownloadedAppsCache();
+                    if (cachedApps && isCacheValid(cachedApps)) {
+                        setDownloadedApps(cachedApps.data);
+                    }
                 } catch (error) {
                     setIsServerDown(true);
                     await copyAssetsToLocal();
@@ -68,6 +76,10 @@ export default function FdroidAppstore() {
         }
 
     }, [isServerDown]);
+    // Function to check if the app has already been downloaded
+    const isAppDownloaded = (packageName) => {
+        return downloadedApps.includes(packageName);
+    };
 
     // Debounce the search input to limit the number of filter operations
     const handleSearch = useCallback(
@@ -197,6 +209,12 @@ export default function FdroidAppstore() {
 
                 if (response.statusCode === 200) {
                     amplitude.track('App Downloaded', { packageName });
+
+                    // Update downloaded apps cache
+                    const newDownloadedApps = [...downloadedApps, packageName];
+                    await setDownloadedAppsCache(newDownloadedApps);
+                    setDownloadedApps(newDownloadedApps);  // Update local state
+
                     Alert.alert('Download Complete', 'Go to Download folder and click on MyAppDownloads', [
                         {
                             text: 'Open Files',
@@ -213,7 +231,7 @@ export default function FdroidAppstore() {
         }
     };
 
- 
+
 
     return (
         <View style={{ flex: 1 }}>
@@ -277,14 +295,15 @@ export default function FdroidAppstore() {
                                             <Text style={styles.subTitle}>About this App</Text>
                                             <Text style={styles.description}>{app.description}</Text>
 
-                                            {/* Download Button */}
+                                            {/* Download/Install Button */}
                                             <TouchableOpacity
                                                 style={styles.downloadButton}
                                                 onPress={() => handleDownloadOrInstall(app.packageName, isServerDown, app.url)}
                                             >
-                                                <Text style={styles.downloadButtonText}>{isServerDown ? "Install" : "Download"}</Text>
+                                                <Text style={styles.downloadButtonText}>
+                                                    {isAppDownloaded(app.packageName) ? 'Install' : 'Download'}
+                                                </Text>
                                             </TouchableOpacity>
-
                                             {/* Download Progress */}
                                             {downloadProgress[app.packageName] !== undefined && !isServerDown && (
                                                 <Progress.Bar progress={downloadProgress[app.packageName]} width={null} style={styles.progressBar} />

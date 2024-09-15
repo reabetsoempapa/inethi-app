@@ -16,14 +16,7 @@ const axiosInstance = axios.create({
 
 export const getRating = async (appId) => {
     try {
-        const response = await axiosInstance.get(`/rating/${appId}`, {
-            // Disable cache at the request level as well
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
-        });
+        const response = await axiosInstance.get(`/rating/${appId}`);
         return response.data.avgRating;
     } catch (error) {
         console.error('Error fetching rating:', error);

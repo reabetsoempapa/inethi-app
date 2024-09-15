@@ -33,7 +33,7 @@ export default function ReviewPage({ route }) {
                             disabled={true}
                             maxStars={5}
                             rating={review.rating}
-                            fullStarColor="gold"
+                            fullStarColor="blue"
                             starSize={18}
                         />
                         <Text style={styles.comment}>{review.comment || 'No comment provided.'}</Text>
