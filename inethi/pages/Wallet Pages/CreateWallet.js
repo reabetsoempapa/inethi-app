@@ -1,19 +1,39 @@
 import React, {useState} from 'react';
 import {View, StyleSheet, Alert, ScrollView, Text} from 'react-native';
 import {Button, TextInput, Paragraph} from 'react-native-paper';
-import {useNavigation} from '@react-navigation/native'; // Correct navigation hook
+import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getToken} from '../../utils/tokenUtils';
 import {useBalance} from '../../context/BalanceContext';
 
 const CreateWalletPage = () => {
   const baseURL = 'https://manage-backend.inethicloud.net';
   const walletCreateEndpoint = '/wallet/create/';
-  const navigation = useNavigation(); // Use the correct hook
+  const navigation = useNavigation();
   const {fetchBalance} = useBalance();
   const [walletName, setWalletName] = useState('');
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const storePin = async pin => {
+    try {
+      await AsyncStorage.setItem('@wallet_pin', pin);
+      console.log('PIN stored successfully');
+      // Verify PIN storage
+      const storedPin = await AsyncStorage.getItem('@wallet_pin');
+      if (storedPin === pin) {
+        console.log('PIN verification successful');
+      } else {
+        console.error('PIN verification failed');
+      }
+    } catch (e) {
+      console.error('Failed to save the PIN.', e);
+      Alert.alert('Error', 'Failed to save the PIN. Please try again.');
+    }
+  };
 
   const handleCreateWallet = async () => {
     if (!walletName) {
@@ -21,7 +41,18 @@ const CreateWalletPage = () => {
       return;
     }
 
+    if (pin.length !== 5 || !/^\d+$/.test(pin)) {
+      Alert.alert('Error', 'PIN must be exactly 5 digits.');
+      return;
+    }
+
+    if (pin !== confirmPin) {
+      Alert.alert('Error', 'PINs do not match.');
+      return;
+    }
+
     setIsLoading(true);
+    setError('');
 
     try {
       const token = await getToken();
@@ -38,12 +69,13 @@ const CreateWalletPage = () => {
       );
 
       if (response.status === 201) {
+        await storePin(pin);
         Alert.alert(
           'Success',
           `Wallet created successfully! Address: ${response.data.address}, Name: ${response.data.name}`,
         );
         fetchBalance();
-        navigation.goBack(); // Navigate back after successful creation
+        navigation.goBack();
       }
     } catch (error) {
       console.error('Error creating wallet:', error);
@@ -66,6 +98,7 @@ const CreateWalletPage = () => {
       } else {
         setError(`Failed to create wallet: ${error.message}`);
       }
+      Alert.alert('Error', error.message || 'An unexpected error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -75,13 +108,35 @@ const CreateWalletPage = () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.formContainer}>
         <Text style={styles.headerText}>Create Wallet</Text>
-
         <TextInput
           label="Wallet Name"
           value={walletName}
           onChangeText={text => setWalletName(text)}
           style={styles.input}
           mode="outlined"
+          placeholder="Enter a name for your wallet"
+        />
+        <TextInput
+          label="5-Digit PIN"
+          value={pin}
+          onChangeText={text => setPin(text)}
+          style={styles.input}
+          mode="outlined"
+          keyboardType="numeric"
+          maxLength={5}
+          secureTextEntry
+          placeholder="Enter a 5-digit PIN"
+        />
+        <TextInput
+          label="Confirm PIN"
+          value={confirmPin}
+          onChangeText={text => setConfirmPin(text)}
+          style={styles.input}
+          mode="outlined"
+          keyboardType="numeric"
+          maxLength={5}
+          secureTextEntry
+          placeholder="Re-enter your 5-digit PIN"
         />
         {error && <Paragraph style={styles.error}>{error}</Paragraph>}
         <Button
@@ -95,7 +150,6 @@ const CreateWalletPage = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
