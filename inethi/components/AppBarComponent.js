@@ -8,6 +8,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import {useNavigation} from '@react-navigation/native';
 
 const NETWORK_SERVICE_URL = 'https://nextcloud.inethicloud.net/';
+const BALANCE_STORAGE_KEY = '@last_known_balance';
 
 const AppBarComponent = ({title, logout}) => {
   const {balance} = useBalance();
@@ -16,8 +17,7 @@ const AppBarComponent = ({title, logout}) => {
   const [appState, setAppState] = useState(AppState.currentState);
   const navigation = useNavigation();
   const [isOnline, setIsOnline] = useState(true);
-  const [data, setData] = useState('1GB');
-  const [time, setTime] = useState('12:00');
+  const [displayBalance, setDisplayBalance] = useState('');
 
   const checkConnection = async () => {
     try {
@@ -72,6 +72,22 @@ const AppBarComponent = ({title, logout}) => {
     };
   }, [appState]);
 
+  useEffect(() => {
+    const updateBalance = async () => {
+      if (isOnline && balance) {
+        setDisplayBalance(balance);
+        await AsyncStorage.setItem(BALANCE_STORAGE_KEY, balance);
+      } else if (!isOnline) {
+        const lastKnownBalance = await AsyncStorage.getItem(
+          BALANCE_STORAGE_KEY,
+        );
+        setDisplayBalance(lastKnownBalance || 'N/A');
+      }
+    };
+
+    updateBalance();
+  }, [isOnline, balance]);
+
   const hideDialog = async () => {
     setVisible(false);
     await AsyncStorage.setItem('hasShownNetworkDialog', 'true');
@@ -105,7 +121,7 @@ const AppBarComponent = ({title, logout}) => {
             {title && <Text style={styles.title}>{title}</Text>}
           </View>
           <View style={styles.rightSection}>
-            <Text style={styles.balanceText}>{balance}</Text>
+            <Text style={styles.balanceText}>{displayBalance}</Text>
             <View style={styles.iconContainer}>
               <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
               <MaterialCommunityIcons
