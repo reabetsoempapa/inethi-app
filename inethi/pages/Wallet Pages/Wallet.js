@@ -36,6 +36,7 @@ const WalletCategoriesPage = () => {
   const {start, copilotEvents, stop} = useCopilot();
   console.log('Route params:', route.params);
   console.log('tutorialStartedRef.current', tutorialStartedRef.current);
+  console.log(route.params?.startTutorial);
 
   useEffect(() => {
     const handleStepChange = step => {
@@ -45,6 +46,8 @@ const WalletCategoriesPage = () => {
     const handleStop = () => {
       stop();
       console.log('Tutorial finished');
+      navigation.setParams({startTutorial: null});
+
       tutorialStartedRef.current = false;
       setIsTutorialStarted(false);
       // Navigate back to the HomeScreen
