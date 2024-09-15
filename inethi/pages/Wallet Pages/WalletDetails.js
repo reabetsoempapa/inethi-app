@@ -229,12 +229,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   balanceContainer: {
+    marginTop: 50,
     alignItems: 'center',
     marginBottom: 10,
   },
   balanceLabel: {
-    marginTop: 5,
-    fontSize: 8,
+    marginTop: 35,
+    fontSize: 18,
     color: '#666',
   },
   balanceAmount: {

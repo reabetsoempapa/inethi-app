@@ -174,8 +174,8 @@ const WalletCategoriesPage = () => {
       return (
         <View style={styles.balanceContainer}>
           {/* <Text style={styles.balanceLabel}>Balance</Text> */}
-          <Text style={styles.balanceAmount}>{balance} Krone</Text>
-          <Text style={styles.walletAddress}>{walletAddress}</Text>
+          {/* <Text style={styles.balanceAmount}>{balance} Krone</Text>
+          <Text style={styles.walletAddress}>{walletAddress}</Text> */}
         </View>
       );
     } else if (index === 1) {
