@@ -198,14 +198,16 @@ const WalletCategoriesPage = () => {
               name={`wallet_step_${idx + 1}`}
               key={idx}>
               <WalkthroughableView style={styles.buttonWrapper}>
-                <IconButton
-                  icon={icon}
-                  size={40}
-                  onPress={action}
-                  disabled={isDisabled}
-                  style={styles.icon}
-                />
-                <Text style={styles.buttonLabel}>{name}</Text>
+                <View style={styles.iconTextContainer}>
+                  <IconButton
+                    icon={icon}
+                    size={40}
+                    onPress={action}
+                    disabled={isDisabled}
+                    style={styles.icon}
+                  />
+                  <Text style={styles.buttonLabel}>{name}</Text>
+                </View>
               </WalkthroughableView>
             </CopilotStep>
           );

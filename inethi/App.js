@@ -286,17 +286,17 @@ const App = () => {
               overlay="svg"
               animated={true}
               tooltipStyle={{
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                backgroundColor: '#e1e8f2',
                 borderRadius: 10,
                 paddingHorizontal: 20,
-                paddingVertical: 10,
+                paddingVertical: 15,
               }}
               stepNumberStyle={{
                 backgroundColor: '#4285F4',
                 color: '#FFFFFF',
               }}
               arrowColor={'rgba(0, 0, 0, 0.8)'}
-              verticalOffset={36}>
+              verticalOffset={55}>
               {userToken ? (
                 <Stack.Navigator>
                   <Stack.Screen
