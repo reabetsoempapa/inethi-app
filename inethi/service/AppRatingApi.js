@@ -13,8 +13,7 @@ export const getRating = async (appId) => {
         return 0; // Return a default rating if there is an error
     }
 };
-
-export const rate = async (rating, appId) => {
+export const rate = async (rating, appId, userName = null, comment = null) => {
     try {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) {
@@ -27,8 +26,11 @@ export const rate = async (rating, appId) => {
         const decodedPayload = Buffer.from(base64Url, 'base64').toString('utf-8');
         const userId = JSON.parse(decodedPayload).sub;
 
-        // Submit the rating with the userId
-        await axios.post(`${BaseURL}/rating/${appId}`, { rating, userId });
+
+        console.log("Inside rate function :", userName, comment)
+
+        // Submit the rating with userId, userName, and comment
+        await axios.post(`${BaseURL}/rating/${appId}`, { rating, userId, userName, comment });
 
         // Return the new average rating after submitting
         const response = await axios.get(`${BaseURL}/rating/${appId}`);
@@ -36,5 +38,16 @@ export const rate = async (rating, appId) => {
     } catch (error) {
         console.error('Error submitting rating:', error);
         return null; // Return null if the rating submission fails
+    }
+};
+
+
+export const getAllRatings = async () => {
+    try {
+        const response = await axios.get(`${BaseURL}/ratings`);
+        return response.data; // Return all ratings as an array of objects
+    } catch (error) {
+        console.error('Error fetching all ratings:', error);
+        return []; // Return an empty array if there is an error
     }
 };
