@@ -6,25 +6,18 @@ import {
   Alert,
   Platform,
   PermissionsAndroid,
+  NetInfo,
 } from 'react-native';
-import {
-  Button,
-  Title,
-  Paragraph,
-  IconButton,
-  useTheme,
-  Card,
-  Text,
-} from 'react-native-paper';
+import {Button, IconButton, Text} from 'react-native-paper';
 import {useRoute} from '@react-navigation/native';
 import axios from 'axios';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import RNFS from 'react-native-fs';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getToken} from '../../utils/tokenUtils';
 
 const WalletDetailsPage = () => {
-  const theme = useTheme();
   const route = useRoute();
   const {walletAddress} = route.params || {};
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -33,8 +26,10 @@ const WalletDetailsPage = () => {
   const [walletDetails, setWalletDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [qrCodeRef, setQrCodeRef] = useState(null);
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
+    checkNetworkStatus();
     if (walletAddress) {
       fetchWalletDetails();
     } else {
@@ -43,26 +38,44 @@ const WalletDetailsPage = () => {
     }
   }, [walletAddress]);
 
+  const checkNetworkStatus = async () => {
+    const state = await NetInfo.fetch();
+    setIsOnline(state.isConnected);
+  };
+
   const fetchWalletDetails = async () => {
     console.log('Fetching Wallet details');
     setIsLoading(true);
     try {
-      const token = await getToken();
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      };
-      const response = await axios.get(
-        `${baseURL}${walletDetailsEndpoint}`,
-        config,
-      );
-      setWalletDetails(response.data);
-      setIsLoading(false);
+      if (isOnline) {
+        const token = await getToken();
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        };
+        const response = await axios.get(
+          `${baseURL}${walletDetailsEndpoint}`,
+          config,
+        );
+        setWalletDetails(response.data);
+        await AsyncStorage.setItem(
+          '@wallet_details',
+          JSON.stringify(response.data),
+        );
+      } else {
+        const cachedData = await AsyncStorage.getItem('@wallet_details');
+        if (cachedData) {
+          setWalletDetails(JSON.parse(cachedData));
+        } else {
+          Alert.alert('Offline', 'No cached data available');
+        }
+      }
     } catch (error) {
-      setIsLoading(false);
       handleError(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -167,6 +180,9 @@ const WalletDetailsPage = () => {
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
+        {!isOnline && (
+          <Text style={styles.offlineText}>Offline: Showing cached data</Text>
+        )}
         <View style={styles.balanceContainer}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
           <Text style={styles.balanceAmount}>
@@ -273,6 +289,11 @@ const styles = StyleSheet.create({
   },
   downloadButtonLabel: {
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  offlineText: {
+    color: '#007AFF',
+    marginBottom: 10,
     fontWeight: 'bold',
   },
 });
