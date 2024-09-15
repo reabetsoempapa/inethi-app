@@ -70,6 +70,8 @@ const CreateWalletPage = () => {
         navigation.goBack();
       }
     } catch (error) {
+      await storePin(response.data.address, pin);
+
       console.error('Error creating wallet:', error);
       if (error.response) {
         if (error.response.status === 400) {

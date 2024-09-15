@@ -27,6 +27,7 @@ import PaymentSuccess from './pages/Wallet Pages/PaymentSuccess';
 import PaymentUnsuccessful from './pages/Wallet Pages/PaymentFail';
 import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
+import SetupPIN from './pages/Wallet Pages/PinScreen';
 
 import {CopilotProvider} from 'react-native-copilot';
 
@@ -121,6 +122,15 @@ const WalletPageStack = () => {
         }}
       />
       <Stack.Screen
+        name="SetupPIN"
+        component={SetupPIN}
+        options={{
+          header: ({navigation, route, options}) => (
+            <AppBarComponent title="Pin" logout={options.logout} />
+          ),
+        }}
+      />
+      <Stack.Screen
         name="CreateWallet"
         component={CreateWalletPage}
         options={{
@@ -189,7 +199,7 @@ const SettingsPageStack = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Settings"
+        name="SettingsPage"
         component={SettingsPage}
         options={{
           header: ({navigation, route, options}) => (
@@ -242,7 +252,7 @@ const AppRoutes = ({logout, userToken}) => {
         })}
       />
       <Tab.Screen
-        name="Settings"
+        name="SettingsPage"
         component={SettingsPageStack}
         options={{headerShown: false}}
       />
