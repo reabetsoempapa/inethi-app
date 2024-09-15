@@ -220,6 +220,9 @@ const MainTabs = ({navigation, logout}) => {
         listeners={{
           tabPress: e => {
             e.preventDefault();
+            console.log(
+              'Navigating to WalletCategories with startTutorial flag',
+            );
             navigation.navigate('Wallet', {
               screen: 'WalletCategories',
               params: {startTutorial: true},
