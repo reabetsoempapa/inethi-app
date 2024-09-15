@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {View, StyleSheet, TouchableOpacity, Image, Text} from 'react-native';
-import {useNavigation} from '@react-navigation/native'; // Updated import
+import {useNavigation} from '@react-navigation/native'; 
 import {Appbar, Dialog, Portal, Button, Paragraph} from 'react-native-paper';
 import MapboxGL from '@rnmapbox/maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,7 +27,7 @@ const directionsClient = MapboxDirectionsFactory({
 });
 
 const MapPage = () => {
-  const navigation = useNavigation(); // Updated to use useNavigation
+  const navigation = useNavigation();
   const [selectedRouter, setSelectedRouter] = useState(null);
   const [popupPosition, setPopupPosition] = useState({top: 0, left: 0});
   const [routers, setRouters] = useState([]);
@@ -57,8 +57,6 @@ const MapPage = () => {
         if (cachedData) {
           console.log('Using locally stored data');
           setRouters(JSON.parse(cachedData));
-        } else {
-          console.log('No local data found, fetching from API');
         }
 
         const state = await NetInfo.fetch();
@@ -71,7 +69,7 @@ const MapPage = () => {
             if (internetCheck.ok) {
               console.log('Internet access confirmed, fetching data from API');
               const response = await fetch(
-                'http://192.168.0.173:8000/monitoring/devices/',
+                'http://localhost:8000/monitoring/devices/',
                 {
                   method: 'GET',
                   headers: {
@@ -106,20 +104,14 @@ const MapPage = () => {
                 JSON.stringify(formattedData),
               );
               console.log('Data fetched from API and saved to local storage');
-            } else {
-              console.log('No internet access, using cached data if available');
             }
           } catch (error) {
-            console.error(
-              'Error checking internet access or fetching router data from API:',
-              error,
-            );
+            console.error('Error fetching router data from API:', error);
           }
         } else {
           console.log('No internet connection, using cached data if available');
+          setIsOffline(true);
         }
-
-        setIsOffline(!state.isConnected);
       } catch (error) {
         console.error('Error fetching router data:', error);
       }
@@ -247,8 +239,7 @@ const MapPage = () => {
       id={`router-${router.id}`}
       coordinate={router.coordinates}
       onSelected={() => handleMarkerPress(router, router.coordinates)}>
-      <TouchableOpacity
-        onPress={() => handleMarkerPress(router, router.coordinates)}>
+      <TouchableOpacity>
         <MaterialCommunityIcons
           name={router.status === 'online' ? 'wifi' : 'wifi-off'}
           size={30}
@@ -289,12 +280,15 @@ const MapPage = () => {
           <Dialog
             visible={!!selectedRouter}
             onDismiss={() => setSelectedRouter(null)}>
-            <Dialog.Title>Router Details</Dialog.Title>
+            <Dialog.Title>Device Information</Dialog.Title>
             <Dialog.Content>
               <Paragraph>Name: {selectedRouter.name}</Paragraph>
               <Paragraph>MAC Address: {selectedRouter.mac}</Paragraph>
               <Paragraph>IP Address: {selectedRouter.ipAddress}</Paragraph>
-              <Paragraph>Status: {selectedRouter.status}</Paragraph>
+              <Paragraph>Status: {selectedRouter.status === 'online' ? 'Online' : 'Offline'}</Paragraph>
+              {distanceToNode !== null && (
+                <Paragraph>Distance to Nearest Node: {distanceToNode >= 1 ? `${distanceToNode.toFixed(2)} km` : `${(distanceToNode * 1000).toFixed(0)} meters`}</Paragraph>
+              )}
             </Dialog.Content>
             <Dialog.Actions>
               <Button onPress={() => setSelectedRouter(null)}>Close</Button>
@@ -374,10 +368,7 @@ const MapPage = () => {
     <View style={styles.container}>
       <Appbar.Header>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content
-          title="Find Nearest Hotspot"
-          titleStyle={styles.appbarTitle}
-        />
+        <Appbar.Content title="Find Nearest Hotspot" titleStyle={styles.appbarTitle} />
       </Appbar.Header>
       <MapboxGL.MapView
         ref={mapRef}

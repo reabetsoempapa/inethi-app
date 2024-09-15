@@ -58,7 +58,11 @@ const HomePageStack = ({ logout }) => {
         name="RequestNode"
         options={{
           header: ({ navigation }) => (
+<<<<<<< HEAD
             <AppBarComponent title="App Store" logout={logout} />
+=======
+            <AppBarComponent title="Installation" logout={logout} />
+>>>>>>> 6c22626 (OtherChanges)
           ),
         }}
       >
@@ -67,9 +71,13 @@ const HomePageStack = ({ logout }) => {
       <Stack.Screen
         name="HotspotOptions"
         options={{
+<<<<<<< HEAD
           header: ({ navigation }) => (
             <AppBarComponent title="Web View" logout={logout} />
           ),
+=======
+          headerShown: false, // Disable header here
+>>>>>>> 6c22626 (OtherChanges)
         }}
       >
         {props => <HotspotOptionsPage {...props} logout={logout} />}
