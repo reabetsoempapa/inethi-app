@@ -169,7 +169,11 @@ const WalletCategoriesPage = () => {
   const renderButtons = buttons => (
     <View style={styles.buttonContainer}>
       {buttons.map(({name, action, requiresWallet, icon, disabled}, idx) => {
-        const isDisabled = (requiresWallet && !hasWallet) || disabled;
+        const isDisabled =
+          (name === 'Create Wallet' && hasWallet) ||
+          (requiresWallet && !hasWallet) ||
+          disabled;
+
         return (
           <CopilotStep
             text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
@@ -177,7 +181,9 @@ const WalletCategoriesPage = () => {
             name={`wallet_step_${idx + 1}`}
             key={idx}>
             <WalkthroughableView style={styles.buttonWrapper}>
-              <Card onPress={action} disabled={isDisabled}>
+              <Card
+                onPress={isDisabled ? null : action}
+                style={[styles.card, isDisabled && styles.disabledCard]}>
                 <Card.Content style={styles.cardContent}>
                   <IconButton
                     icon={icon}
@@ -197,6 +203,15 @@ const WalletCategoriesPage = () => {
                     ]}>
                     {name}
                   </Paragraph>
+                  {isDisabled && (
+                    <View style={styles.disabledOverlay}>
+                      <IconButton
+                        icon="lock"
+                        size={20}
+                        color={theme.colors.disabled}
+                      />
+                    </View>
+                  )}
                 </Card.Content>
               </Card>
             </WalkthroughableView>
@@ -234,8 +249,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   buttonWrapper: {width: '30%', marginBottom: 20},
-  cardContent: {alignItems: 'center'},
-  buttonLabel: {marginTop: 8, textAlign: 'center'},
+  card: {
+    elevation: 4,
+  },
+  disabledCard: {
+    backgroundColor: '#f0f0f0',
+    elevation: 0,
+  },
+  cardContent: {
+    alignItems: 'center',
+    position: 'relative',
+  },
+  buttonLabel: {
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  disabledOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  },
 });
 
 export default WalletCategoriesPage;
