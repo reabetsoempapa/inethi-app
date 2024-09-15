@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {Provider as PaperProvider} from 'react-native-paper';
@@ -81,7 +81,7 @@ const HomePageStack = ({logout}) => {
 // Wallet Page Stack
 const WalletPageStack = ({logout}) => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{headerShown: true}}>
       <Stack.Screen
         name="WalletCategories"
         options={{
@@ -104,16 +104,16 @@ const WalletPageStack = ({logout}) => {
         name="AddRecipient"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="Add Recipient" logout={logout} />
+            <AppBarComponent title="Recipient" logout={logout} />
           ),
         }}>
         {props => <AddRecipientScreen {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
-        name="ViewRecipients"
+        name="Recipients"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="View Recipients" logout={logout} />
+            <AppBarComponent title="Recipients" logout={logout} />
           ),
         }}>
         {props => <ViewRecipientsScreen {...props} logout={logout} />}
@@ -202,8 +202,8 @@ const SettingsPageStack = ({logout}) => {
   );
 };
 
-// Main App Routes with Bottom Tabs for Authenticated Users
-const AppRoutes = ({logout, userToken}) => {
+// Main Tabs
+const MainTabs = ({navigation, logout}) => {
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
@@ -211,10 +211,10 @@ const AppRoutes = ({logout, userToken}) => {
           let iconName;
           if (route.name === 'Home') {
             iconName = 'home-outline';
+          } else if (route.name === 'Wallet') {
+            iconName = 'wallet-outline';
           } else if (route.name === 'Help') {
             iconName = 'help-circle-outline';
-          } else if (route.name === 'Settings') {
-            iconName = 'settings-outline';
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -226,24 +226,40 @@ const AppRoutes = ({logout, userToken}) => {
         {props => <HomePageStack {...props} logout={logout} />}
       </Tab.Screen>
       <Tab.Screen
+        name="Wallet"
+        options={{headerShown: false}} // Keep this false as we're handling headers in WalletPageStack
+      >
+        {props => <WalletPageStack {...props} logout={logout} />}
+      </Tab.Screen>
+      <Tab.Screen
         name="Help"
-        component={HelpPage}
-        listeners={({navigation}) => ({
+        options={{headerShown: false}}
+        listeners={{
           tabPress: e => {
             e.preventDefault();
-            console.log('Help tab pressed, navigating to WalletCategories');
-            navigation.navigate('WalletPageStack', {
+            navigation.navigate('Wallet', {
               screen: 'WalletCategories',
               params: {startTutorial: true},
-              initial: false,
             });
           },
-        })}
-      />
-      <Tab.Screen name="SettingsPage" options={{headerShown: false}}>
-        {props => <SettingsPageStack {...props} logout={logout} />}
+        }}>
+        {props => <HelpPage {...props} />}
       </Tab.Screen>
     </Tab.Navigator>
+  );
+};
+
+// Main App Routes
+const AppRoutes = ({logout}) => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="MainTabs" options={{headerShown: false}}>
+        {props => <MainTabs {...props} logout={logout} />}
+      </Stack.Screen>
+      <Stack.Screen name="WalletPageStack" options={{headerShown: false}}>
+        {props => <WalletPageStack {...props} logout={logout} />}
+      </Stack.Screen>
+    </Stack.Navigator>
   );
 };
 
@@ -259,12 +275,12 @@ const App = () => {
     loadToken();
   }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('tokenExpiry');
     await AsyncStorage.removeItem('refreshToken');
     setUserToken(null);
-  };
+  }, []);
 
   const handleLoginSuccess = async (token, expiresIn, refresh_token) => {
     const expiryDate = new Date().getTime() + expiresIn * 1000;
@@ -294,46 +310,35 @@ const App = () => {
               }}
               arrowColor={'rgba(0, 0, 0, 0.8)'}
               verticalOffset={55}>
-              {userToken ? (
-                <Stack.Navigator>
-                  <Stack.Screen name="AppRoutes" options={{headerShown: false}}>
-                    {props => (
-                      <AppRoutes
-                        {...props}
-                        logout={logout}
-                        userToken={userToken}
-                      />
-                    )}
+              <Stack.Navigator>
+                {userToken ? (
+                  <Stack.Screen name="MainTabs" options={{headerShown: false}}>
+                    {props => <MainTabs {...props} logout={logout} />}
                   </Stack.Screen>
-                  <Stack.Screen
-                    name="WalletPageStack"
-                    options={{headerShown: false}}>
-                    {props => <WalletPageStack {...props} logout={logout} />}
-                  </Stack.Screen>
-                </Stack.Navigator>
-              ) : (
-                <Stack.Navigator>
-                  <Stack.Screen name="Login" options={{headerShown: false}}>
-                    {props => (
-                      <LoginPage
-                        {...props}
-                        onLoginSuccess={handleLoginSuccess}
-                      />
-                    )}
-                  </Stack.Screen>
-                  <Stack.Screen
-                    name="Register"
-                    options={{headerTitle: 'Register'}}>
-                    {props => (
-                      <RegisterPage
-                        {...props}
-                        onRegisterSuccess={() => {}}
-                        onLoginSuccess={handleLoginSuccess}
-                      />
-                    )}
-                  </Stack.Screen>
-                </Stack.Navigator>
-              )}
+                ) : (
+                  <>
+                    <Stack.Screen name="Login" options={{headerShown: false}}>
+                      {props => (
+                        <LoginPage
+                          {...props}
+                          onLoginSuccess={handleLoginSuccess}
+                        />
+                      )}
+                    </Stack.Screen>
+                    <Stack.Screen
+                      name="Register"
+                      options={{headerTitle: 'Register'}}>
+                      {props => (
+                        <RegisterPage
+                          {...props}
+                          onRegisterSuccess={() => {}}
+                          onLoginSuccess={handleLoginSuccess}
+                        />
+                      )}
+                    </Stack.Screen>
+                  </>
+                )}
+              </Stack.Navigator>
             </CopilotProvider>
           </NavigationContainer>
         </BalanceProvider>

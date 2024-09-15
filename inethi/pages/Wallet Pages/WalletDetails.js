@@ -7,7 +7,14 @@ import {
   Platform,
   PermissionsAndroid,
 } from 'react-native';
-import {Button, Title, Paragraph, IconButton} from 'react-native-paper';
+import {
+  Button,
+  Title,
+  Paragraph,
+  IconButton,
+  useTheme,
+  Card,
+} from 'react-native-paper';
 import {useRoute} from '@react-navigation/native';
 import axios from 'axios';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -16,6 +23,7 @@ import RNFS from 'react-native-fs';
 import {getToken} from '../../utils/tokenUtils';
 
 const WalletDetailsPage = () => {
+  const theme = useTheme();
   const route = useRoute();
   const {walletAddress} = route.params || {};
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -53,30 +61,36 @@ const WalletDetailsPage = () => {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-      if (error.response) {
-        if (error.response.status === 401) {
+      handleError(error);
+    }
+  };
+
+  const handleError = error => {
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
           Alert.alert('Error', 'Authentication credentials were not provided.');
-        } else if (error.response.status === 404) {
+          break;
+        case 404:
           Alert.alert('Error', 'User does not exist.');
-        } else if (error.response.status === 417) {
+          break;
+        case 417:
           Alert.alert('Error', 'User does not have a wallet.');
-        } else if (error.response.status === 500) {
+          break;
+        case 500:
           Alert.alert(
             'Error',
             'Error checking wallet details. Please contact iNethi support.',
           );
-        } else {
+          break;
+        default:
           Alert.alert(
             'Error',
             `Failed to check wallet details: ${error.message}`,
           );
-        }
-      } else {
-        Alert.alert(
-          'Error',
-          `Failed to check wallet details: ${error.message}`,
-        );
       }
+    } else {
+      Alert.alert('Error', `Failed to check wallet details: ${error.message}`);
     }
   };
 
@@ -111,7 +125,7 @@ const WalletDetailsPage = () => {
     const hasPermission = await requestStoragePermission();
 
     if (!hasPermission) {
-      alert('Permission to access storage was denied');
+      Alert.alert('Error', 'Permission to access storage was denied');
       return;
     }
 
@@ -128,11 +142,11 @@ const WalletDetailsPage = () => {
         });
 
         await RNFS.writeFile(filePath, svgData, 'base64');
-        alert(`QR code saved to ${filePath}`);
+        Alert.alert('Success', `QR code saved to ${filePath}`);
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to save QR code');
+      Alert.alert('Error', 'Failed to save QR code');
     }
   };
 
@@ -144,7 +158,7 @@ const WalletDetailsPage = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -153,31 +167,37 @@ const WalletDetailsPage = () => {
     <View style={styles.container}>
       <Title style={styles.title}>Wallet Details</Title>
       {walletDetails ? (
-        <View style={styles.qrCodeContainer}>
-          <QRCode
-            value={walletDetails.wallet_address}
-            size={200}
-            getRef={ref => setQrCodeRef(ref)}
-          />
-          <View style={styles.walletAddressContainer}>
-            <Paragraph style={styles.walletAddress}>
-              Wallet Address: {walletDetails.wallet_address}
-            </Paragraph>
-            <IconButton
-              icon="content-copy"
-              size={20}
-              onPress={handleCopyAddress}
-            />
-          </View>
-          <Button
-            mode="contained"
-            onPress={handleDownloadQrCode}
-            style={styles.downloadButton}>
-            Download QR Code
-          </Button>
-        </View>
+        <Card style={styles.card}>
+          <Card.Content style={styles.cardContent}>
+            <View style={styles.qrCodeContainer}>
+              <QRCode
+                value={walletDetails.wallet_address}
+                size={200}
+                getRef={ref => setQrCodeRef(ref)}
+              />
+            </View>
+            <View style={styles.walletAddressContainer}>
+              <Paragraph style={styles.walletAddress}>
+                {walletDetails.wallet_address}
+              </Paragraph>
+              <IconButton
+                icon="content-copy"
+                size={24}
+                onPress={handleCopyAddress}
+              />
+            </View>
+            <Button
+              mode="contained"
+              onPress={handleDownloadQrCode}
+              style={styles.downloadButton}>
+              Download QR Code
+            </Button>
+          </Card.Content>
+        </Card>
       ) : (
-        <Paragraph>Error loading wallet details.</Paragraph>
+        <Paragraph style={styles.errorText}>
+          Error loading wallet details.
+        </Paragraph>
       )}
     </View>
   );
@@ -186,10 +206,7 @@ const WalletDetailsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff', // Change this to white
-    padding: 20, // Consistent padding
+    padding: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -201,31 +218,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color: '#333333', // Consistent text color
+  },
+  card: {
+    marginTop: 20,
+  },
+  cardContent: {
+    alignItems: 'center',
   },
   qrCodeContainer: {
-    alignItems: 'center',
-    marginTop: 20,
+    marginBottom: 20,
   },
   walletAddressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    width: '100%',
+    marginBottom: 20,
   },
   walletAddress: {
     flex: 1,
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#333333', // Consistent text color
   },
   downloadButton: {
-    marginTop: 20,
-    width: '100%',
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#0066ff', // Consistent button color
+    marginTop: 10,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
   },
 });
 

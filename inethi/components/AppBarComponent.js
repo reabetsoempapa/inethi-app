@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   balanceText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     marginRight: 10,
     marginLeft: 20,
   },

@@ -1,16 +1,22 @@
 import React, {useState, useEffect} from 'react';
 import {
   View,
-  Text,
-  TextInput,
   StyleSheet,
   ActivityIndicator,
   Alert,
   TouchableOpacity,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
+import {
+  TextInput,
+  Button,
+  Dialog,
+  Portal,
+  Paragraph,
+  useTheme,
+  IconButton,
+} from 'react-native-paper';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {Dialog, Portal} from 'react-native-paper';
 import {useBalance} from '../../context/BalanceContext';
 import {
   Camera,
@@ -18,7 +24,7 @@ import {
   useCameraPermission,
   useCodeScanner,
 } from 'react-native-vision-camera';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PaymentPage = () => {
@@ -175,24 +181,27 @@ const PaymentPage = () => {
     }
   };
 
+  const theme = useTheme();
+
   return (
     <View style={styles.container}>
       {isScannerOpen && device ? (
         <>
           <Camera
-            style={{flex: 1, width: '100%'}}
+            style={StyleSheet.absoluteFill}
             device={device}
             isActive={isScannerOpen}
             codeScanner={codeScanner}
           />
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => setIsScannerOpen(false)}>
-            <Text style={styles.buttonText}>Exit Scanner</Text>
-          </TouchableOpacity>
+          <Button
+            mode="contained"
+            onPress={() => setIsScannerOpen(false)}
+            style={styles.exitScannerButton}>
+            Exit Scanner
+          </Button>
         </>
       ) : (
-        <>
+        <View style={styles.formContainer}>
           <Picker
             selectedValue={paymentMethod}
             style={styles.picker}
@@ -201,93 +210,89 @@ const PaymentPage = () => {
             <Picker.Item label="Wallet Address" value="walletAddress" />
           </Picker>
           {paymentMethod === 'walletAddress' && (
-            <TouchableOpacity style={styles.scanButton} onPress={openScanner}>
-              <Ionicons name="qr-code-outline" size={24} color="white" />
-              <Text style={styles.scanButtonText}>Scan QR Code</Text>
-            </TouchableOpacity>
+            <Button
+              mode="contained"
+              onPress={openScanner}
+              icon={({size, color}) => (
+                <MaterialCommunityIcons
+                  name="qrcode-scan"
+                  size={size}
+                  color={color}
+                />
+              )}
+              style={styles.scanButton}>
+              Scan QR Code
+            </Button>
           )}
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name={
-                paymentMethod === 'username'
-                  ? 'person-outline'
-                  : 'wallet-outline'
-              }
-              size={20}
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              onChangeText={setReceiver}
-              value={receiver}
-              placeholder={
-                paymentMethod === 'username'
-                  ? 'Username of receiver'
-                  : 'Wallet address'
-              }
-              placeholderTextColor="#aaa"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="cash-outline" size={20} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              onChangeText={setAmount}
-              value={amount}
-              placeholder="Amount"
-              keyboardType="numeric"
-              placeholderTextColor="#aaa"
-            />
-          </View>
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              isButtonDisabled && styles.disabledButton,
-            ]}
+          <TextInput
+            label={
+              paymentMethod === 'username'
+                ? 'Username of receiver'
+                : 'Wallet address'
+            }
+            value={receiver}
+            onChangeText={setReceiver}
+            style={styles.input}
+            left={
+              <TextInput.Icon
+                icon={({size, color}) => (
+                  <MaterialCommunityIcons
+                    name={paymentMethod === 'username' ? 'account' : 'wallet'}
+                    size={size}
+                    color={color}
+                  />
+                )}
+              />
+            }
+          />
+          <TextInput
+            label="Amount"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            style={styles.input}
+            left={
+              <TextInput.Icon
+                icon={({size, color}) => (
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={size}
+                    color={color}
+                  />
+                )}
+              />
+            }
+          />
+          {error ? (
+            <Paragraph style={styles.errorText}>{error}</Paragraph>
+          ) : null}
+          <Button
+            mode="contained"
             onPress={handleSendPayment}
-            disabled={isButtonDisabled}>
-            <Text style={styles.buttonText}>Send Payment</Text>
-          </TouchableOpacity>
-          {isLoading && (
-            <Dialog visible={true}>
-              <Dialog.Content>
-                <ActivityIndicator size="large" />
-              </Dialog.Content>
-            </Dialog>
-          )}
-        </>
+            disabled={isButtonDisabled}
+            style={styles.sendButton}>
+            Send Payment
+          </Button>
+        </View>
       )}
       <Portal>
         <Dialog
           visible={isPinModalVisible}
-          onDismiss={() => {
-            setIsPinModalVisible(false);
-            setPin(''); // Clear the PIN input when dismissing
-          }}>
+          onDismiss={() => setIsPinModalVisible(false)}>
           <Dialog.Title>Enter PIN</Dialog.Title>
           <Dialog.Content>
             <TextInput
-              style={styles.pinInput}
-              onChangeText={setPin}
+              label="5-digit PIN"
               value={pin}
-              placeholder="Enter your 5-digit PIN"
+              onChangeText={setPin}
               keyboardType="numeric"
               secureTextEntry
               maxLength={5}
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <TouchableOpacity
-              onPress={() => {
-                setIsPinModalVisible(false);
-                setPin(''); // Clear the PIN input when cancelling
-              }}>
-              <Text style={styles.dialogButton}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={verifyPinAndProceed}>
-              <Text style={styles.dialogButton}>Verify</Text>
-            </TouchableOpacity>
+            <Button onPress={() => setIsPinModalVisible(false)}>Cancel</Button>
+            <Button onPress={verifyPinAndProceed}>Verify</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -295,100 +300,35 @@ const PaymentPage = () => {
   );
 };
 
-const mockSendPayment = async paymentData => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({success: true}); // Mocking a successful payment
-    }, 1000);
-  });
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
+    padding: 16,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    marginBottom: 20,
-    backgroundColor: '#f9f9f9',
-  },
-  input: {
+  formContainer: {
     flex: 1,
-    height: 50,
-    paddingLeft: 40,
-    paddingRight: 10,
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: 10,
   },
   picker: {
-    height: 50,
-    width: '100%',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#0066ff',
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    paddingLeft: 10,
+    marginBottom: 16,
+  },
+  input: {
+    marginBottom: 16,
   },
   scanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#0066ff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  scanButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    marginLeft: 8,
+    marginBottom: 16,
   },
   sendButton: {
-    backgroundColor: '#0066ff',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+    marginTop: 16,
   },
-  disabledButton: {
-    backgroundColor: '#A0A0A0',
-  },
-  backButton: {
-    backgroundColor: '#0066ff',
-    alignItems: 'center',
-    borderRadius: 8,
-    paddingVertical: 15,
-    marginTop: 20,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  pinInput: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginTop: 10,
-    paddingHorizontal: 10,
-  },
-  dialogButton: {
-    color: '#0066ff',
-    marginLeft: 20,
+  exitScannerButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
   },
   errorText: {
     color: 'red',
-    marginBottom: 10,
+    marginBottom: 16,
   },
 });
 

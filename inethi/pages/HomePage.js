@@ -52,13 +52,15 @@ const HomePage = ({logout}) => {
     analytics().logEvent('navigate_to_AppStore', {feature: 'App Store'});
     navigation.navigate('AppStore');
   };
-
+  const handleWalletPress = () => {
+    navigation.navigate('Wallet', {screen: 'WalletCategories'});
+  };
   const [categories, setCategories] = useState({
     Wallet: [
       {
         name: 'Wallet',
         action: () =>
-          navigation.navigate('WalletPageStack', {
+          navigation.navigate('Wallet', {
             screen: 'WalletCategories',
           }),
         url: '',
