@@ -35,178 +35,169 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Home Page Stack
-const HomePageStack = () => {
+const HomePageStack = ({logout}) => {
   return (
     <Stack.Navigator>
       <Stack.Screen
         name="HomeScreen"
-        component={HomePage}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Home" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Home" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <HomePage {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="AppStore"
-        component={FdroidAppstore}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="App Store" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="App Store" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <FdroidAppstore {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="WebView"
-        component={WebViewComponent}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Web View" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Web View" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <WebViewComponent {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="Map"
-        component={MapPage}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Map" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Map" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <MapPage {...props} logout={logout} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };
 
 // Wallet Page Stack
-const WalletPageStack = () => {
+const WalletPageStack = ({logout}) => {
   return (
     <Stack.Navigator>
       <Stack.Screen
         name="WalletCategories"
-        component={WalletCategoriesPage}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent
-              title="Wallet Categories"
-              logout={options.logout}
-            />
+          header: ({navigation}) => (
+            <AppBarComponent title="Wallet" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <WalletCategoriesPage {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="WalletDetails"
-        component={WalletDetailsPage}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Wallet Details" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Wallet Details" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <WalletDetailsPage {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="AddRecipient"
-        component={AddRecipientScreen}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Add Recipient" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Add Recipient" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <AddRecipientScreen {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="ViewRecipients"
-        component={ViewRecipientsScreen}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="View Recipients" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="View Recipients" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <ViewRecipientsScreen {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="SetupPIN"
-        component={SetupPIN}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Pin" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Pin" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <SetupPIN {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="CreateWallet"
-        component={CreateWalletPage}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Create Wallet" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Create Wallet" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <CreateWalletPage {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="RecipientDetails"
-        component={RecipientDetailsScreen}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent
-              title="Recipient Details"
-              logout={options.logout}
-            />
+          header: ({navigation}) => (
+            <AppBarComponent title="Recipient Details" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <RecipientDetailsScreen {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="Payment"
-        component={PaymentPage}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Payment" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Payment" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <PaymentPage {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="PaymentHistory"
-        component={PaymentHistory}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Payment History" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Payment History" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <PaymentHistory {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="PaymentSuccess"
-        component={PaymentSuccess}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Payment Success" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Payment Success" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <PaymentSuccess {...props} logout={logout} />}
+      </Stack.Screen>
       <Stack.Screen
         name="PaymentUnsuccessful"
-        component={PaymentUnsuccessful}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent
-              title="Payment Unsuccessful"
-              logout={options.logout}
-            />
+          header: ({navigation}) => (
+            <AppBarComponent title="Payment Unsuccessful" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <PaymentUnsuccessful {...props} logout={logout} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };
 
 // Settings Page Stack
-const SettingsPageStack = () => {
+const SettingsPageStack = ({logout}) => {
   return (
     <Stack.Navigator>
       <Stack.Screen
         name="SettingsPage"
-        component={SettingsPage}
         options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Settings" logout={options.logout} />
+          header: ({navigation}) => (
+            <AppBarComponent title="Settings" logout={logout} />
           ),
-        }}
-      />
+        }}>
+        {props => <SettingsPage {...props} logout={logout} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };
@@ -231,11 +222,9 @@ const AppRoutes = ({logout, userToken}) => {
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: [{display: 'flex'}, null],
       })}>
-      <Tab.Screen
-        name="Home"
-        component={HomePageStack}
-        options={{headerShown: false}}
-      />
+      <Tab.Screen name="Home" options={{headerShown: false}}>
+        {props => <HomePageStack {...props} logout={logout} />}
+      </Tab.Screen>
       <Tab.Screen
         name="Help"
         component={HelpPage}
@@ -251,11 +240,9 @@ const AppRoutes = ({logout, userToken}) => {
           },
         })}
       />
-      <Tab.Screen
-        name="SettingsPage"
-        component={SettingsPageStack}
-        options={{headerShown: false}}
-      />
+      <Tab.Screen name="SettingsPage" options={{headerShown: false}}>
+        {props => <SettingsPageStack {...props} logout={logout} />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 };
@@ -309,16 +296,20 @@ const App = () => {
               verticalOffset={55}>
               {userToken ? (
                 <Stack.Navigator>
-                  <Stack.Screen
-                    name="AppRoutes"
-                    component={AppRoutes}
-                    options={{headerShown: false}}
-                  />
+                  <Stack.Screen name="AppRoutes" options={{headerShown: false}}>
+                    {props => (
+                      <AppRoutes
+                        {...props}
+                        logout={logout}
+                        userToken={userToken}
+                      />
+                    )}
+                  </Stack.Screen>
                   <Stack.Screen
                     name="WalletPageStack"
-                    component={WalletPageStack}
-                    options={{headerShown: false}}
-                  />
+                    options={{headerShown: false}}>
+                    {props => <WalletPageStack {...props} logout={logout} />}
+                  </Stack.Screen>
                 </Stack.Navigator>
               ) : (
                 <Stack.Navigator>
@@ -332,9 +323,15 @@ const App = () => {
                   </Stack.Screen>
                   <Stack.Screen
                     name="Register"
-                    component={RegisterPage}
-                    options={{headerTitle: 'Register'}}
-                  />
+                    options={{headerTitle: 'Register'}}>
+                    {props => (
+                      <RegisterPage
+                        {...props}
+                        onRegisterSuccess={() => {}}
+                        onLoginSuccess={handleLoginSuccess}
+                      />
+                    )}
+                  </Stack.Screen>
                 </Stack.Navigator>
               )}
             </CopilotProvider>

@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -23,7 +22,7 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const navigation = useNavigation(); // Updated to use useNavigation
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
@@ -49,14 +48,16 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
       );
 
       if (response.status === 201) {
-        onRegisterSuccess();
+        if (onRegisterSuccess) {
+          onRegisterSuccess();
+        }
         await handleLogin(
           username,
           password,
           onLoginSuccess,
           setError,
           setLoading,
-          navigation, // Updated to use navigation
+          navigation,
         );
       } else {
         setError('Failed to register');

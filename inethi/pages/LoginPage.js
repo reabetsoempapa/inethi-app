@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -10,8 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import axios from 'axios';
-import {useNavigation} from '@react-navigation/native'; // Updated import
+import {useNavigation} from '@react-navigation/native';
 import {handleLogin} from '../utils/utils';
 import {Dialog} from 'react-native-paper';
 
@@ -19,7 +17,7 @@ const LoginPage = ({onLoginSuccess}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigation = useNavigation(); // Updated to use useNavigation
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
@@ -29,7 +27,7 @@ const LoginPage = ({onLoginSuccess}) => {
     } else {
       setIsButtonDisabled(true);
     }
-  }, [password, username]); // Corrected dependency array
+  }, [password, username]);
 
   useEffect(() => {
     if (error) {
@@ -72,18 +70,16 @@ const LoginPage = ({onLoginSuccess}) => {
           <Text style={styles.registerText}>Register here</Text>
         </TouchableOpacity>
       </View>
-      {/* Fixed conditional rendering */}
-      {loading ? (
+      {loading && (
         <Dialog visible={true}>
           <Dialog.Content>
             <ActivityIndicator size="large" />
           </Dialog.Content>
         </Dialog>
-      ) : null}
+      )}
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
