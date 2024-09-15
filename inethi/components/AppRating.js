@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Button } from 'react-native';
 import axios from 'axios';
 import StarRating from 'react-native-star-rating';
-
-const AppRating = ({ appId }) => {
+import { Buffer } from 'buffer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+export default function AppRating({ appId }) {
     const [averageRating, setAverageRating] = useState(0);
     const [userRating, setUserRating] = useState(0);
 
+    console.log("id:", appId)
+
     // Fetch the current average rating from the backend
     useEffect(() => {
-        axios.get(`http://localhost:3001/rating/${appId}`)
+        axios.get(`http://192.168.0.168:3005/rating/${appId}`)
             .then(response => {
                 setAverageRating(response.data.avgRating);
             })
@@ -17,17 +20,34 @@ const AppRating = ({ appId }) => {
     }, [appId]);
 
     // Submit a new rating
-    const submitRating = (rating) => {
-        axios.post(`http://localhost:3001/rating/${appId}`, { rating })
-            .then(() => {
-                setUserRating(rating);
-                // Re-fetch the average rating after submitting
-                axios.get(`http://localhost:3001/rating/${appId}`)
-                    .then(response => {
-                        setAverageRating(response.data.avgRating);
-                    });
-            })
-            .catch(error => console.error('Error submitting rating:', error));
+    const submitRating = async (rating) => {
+        try {
+            // Retrieve the token from storage
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) {
+                console.error('User is not logged in.');
+                return;
+            }
+
+            // Decode the token payload using Buffer
+            const base64Url = token.split('.')[1];
+            const decodedPayload = Buffer.from(base64Url, 'base64').toString('utf-8');
+            const userId = JSON.parse(decodedPayload).sub;
+
+            // Submit the rating with the userId
+            axios.post(`http://192.168.0.168:3007/rating/${appId}`, { rating, userId })
+                .then(() => {
+                    setUserRating(rating);
+                    // Re-fetch the average rating after submitting
+                    axios.get(`http://192.168.0.168:3007/rating/${appId}`)
+                        .then(response => {
+                            setAverageRating(response.data.avgRating);
+                        });
+                })
+                .catch(error => console.error('Error submitting rating:', error));
+        } catch (error) {
+            console.error('Error processing rating submission:', error);
+        }
     };
 
     return (
@@ -44,4 +64,4 @@ const AppRating = ({ appId }) => {
     );
 };
 
-export default AppRating;
+

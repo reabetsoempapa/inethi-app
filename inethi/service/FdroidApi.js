@@ -1,7 +1,7 @@
 import axios from 'axios';
 import RNFS from 'react-native-fs'; // Correctly import RNFS
 
-const BASE_URL = 'http://196.24.153.56:3005';
+const BASE_URL = 'http://192.168.0.168:3005';
 const INDEX_URL = `${BASE_URL}/repo/index-v2.json`;
 
 const timeout = (ms, errorMessage) => {
@@ -36,6 +36,7 @@ export const getApps = async () => {
         }
 
         const appList = apps.map(app => ({
+            appId: app.id,
             appName: app.appName,
             packageName: app.packageName,
             summary: app.summary,

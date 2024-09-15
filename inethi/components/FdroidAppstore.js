@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
-
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, Button, TextInput, Alert, Linking, ActivityIndicator, ToastAndroid, Platform } from 'react-native';
 import { PermissionsAndroid } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Progress from 'react-native-progress';
 import RNFS from 'react-native-fs';
-
+import jwtDecode from 'jwt-decode';
 import { getApps, download } from '../service/FdroidApi';
 import * as amplitude from '@amplitude/analytics-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppRating from './AppRating';
+import _ from 'lodash';
 
 amplitude.init('d584a34a7957c1300fa733ee33a3a960');
 
@@ -29,16 +31,13 @@ const requestStoragePermission = async () => {
                 ];
             }
 
-            const granted = await PermissionsAndroid.requestMultiple(
-                permissions,
-                {
-                    title: 'Storage Permission',
-                    message: 'This app needs access to your storage to download files',
-                    buttonNeutral: 'Ask Me Later',
-                    buttonNegative: 'Cancel',
-                    buttonPositive: 'OK',
-                }
-            );
+            const granted = await PermissionsAndroid.requestMultiple(permissions, {
+                title: 'Storage Permission',
+                message: 'This app needs access to your storage to download files',
+                buttonNeutral: 'Ask Me Later',
+                buttonNegative: 'Cancel',
+                buttonPositive: 'OK',
+            });
 
             if (sdkInt >= 33) {
                 return permissions.every(permission => granted[permission] === PermissionsAndroid.RESULTS.GRANTED);
@@ -63,6 +62,7 @@ export default function FdroidAppstore() {
     const [downloadProgress, setDownloadProgress] = useState({});
     const [isServerDown, setIsServerDown] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [user_id, setUserId] = useState("");
 
     useEffect(() => {
         const fetchAndCopyApps = async () => {
@@ -105,16 +105,22 @@ export default function FdroidAppstore() {
 
     }, [isServerDown]);
 
-    // Handle search input change and filter apps
-    const handleSearch = (query) => {
-        setSearchQuery(query);
+    // Debounce the search input to limit the number of filter operations
+    const handleSearch = useCallback(
+        _.debounce((query) => {
+            setSearchQuery(query);
+        }, 300), // 300ms debounce time
+        []
+    );
 
-        // Filter the apps based on the search query (case-insensitive)
-        const filtered = apps.filter(app =>
-            app.appName.toLowerCase().includes(query.toLowerCase())
+    // Memoized filter function to optimize search performance
+    const filteredAppsMemo = useMemo(() => {
+        return apps.filter(app =>
+            app.appName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            app.summary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            app.description?.toLowerCase().includes(searchQuery.toLowerCase())
         );
-        setFilteredApps(filtered);
-    };
+    }, [apps, searchQuery]);
 
     const showServerDownMessage = () => {
         if (Platform.OS === 'android') {
@@ -247,6 +253,8 @@ export default function FdroidAppstore() {
         });
     };
 
+
+
     return (
         <View style={{ flex: 1 }}>
             {isLoading ? (
@@ -259,42 +267,47 @@ export default function FdroidAppstore() {
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search for apps..."
-                        value={searchQuery}
                         onChangeText={handleSearch}
                     />
                     <ScrollView>
 
-                        {filteredApps.map(app => (
-                            <View key={app.packageName} style={styles.appContainer}>
-                                <Image source={{ uri: app.icon }} style={styles.icon} />
-                                <Text style={styles.appTitle}>{app.appName}</Text>
-                                <Text style={styles.summary}>
-                                    {app.summary}.{"\n\n"}
-                                    {!isServerDown && (
-                                        <Text style={styles.link} onPress={() => handleViewClick(app.packageName)}>
-                                            {" "}view description
-                                        </Text>
+                        {filteredAppsMemo.length === 0 ? (
+                            <Text>No apps found for "{searchQuery}"</Text>
+                        ) : (
+                            filteredAppsMemo.map(app => (
+                                <View key={app.packageName} style={styles.appContainer}>
+                                    <Image source={{ uri: app.icon }} style={styles.icon} />
+                                    <Text style={styles.appTitle}>{app.appName}</Text>
+                                    <Text style={styles.summary}>
+                                        {app.summary}.{"\n\n"}
+                                        {!isServerDown && (
+                                            <Text style={styles.link} onPress={() => handleViewClick(app.packageName)}>
+                                                {" "}view description
+                                            </Text>
+                                        )}
+                                    </Text>
+                                    {isMoreInfor[app.packageName]?.Clicked && (
+                                        <Text style={styles.description}>{app.description}</Text>
                                     )}
-                                </Text>
-                                {isMoreInfor[app.packageName]?.Clicked && (
-                                    <Text style={styles.description}>{app.description}</Text>
-                                )}
-                                <Button
-                                    title={isServerDown ? "Install" : "Download"}
-                                    onPress={() => handleDownloadOrInstall(app.packageName, isServerDown, app.url)}
-                                />
-                                {downloadProgress[app.packageName] !== undefined && !isServerDown && (
-                                    <Progress.Bar progress={downloadProgress[app.packageName]} width={null} style={styles.progressBar} />
-                                )}
-                            </View>
-                        ))}
+                                    <Button
+                                        title={isServerDown ? "Install" : "Download"}
+                                        onPress={() => handleDownloadOrInstall(app.packageName, isServerDown, app.url)}
+                                    />
+                                    {downloadProgress[app.packageName] !== undefined && !isServerDown && (
+                                        <Progress.Bar progress={downloadProgress[app.packageName]} width={null} style={styles.progressBar} />
+                                    )}
+
+                                    {/* Add AppRating component here */}
+                                    {app.appId ? <AppRating appId={app.appId} /> : <Text></Text>}
+                                </View>
+                            ))
+                        )}
                     </ScrollView>
                 </View>
             )}
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         padding: 20,

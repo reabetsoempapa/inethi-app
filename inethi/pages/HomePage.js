@@ -174,7 +174,9 @@ const HomePage = ({ logout }) => {
     );
   const fetchServices = async () => {
     try {
+      console.log("fetching services....")
       const token = await getToken();
+      console.log("after ...tocke")
       if (!token) return;
 
       const config = {

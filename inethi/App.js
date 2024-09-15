@@ -29,7 +29,7 @@ import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
 
 // Import CopilotProvider
-import {CopilotProvider} from 'react-native-copilot';
+import { CopilotProvider } from 'react-native-copilot';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -65,18 +65,7 @@ const HomePageStack = () => {
           ),
         }}
       />
-      {/* <Stack.Screen
-        name="ServiceContainer"
-        component={ServiceContainer}
-        options={{
-          header: ({ navigation, route, options }) => (
-            <AppBarComponent
-              title="Service Container"
-              logout={options.logout}
-            />
-          ),
-        }}
-      /> */}
+
       <Stack.Screen
         name="Map"
         component={MapPage}
@@ -259,12 +248,12 @@ const AppRoutes = ({ logout, userToken }) => {
       <Tab.Screen
         name="Help"
         component={HelpPage}
-        listeners={({navigation}) => ({
+        listeners={({ navigation }) => ({
           tabPress: e => {
             e.preventDefault(); // Prevent default tab press behavior
             console.log('Tutorial passing');
             // Navigate to Home and pass the `startTutorial: true` flag
-            navigation.navigate('Home', {startTutorial: true});
+            navigation.navigate('Home', { startTutorial: true });
             console.log('Tutorial passed');
           },
         })}
@@ -303,6 +292,8 @@ const App = () => {
     await AsyncStorage.setItem('userToken', token);
     await AsyncStorage.setItem('tokenExpiry', expiryDate.toString()); // Store the expiry time
     await AsyncStorage.setItem('refreshToken', refresh_token);
+
+    console.log("token :", token)
     setUserToken(token);
   };
 
@@ -317,17 +308,17 @@ const App = () => {
                   <Stack.Screen
                     name="AppRoutes"
                     component={AppRoutes}
-                    options={{headerShown: false}}
+                    options={{ headerShown: false }}
                   />
                   <Stack.Screen
                     name="WalletPageStack"
                     component={WalletPageStack}
-                    options={{headerShown: false}}
+                    options={{ headerShown: false }}
                   />
                 </Stack.Navigator>
               ) : (
                 <Stack.Navigator>
-                  <Stack.Screen name="Login" options={{headerShown: false}}>
+                  <Stack.Screen name="Login" options={{ headerShown: false }}>
                     {props => (
                       <LoginPage
                         {...props}
@@ -338,7 +329,7 @@ const App = () => {
                   <Stack.Screen
                     name="Register"
                     component={RegisterPage}
-                    options={{headerTitle: 'Register'}}
+                    options={{ headerTitle: 'Register' }}
                   />
                 </Stack.Navigator>
               )}
