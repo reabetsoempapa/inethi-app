@@ -42,7 +42,8 @@ const WalletCategoriesPage = () => {
 
     const handleStop = () => {
       console.log('Tutorial finished');
-      // You can add any actions you want to perform when the tutorial is finished
+      // Navigate back to the HomeScreen
+      navigation.navigate('HomeScreen');
     };
 
     copilotEvents.on('stepChange', handleStepChange);
@@ -52,7 +53,7 @@ const WalletCategoriesPage = () => {
       copilotEvents.off('stepChange', handleStepChange);
       copilotEvents.off('stop', handleStop);
     };
-  }, [copilotEvents]);
+  }, [copilotEvents, navigation]);
 
   const startTutorialIfNeeded = useCallback(() => {
     if (route.params?.startTutorial && !tutorialStartedRef.current) {
