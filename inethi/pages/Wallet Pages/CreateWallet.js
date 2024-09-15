@@ -18,9 +18,17 @@ const CreateWalletPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const storePin = async (walletAddress, pin) => {
+  const storePin = async pin => {
     try {
-      await AsyncStorage.setItem(`@wallet_pin_${walletAddress}`, pin);
+      await AsyncStorage.setItem('@wallet_pin', pin);
+      console.log('PIN stored successfully');
+      // Verify PIN storage
+      const storedPin = await AsyncStorage.getItem('@wallet_pin');
+      if (storedPin === pin) {
+        console.log('PIN verification successful');
+      } else {
+        console.error('PIN verification failed');
+      }
     } catch (e) {
       console.error('Failed to save the PIN.', e);
       Alert.alert('Error', 'Failed to save the PIN. Please try again.');
@@ -61,7 +69,7 @@ const CreateWalletPage = () => {
       );
 
       if (response.status === 201) {
-        await storePin(response.data.address, pin);
+        await storePin(pin);
         Alert.alert(
           'Success',
           `Wallet created successfully! Address: ${response.data.address}, Name: ${response.data.name}`,
@@ -70,8 +78,6 @@ const CreateWalletPage = () => {
         navigation.goBack();
       }
     } catch (error) {
-      await storePin(response.data.address, pin);
-
       console.error('Error creating wallet:', error);
       if (error.response) {
         if (error.response.status === 400) {
@@ -144,7 +150,6 @@ const CreateWalletPage = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

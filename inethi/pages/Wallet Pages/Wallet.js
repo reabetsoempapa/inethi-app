@@ -170,17 +170,22 @@ const WalletCategoriesPage = () => {
         await trackButtonClick('view_recipients_button_clicked');
         navigation.navigate('ViewRecipients');
       },
+      requiresWallet: true,
       icon: 'account-multiple-outline',
     },
     {
       name: 'Pay',
       action: () =>
         navigation.navigate('ViewRecipients', {state: {fromPay: true}}),
+      requiresWallet: true,
+
       icon: 'cash',
     },
     {
       name: 'History',
       action: () => navigation.navigate('PaymentHistory'),
+      requiresWallet: true,
+
       icon: 'history',
     },
   ];

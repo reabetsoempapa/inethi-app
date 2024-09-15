@@ -49,10 +49,13 @@ const PaymentPage = () => {
   useEffect(() => {
     setIsButtonDisabled(!(receiver && amount));
   }, [receiver, amount]);
-
   const checkPinStatus = async () => {
     try {
       const storedPin = await AsyncStorage.getItem('@wallet_pin');
+      console.log(
+        'Checking PIN status:',
+        storedPin ? 'PIN exists' : 'No PIN set',
+      );
       setIsPinSet(!!storedPin);
     } catch (error) {
       console.error('Error checking PIN status:', error);
@@ -88,6 +91,7 @@ const PaymentPage = () => {
   const verifyPinAndProceed = async () => {
     try {
       const storedPin = await AsyncStorage.getItem('@wallet_pin');
+      console.log('Verifying PIN:', storedPin ? 'PIN exists' : 'No PIN set');
       if (!storedPin) {
         Alert.alert('Error', 'PIN not set. Please set up a PIN first.');
         setIsPinModalVisible(false);
