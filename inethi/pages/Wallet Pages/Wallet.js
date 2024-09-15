@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   useTheme,
   Button,
+  Snackbar,
 } from 'react-native-paper';
 import {
   useNavigation,
@@ -22,6 +23,7 @@ import {
 } from '../../service/Wallet';
 import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
 const WalkthroughableView = walkthroughable(View);
 
@@ -35,9 +37,22 @@ const WalletCategoriesPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTutorialStarted, setIsTutorialStarted] = useState(false);
   const tutorialStartedRef = useRef(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [showOfflineNotice, setShowOfflineNotice] = useState(false);
 
   const {start, copilotEvents, stop} = useCopilot();
   const theme = useTheme();
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsOffline(!state.isConnected);
+      if (!state.isConnected) {
+        setShowOfflineNotice(true);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleStepChange = step => {
@@ -60,7 +75,7 @@ const WalletCategoriesPage = () => {
       copilotEvents.off('stepChange', handleStepChange);
       copilotEvents.off('stop', handleStop);
     };
-  }, [copilotEvents, navigation]);
+  }, [copilotEvents, navigation, stop]);
 
   const startTutorialIfNeeded = useCallback(() => {
     if (route.params?.startTutorial && !tutorialStartedRef.current) {
@@ -81,11 +96,13 @@ const WalletCategoriesPage = () => {
   }, [route.params, start]);
 
   const initializeComponent = useCallback(async () => {
-    await handleCheckWalletOwnership();
-    await fetchBalance();
-    await handleCheckWalletDetails();
+    if (!isOffline) {
+      await handleCheckWalletOwnership();
+      await fetchBalance();
+      await handleCheckWalletDetails();
+    }
     await fetchTransactions();
-  }, []);
+  }, [isOffline, fetchBalance]);
 
   useFocusEffect(
     useCallback(() => {
@@ -99,9 +116,16 @@ const WalletCategoriesPage = () => {
     try {
       const response = await checkWalletOwnership();
       setHasWallet(response.data.has_wallet);
+      await AsyncStorage.setItem(
+        'hasWallet',
+        JSON.stringify(response.data.has_wallet),
+      );
     } catch (error) {
       console.error('Error checking wallet ownership:', error);
-      handleError(error, 'Failed to check wallet ownership');
+      const storedHasWallet = await AsyncStorage.getItem('hasWallet');
+      if (storedHasWallet !== null) {
+        setHasWallet(JSON.parse(storedHasWallet));
+      }
     }
   };
 
@@ -110,8 +134,13 @@ const WalletCategoriesPage = () => {
     try {
       const response = await fetchWalletDetails();
       setWalletAddress(response.data.wallet_address);
+      await AsyncStorage.setItem('walletAddress', response.data.wallet_address);
     } catch (error) {
-      handleError(error, 'Failed to check wallet details');
+      console.error('Error fetching wallet details:', error);
+      const storedWalletAddress = await AsyncStorage.getItem('walletAddress');
+      if (storedWalletAddress) {
+        setWalletAddress(storedWalletAddress);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -127,30 +156,6 @@ const WalletCategoriesPage = () => {
       setTransactions(sortedTransactions.slice(0, 3));
     } catch (error) {
       console.error('Failed to load transactions:', error);
-    }
-  };
-
-  const handleError = (error, defaultMessage) => {
-    if (error.response) {
-      const {status, message} = error.response;
-      switch (status) {
-        case 401:
-          Alert.alert('Error', 'Authentication credentials were not provided.');
-          break;
-        case 404:
-          Alert.alert('Error', 'User does not exist.');
-          break;
-        case 417:
-          Alert.alert('Error', 'User does not have a wallet.');
-          break;
-        case 500:
-          Alert.alert('Error', 'Server error. Please contact support.');
-          break;
-        default:
-          Alert.alert('Error', `${defaultMessage}: ${message}`);
-      }
-    } else {
-      Alert.alert('Error', `${defaultMessage}: ${error.message}`);
     }
   };
 
@@ -222,9 +227,7 @@ const WalletCategoriesPage = () => {
       item.disabled;
     return (
       <CopilotStep
-        text={`This is the ${
-          item.name
-        } button. You can use it to ${item.name.toLowerCase()}.`}
+        text={item.text}
         order={index + 1}
         name={`wallet_step_${index + 1}`}>
         <WalkthroughableView style={styles.buttonWrapper}>
@@ -271,7 +274,17 @@ const WalletCategoriesPage = () => {
 
   const renderItem = ({item, index}) => {
     if (index === 0) {
-      return <View style={styles.balanceContainer}></View>;
+      return (
+        <View style={styles.balanceContainer}>
+          {/* <Text style={styles.balanceLabel}>Current Balance</Text>
+          <Text style={styles.balanceAmount}>{balance} eKROON</Text> */}
+          {walletAddress && (
+            <Text style={styles.walletAddress}>
+              {/* Wallet Address: {walletAddress} */}
+            </Text>
+          )}
+        </View>
+      );
     } else if (index === 1) {
       return (
         <View style={styles.categoriesContainer}>
@@ -305,19 +318,32 @@ const WalletCategoriesPage = () => {
   };
 
   return (
-    <FlatList
-      style={styles.container}
-      data={[{id: 'balance'}, {id: 'categories'}, {id: 'transactions'}]}
-      renderItem={renderItem}
-      keyExtractor={item => item.id}
-      ListFooterComponent={() =>
-        isLoading && (
-          <ActivityIndicator animating={true} color={theme.colors.primary} />
-        )
-      }
-    />
+    <>
+      <FlatList
+        style={styles.container}
+        data={[{id: 'balance'}, {id: 'categories'}, {id: 'transactions'}]}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+        ListFooterComponent={() =>
+          isLoading && (
+            <ActivityIndicator animating={true} color={theme.colors.primary} />
+          )
+        }
+      />
+      <Snackbar
+        visible={showOfflineNotice}
+        onDismiss={() => setShowOfflineNotice(false)}
+        duration={3000}
+        action={{
+          label: 'Dismiss',
+          onPress: () => setShowOfflineNotice(false),
+        }}>
+        You're offline. Some features may be limited.
+      </Snackbar>
+    </>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

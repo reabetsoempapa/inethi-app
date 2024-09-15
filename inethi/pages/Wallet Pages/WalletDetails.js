@@ -7,7 +7,7 @@ import {
   Platform,
   PermissionsAndroid,
 } from 'react-native';
-import {Button, IconButton, Text} from 'react-native-paper';
+import {Button, IconButton, Text, Snackbar} from 'react-native-paper';
 import {useRoute} from '@react-navigation/native';
 import axios from 'axios';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -27,6 +27,7 @@ const WalletDetailsPage = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
+  const [showOfflineNotice, setShowOfflineNotice] = useState(false);
   const qrCodeRef = useRef();
 
   useEffect(() => {
@@ -42,6 +43,9 @@ const WalletDetailsPage = () => {
     const state = await NetInfo.fetch();
     console.log('Network status:', state.isConnected ? 'Online' : 'Offline');
     setIsOnline(state.isConnected);
+    if (!state.isConnected) {
+      setShowOfflineNotice(true);
+    }
   }, []);
 
   const initializeWalletAddress = async () => {
@@ -57,7 +61,6 @@ const WalletDetailsPage = () => {
       fetchWalletDetails(address);
     } else {
       console.log('No wallet address available');
-      Alert.alert('Error', 'No wallet address available.');
       setIsLoading(false);
     }
   };
@@ -114,32 +117,7 @@ const WalletDetailsPage = () => {
 
   const handleError = error => {
     console.log('Handling error:', error);
-    if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          Alert.alert('Error', 'Authentication credentials were not provided.');
-          break;
-        case 404:
-          Alert.alert('Error', 'User does not exist.');
-          break;
-        case 417:
-          Alert.alert('Error', 'User does not have a wallet.');
-          break;
-        case 500:
-          Alert.alert(
-            'Error',
-            'Error checking wallet details. Please contact iNethi support.',
-          );
-          break;
-        default:
-          Alert.alert(
-            'Error',
-            `Failed to check wallet details: ${error.message}`,
-          );
-      }
-    } else {
-      Alert.alert('Error', `Failed to check wallet details: ${error.message}`);
-    }
+    setShowOfflineNotice(true);
   };
 
   const requestStoragePermission = async () => {
@@ -178,7 +156,7 @@ const WalletDetailsPage = () => {
 
     if (!hasPermission) {
       console.log('Storage permission denied');
-      Alert.alert('Error', 'Permission to access storage was denied');
+      setShowOfflineNotice(true);
       return;
     }
 
@@ -196,12 +174,12 @@ const WalletDetailsPage = () => {
           })
           .catch(err => {
             console.error('Error saving QR code:', err);
-            Alert.alert('Error', 'Failed to save QR code');
+            setShowOfflineNotice(true);
           });
       });
     } else {
       console.log('QR code ref not available');
-      Alert.alert('Error', 'QR code not available');
+      setShowOfflineNotice(true);
     }
   };
 
@@ -224,9 +202,6 @@ const WalletDetailsPage = () => {
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
-        {!isOnline && (
-          <Text style={styles.offlineText}>Offline: Showing cached data</Text>
-        )}
         <View style={styles.balanceContainer}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
           <Text style={styles.balanceAmount}>
@@ -268,6 +243,18 @@ const WalletDetailsPage = () => {
           </>
         )}
       </View>
+      <Snackbar
+        visible={showOfflineNotice}
+        onDismiss={() => setShowOfflineNotice(false)}
+        duration={3000}
+        action={{
+          label: 'Dismiss',
+          onPress: () => setShowOfflineNotice(false),
+        }}>
+        {isOnline
+          ? 'An error occurred. Please try again later.'
+          : "You're offline. Some features may be limited."}
+      </Snackbar>
     </View>
   );
 };
