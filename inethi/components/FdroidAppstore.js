@@ -254,7 +254,6 @@ export default function FdroidAppstore() {
     };
 
 
-
     return (
         <View style={{ flex: 1 }}>
             {isLoading ? (
@@ -269,8 +268,9 @@ export default function FdroidAppstore() {
                         placeholder="Search for apps..."
                         onChangeText={handleSearch}
                     />
-                    <ScrollView>
-
+                    <ScrollView
+                        contentContainerStyle={{ paddingBottom: 50 }} // Add bottom padding here
+                    >
                         {filteredAppsMemo.length === 0 ? (
                             <Text>No apps found for "{searchQuery}"</Text>
                         ) : (
@@ -303,6 +303,7 @@ export default function FdroidAppstore() {
                             ))
                         )}
                     </ScrollView>
+
                 </View>
             )}
         </View>

@@ -1,53 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button } from 'react-native';
-import axios from 'axios';
+import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import StarRating from 'react-native-star-rating';
-import { Buffer } from 'buffer';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { rate, getRating } from "../service/AppRatingApi";
+
 export default function AppRating({ appId }) {
     const [averageRating, setAverageRating] = useState(0);
     const [userRating, setUserRating] = useState(0);
-
-    console.log("id:", appId)
+    const [showCommentInput, setShowCommentInput] = useState(false);
+    const [userName, setUserName] = useState('');
+    const [comment, setComment] = useState('');
 
     // Fetch the current average rating from the backend
     useEffect(() => {
-        axios.get(`http://192.168.0.168:3005/rating/${appId}`)
-            .then(response => {
-                setAverageRating(response.data.avgRating);
-            })
-            .catch(error => console.error('Error fetching rating:', error));
+        const fetchRating = async () => {
+            const avg = await getRating(appId);
+            setAverageRating(avg);
+        };
+        fetchRating();
     }, [appId]);
 
-    // Submit a new rating
-    const submitRating = async (rating) => {
-        try {
-            // Retrieve the token from storage
-            const token = await AsyncStorage.getItem('userToken');
-            if (!token) {
-                console.error('User is not logged in.');
-                return;
-            }
+    // Handle rating submission
+    const handleSubmitRating = (rating) => {
+        setUserRating(rating);
+        setShowCommentInput(true); // Show comment and username input fields after rating
+    };
 
-            // Decode the token payload using Buffer
-            const base64Url = token.split('.')[1];
-            const decodedPayload = Buffer.from(base64Url, 'base64').toString('utf-8');
-            const userId = JSON.parse(decodedPayload).sub;
-
-            // Submit the rating with the userId
-            axios.post(`http://192.168.0.168:3007/rating/${appId}`, { rating, userId })
-                .then(() => {
-                    setUserRating(rating);
-                    // Re-fetch the average rating after submitting
-                    axios.get(`http://192.168.0.168:3007/rating/${appId}`)
-                        .then(response => {
-                            setAverageRating(response.data.avgRating);
-                        });
-                })
-                .catch(error => console.error('Error submitting rating:', error));
-        } catch (error) {
-            console.error('Error processing rating submission:', error);
-        }
+    // Submit comment and username along with rating
+    const handleSubmitComment = async () => {
+        await rate(userRating, appId, userName, comment); // Pass username and comment to backend
+        setShowCommentInput(false); // Hide input fields after submission
     };
 
     return (
@@ -57,11 +38,43 @@ export default function AppRating({ appId }) {
                 disabled={false}
                 maxStars={5}
                 rating={userRating}
-                selectedStar={submitRating}
+                selectedStar={handleSubmitRating}
                 fullStarColor="gold"
             />
+
+            {/* Show input fields for username and comment after user selects a rating */}
+            {showCommentInput && (
+                <View style={styles.commentContainer}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Enter your username (optional)"
+                        value={userName}
+                        onChangeText={setUserName}
+                    />
+                    <TextInput
+                        style={[styles.input, { height: 100 }]}
+                        placeholder="Add a comment (optional)"
+                        value={comment}
+                        onChangeText={setComment}
+                        multiline
+                    />
+                    <Button title="Submit" onPress={handleSubmitComment} />
+                </View>
+            )}
         </View>
     );
-};
+}
 
-
+const styles = StyleSheet.create({
+    input: {
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 5,
+        padding: 10,
+        marginVertical: 10,
+        width: '100%',
+    },
+    commentContainer: {
+        marginTop: 20,
+    },
+});

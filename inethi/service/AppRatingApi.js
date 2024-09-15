@@ -1,0 +1,40 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
+import axios from 'axios';
+
+const BaseURL = "http://192.168.0.168:3007";
+
+export const getRating = async (appId) => {
+    try {
+        const response = await axios.get(`${BaseURL}/rating/${appId}`);
+        return response.data.avgRating;
+    } catch (error) {
+        console.error('Error fetching rating:', error);
+        return 0; // Return a default rating if there is an error
+    }
+};
+
+export const rate = async (rating, appId) => {
+    try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+            console.error('User is not logged in.');
+            return;
+        }
+
+        // Decode the token payload using Buffer
+        const base64Url = token.split('.')[1];
+        const decodedPayload = Buffer.from(base64Url, 'base64').toString('utf-8');
+        const userId = JSON.parse(decodedPayload).sub;
+
+        // Submit the rating with the userId
+        await axios.post(`${BaseURL}/rating/${appId}`, { rating, userId });
+
+        // Return the new average rating after submitting
+        const response = await axios.get(`${BaseURL}/rating/${appId}`);
+        return response.data.avgRating;
+    } catch (error) {
+        console.error('Error submitting rating:', error);
+        return null; // Return null if the rating submission fails
+    }
+};
