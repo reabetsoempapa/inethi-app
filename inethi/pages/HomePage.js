@@ -1,23 +1,12 @@
 import React, {useState, useEffect} from 'react';
 import {
   View,
-  Image,
-  Alert,
   ScrollView,
   Text,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import {
-  Button,
-  Card,
-  Title,
-  Dialog,
-  Portal,
-  TextInput,
-  Paragraph,
-  IconButton,
-} from 'react-native-paper';
+import {Button, Card, Title, Dialog, Portal} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import axios from 'axios';
@@ -51,9 +40,6 @@ const HomePage = ({logout}) => {
     console.log('appstore clicked');
     analytics().logEvent('navigate_to_AppStore', {feature: 'App Store'});
     navigation.navigate('AppStore');
-  };
-  const handleWalletPress = () => {
-    navigation.navigate('Wallet', {screen: 'WalletCategories'});
   };
   const [categories, setCategories] = useState({
     Wallet: [

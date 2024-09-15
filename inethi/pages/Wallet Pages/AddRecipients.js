@@ -16,7 +16,7 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
+import {isValidWalletAddress} from './Helpers/WalletAdressValidator';
 const AddRecipientScreen = () => {
   const [recipientName, setRecipientName] = useState('');
   const [recipientWalletAddress, setRecipientWalletAddress] = useState('');
@@ -39,6 +39,11 @@ const AddRecipientScreen = () => {
   });
 
   const handleAddRecipient = async () => {
+    if (!isValidWalletAddress(recipientWalletAddress)) {
+      setError('Invalid wallet address format');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await addRecipient(
@@ -54,7 +59,6 @@ const AddRecipientScreen = () => {
       setIsLoading(false);
     }
   };
-
   const openScanner = async () => {
     const permission = await requestPermission();
     if (permission) {
@@ -97,14 +101,27 @@ const AddRecipientScreen = () => {
             <TextInput
               label="Wallet Address"
               value={recipientWalletAddress}
-              onChangeText={setRecipientWalletAddress}
+              onChangeText={text => {
+                setRecipientWalletAddress(text);
+                setError(''); // Clear error when input changes
+              }}
               style={[styles.input, styles.walletAddressInput]}
               mode="outlined"
+              error={
+                !isValidWalletAddress(recipientWalletAddress) &&
+                recipientWalletAddress !== ''
+              }
             />
             <TouchableOpacity style={styles.scanButton} onPress={openScanner}>
               <Ionicons name="qr-code-outline" size={24} color="white" />
             </TouchableOpacity>
           </View>
+          {!isValidWalletAddress(recipientWalletAddress) &&
+            recipientWalletAddress !== '' && (
+              <Text style={styles.errorText}>
+                Invalid wallet address format
+              </Text>
+            )}
           <TextInput
             label="Wallet Name"
             value={recipientWalletName}
