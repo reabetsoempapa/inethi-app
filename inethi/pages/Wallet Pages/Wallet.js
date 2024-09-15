@@ -40,10 +40,17 @@ const WalletCategoriesPage = () => {
       console.log('Tutorial step changed:', step);
     };
 
+    const handleStop = () => {
+      console.log('Tutorial finished');
+      // You can add any actions you want to perform when the tutorial is finished
+    };
+
     copilotEvents.on('stepChange', handleStepChange);
+    copilotEvents.on('stop', handleStop);
 
     return () => {
       copilotEvents.off('stepChange', handleStepChange);
+      copilotEvents.off('stop', handleStop);
     };
   }, [copilotEvents]);
 
@@ -186,7 +193,7 @@ const WalletCategoriesPage = () => {
           return (
             <CopilotStep
               text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
-              order={idx + 2} // +2 because we have an intro step
+              order={idx + 1}
               name={`wallet_step_${idx + 1}`}
               key={idx}>
               <WalkthroughableView style={styles.buttonWrapper}>
@@ -209,16 +216,7 @@ const WalletCategoriesPage = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <CopilotStep
-          text="Welcome to the Wallet Categories! Here you can manage all your wallet-related activities."
-          order={1}
-          name="intro">
-          <WalkthroughableView>
-            <Text style={styles.headerText}>Wallet Categories</Text>
-          </WalkthroughableView>
-        </CopilotStep>
         {renderButtons(walletCategories)}
-
         <Portal>
           {isLoading && (
             <Dialog visible={true}>
@@ -243,13 +241,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     padding: 16,
-    paddingTop: 40,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#4285F4',
   },
   buttonContainer: {
     flexDirection: 'row',
