@@ -1,17 +1,46 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, Alert, ScrollView } from 'react-native';
-import { Button, Card, Text, Title } from 'react-native-paper';
+import { Button, Card, Title } from 'react-native-paper';
+import emailjs from 'emailjs-com';
 
 const RequestNodePage = () => {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [contact, setContact] = useState('');
-  const [address, setAddress] = useState(''); // New field for installation address
+  const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
+
+  const sendEmail = () => {
+    const serviceID = 'service_2cpwac7'; // Replace with your EmailJS Service ID
+    const templateID = 'template_k3dbj3t'; // Replace with your EmailJS Template ID
+    const publicKey = 'fD9rYE_oPHtthKqcz'; // Replace with your EmailJS Public Key
+
+    const templateParams = {
+      from_name: name,
+      location,
+      contact,
+      address,
+      description,
+    };
+
+    emailjs.send(serviceID, templateID, templateParams, publicKey)
+      .then(response => {
+        Alert.alert('Success', 'Your request has been sent successfully.');
+      })
+      .catch(error => {
+        Alert.alert('Error', 'There was an issue sending your request.');
+        console.error('EmailJS Error:', error);
+      });
+  };
 
   const handleSubmit = () => {
     if (name && location && contact && address && description) {
-      Alert.alert('Request Sent', 'Your request to add a node has been submitted.');
+      sendEmail(); // Send email on form submit
+      setName('');
+      setLocation('');
+      setContact('');
+      setAddress('');
+      setDescription('');
     } else {
       Alert.alert('Error', 'Please fill out all the fields.');
     }
@@ -23,7 +52,6 @@ const RequestNodePage = () => {
         <Card.Content>
           <Title style={styles.title}>Node Installation Request</Title>
           
-          <Text style={styles.label}>Full Name</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter your full name"
@@ -31,7 +59,6 @@ const RequestNodePage = () => {
             onChangeText={setName}
           />
 
-          <Text style={styles.label}>Location of Node</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter the node location"
@@ -39,7 +66,6 @@ const RequestNodePage = () => {
             onChangeText={setLocation}
           />
 
-          <Text style={styles.label}>Installation Address</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter the installation address"
@@ -47,7 +73,6 @@ const RequestNodePage = () => {
             onChangeText={setAddress}
           />
 
-          <Text style={styles.label}>Your Contact Information</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter your email or phone number"
@@ -56,7 +81,6 @@ const RequestNodePage = () => {
             keyboardType="email-address"
           />
 
-          <Text style={styles.label}>Additional Description</Text>
           <TextInput
             style={styles.textArea}
             placeholder="Provide details about the node and your needs"
@@ -93,11 +117,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#333',
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
     color: '#333',
   },
   input: {
