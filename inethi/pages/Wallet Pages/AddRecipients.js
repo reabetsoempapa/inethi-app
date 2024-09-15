@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import {Button, TextInput, Title, Text} from 'react-native-paper';
+import {Button, TextInput, Text} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
 import {addRecipient} from '../../service/recipient';
 import {
@@ -17,6 +17,7 @@ import {
 } from 'react-native-vision-camera';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {isValidWalletAddress} from './Helpers/WalletAdressValidator';
+
 const AddRecipientScreen = () => {
   const [recipientName, setRecipientName] = useState('');
   const [recipientWalletAddress, setRecipientWalletAddress] = useState('');
@@ -59,6 +60,7 @@ const AddRecipientScreen = () => {
       setIsLoading(false);
     }
   };
+
   const openScanner = async () => {
     const permission = await requestPermission();
     if (permission) {
@@ -89,7 +91,7 @@ const AddRecipientScreen = () => {
         </>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Title style={styles.title}>Add New Recipient</Title>
+          <Text style={styles.title}>Add New Recipient</Text>
           <TextInput
             label="Recipient Name"
             value={recipientName}
@@ -103,7 +105,7 @@ const AddRecipientScreen = () => {
               value={recipientWalletAddress}
               onChangeText={text => {
                 setRecipientWalletAddress(text);
-                setError(''); // Clear error when input changes
+                setError('');
               }}
               style={[styles.input, styles.walletAddressInput]}
               mode="outlined"
@@ -134,7 +136,9 @@ const AddRecipientScreen = () => {
             mode="contained"
             onPress={handleAddRecipient}
             loading={isLoading}
-            style={styles.addButton}>
+            style={styles.addButton}
+            labelStyle={styles.buttonLabel}
+            color="#007AFF">
             Add Recipient
           </Button>
         </ScrollView>
@@ -145,6 +149,7 @@ const AddRecipientScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: 40,
     flex: 1,
     backgroundColor: '#fff',
   },
@@ -152,14 +157,17 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    fontSize: 25,
+    marginTop: 30,
+    marginBottom: 25,
     color: '#333',
+    alignSelf: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   input: {
     marginBottom: 16,
+    backgroundColor: 'white',
   },
   walletAddressContainer: {
     flexDirection: 'row',
@@ -171,7 +179,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   scanButton: {
-    backgroundColor: '#0066ff',
+    backgroundColor: '#007AFF',
     padding: 10,
     borderRadius: 8,
   },
@@ -180,9 +188,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   addButton: {
-    marginTop: 8,
-    backgroundColor: '#0066ff',
+    marginTop: 10,
     paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+    marginTop: 25,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   closeScannerButton: {
     position: 'absolute',

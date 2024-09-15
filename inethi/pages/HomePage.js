@@ -11,6 +11,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useBalance } from '../context/BalanceContext';
 import * as amplitude from '@amplitude/analytics-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getToken } from '../utils/tokenUtils';
 import {
   checkInternetConnection,
   checkWirelessConnection,
@@ -43,22 +45,74 @@ const HomePage = ({ logout }) => {
         url: '',
       },
     ],
-    Navigator: [{ name: 'FindHotspot', action: () => handleFindHotspotClick() }],
+    Navigator: [
+      { name: 'Hotspot Services', action: () => handleHotspotOptionsClick() },
+    ],
     Appstore: [{ name: 'AppStore', action: () => handleAppstoreClick() }],
   });
 
+  const [internetData, setInternetData] = useState(null);
+  const [username, setUsername] = useState(null);
+  const [progress, setProgress] = useState(0); // For progress bar
+
   const handleAppstoreClick = () => {
-    console.log('appstore clicked');
     logAnalyticsEvent('navigate_to_AppStore', { feature: 'App Store' });
     navigation.navigate('AppStore');
   };
 
-  const handleFindHotspotClick = async () => {
-    await logAnalyticsEvent('find_hotspot_button_clicked', {
-      button: 'FindHotspot',
-    });
-    navigation.navigate('Map');
+  const handleHotspotOptionsClick = () => {
+    logAnalyticsEvent('navigate_to_HotspotOptions', { feature: 'Hotspot Options' });
+    navigation.navigate('HotspotOptions'); // Navigates to HotspotOptionsPage
   };
+
+  // Fetch username and internet data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = await getToken();
+      const storedUsername = await AsyncStorage.getItem('username');
+      if (storedUsername) {
+        setUsername(storedUsername);
+        fetchUserInternetData(storedUsername, token);
+      }
+    };
+
+    const fetchUserInternetData = async (username, token) => {
+      try {
+        const response = await fetch('http://localhost:8000/accounts/users/', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        const user = data.find(user => user.username === username);
+
+        if (user) {
+          setInternetData(user.profile); // Access user profile
+          updateProgress(user.profile); // Update progress bar
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    const updateProgress = (profile) => {
+      const dataReceived = profile.bytes_recv || 0;
+      const dataSent = profile.bytes_sent || 0;
+      const totalData = dataReceived + dataSent;
+
+      if (totalData > 0) {
+        const progressValue = totalData / 1000000; // Example: Divide by 1MB for the progress bar
+        setProgress(progressValue);
+      } else {
+        setProgress(0); // Default progress
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const checkStatuses = async () => {
@@ -107,44 +161,30 @@ const HomePage = ({ logout }) => {
 
   const renderButtons = buttons => {
     const buttonRows = [];
-    for (let i = 0; i < buttons.length; i += 2) {
-      const pair = buttons.slice(i, i + 2);
+    for (let i = 0; i < buttons.length; i++) {
+      const { name, action, url } = buttons[i];
       buttonRows.push(
-        <View key={i} style={styles.buttonRow}>
-          {pair.map(({ name, action, url, requiresWallet, disabled }, idx) => {
-            const isDisabled = (requiresWallet && !hasWallet) || disabled;
-
-            return (
-              <Button
-                key={idx}
-                mode="contained"
-                onPress={() => {
-                  if (action && !isDisabled) {
-                    action();
-                  } else if (url && !isDisabled) {
-                    navigation.navigate('WebView', { url });
-                  } else {
-                    console.error('Button has no action or URL');
-                  }
-                }}
-                style={[styles.button, isDisabled && styles.buttonDisabled]}
-                labelStyle={
-                  isDisabled ? styles.buttonTextDisabled : styles.buttonText
-                }
-                disabled={isDisabled}
-                icon={() => {
-                  if (name === 'FindHotspot') {
-                    return (
-                      <Ionicons name="map-outline" size={20} color="#FFFFFF" />
-                    );
-                  }
-                  return null;
-                }}>
-                {name}
-              </Button>
-            );
-          })}
-        </View>,
+        <Button
+          key={i}
+          mode="contained"
+          onPress={() => {
+            if (action) {
+              action();
+            } else if (url) {
+              navigation.navigate('WebView', { url });
+            }
+          }}
+          style={styles.button}
+          labelStyle={styles.buttonText}
+          icon={() => {
+            if (name === 'Hotspot Services') {
+              // return <Ionicons name="map-outline" size={20} color="#FFFFFF" />;
+            }
+            return null;
+          }}
+        >
+          {name}
+        </Button>,
       );
     }
     return buttonRows;
@@ -161,9 +201,10 @@ const HomePage = ({ logout }) => {
     ));
 
   const InternetDataCard = () => {
-    const totalData = 20;
-    const remainingData = 19;
-    const usedData = totalData - remainingData;
+    const totalData = 20; // Set default total data
+    const remainingData = internetData
+      ? totalData - (internetData.bytes_recv + internetData.bytes_sent) / 1000000
+      : totalData;
     const progress = remainingData / totalData;
 
     return (
@@ -173,7 +214,7 @@ const HomePage = ({ logout }) => {
           <View>
             <Text style={styles.internetDataTitle}>Internet Data</Text>
             <Text style={styles.internetDataText}>
-              {remainingData}GB left of {totalData}GB Data
+              {remainingData.toFixed(2)}GB left of {totalData}GB Data
             </Text>
           </View>
         </View>
