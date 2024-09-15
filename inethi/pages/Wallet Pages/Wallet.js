@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, {useState, useCallback, useRef} from 'react';
 import {View, StyleSheet, ScrollView} from 'react-native';
 import {
   IconButton,
@@ -34,39 +34,44 @@ const WalletCategoriesPage = () => {
   const {start, copilotEvents, stop} = useCopilot();
   const theme = useTheme();
 
-  useEffect(() => {
-    handleCheckWalletOwnership();
-    setupTutorialListeners();
-    return () => removeTutorialListeners();
-  }, []);
+  const initializeComponent = useCallback(async () => {
+    await handleCheckWalletOwnership();
+    await fetchBalance();
+    startTutorialIfNeeded();
+  }, [route.params]);
 
   useFocusEffect(
     useCallback(() => {
-      startTutorialIfNeeded();
-    }, [route.params]),
+      initializeComponent();
+    }, [initializeComponent]),
   );
 
-  const setupTutorialListeners = () => {
+  const setupTutorialListeners = useCallback(() => {
     copilotEvents.on('stepChange', step =>
       console.log('Tutorial step changed:', step),
     );
     copilotEvents.on('stop', handleTutorialStop);
-  };
 
-  const removeTutorialListeners = () => {
-    copilotEvents.off('stepChange');
-    copilotEvents.off('stop');
-  };
+    return () => {
+      copilotEvents.off('stepChange');
+      copilotEvents.off('stop');
+    };
+  }, [copilotEvents]);
 
-  const handleTutorialStop = () => {
+  React.useEffect(() => {
+    const unsubscribe = setupTutorialListeners();
+    return unsubscribe;
+  }, [setupTutorialListeners]);
+
+  const handleTutorialStop = useCallback(() => {
     stop();
     console.log('Tutorial finished');
     navigation.setParams({startTutorial: null});
     tutorialStartedRef.current = false;
     navigation.navigate('HomeScreen');
-  };
+  }, [navigation, stop]);
 
-  const startTutorialIfNeeded = () => {
+  const startTutorialIfNeeded = useCallback(() => {
     if (route.params?.startTutorial && !tutorialStartedRef.current) {
       console.log('Attempting to start tutorial');
       setTimeout(() => {
@@ -79,7 +84,7 @@ const WalletCategoriesPage = () => {
         }
       }, 500);
     }
-  };
+  }, [route.params, start]);
 
   const handleCheckWalletOwnership = async () => {
     try {
