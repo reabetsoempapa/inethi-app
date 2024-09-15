@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Card,
   Text,
+  IconButton,
 } from 'react-native-paper';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {fetchRecipients} from '../../service/recipient';
@@ -58,20 +59,25 @@ const ViewRecipientsScreen = () => {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}>
-      <Title style={styles.title}>View Recipients</Title>
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#0066ff" />
-      ) : error ? (
-        <Paragraph style={styles.error}>{error}</Paragraph>
-      ) : Object.keys(recipients).length > 0 ? (
-        Object.keys(recipients)
-          .sort()
-          .map((letter, index) => {
-            console.log('Rendering letter:', letter); // Debug log
-            return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Title style={styles.title}>Recipients</Title>
+        <IconButton
+          icon="plus"
+          size={24}
+          color="#007AFF"
+          onPress={() => navigation.navigate('AddRecipient')}
+        />
+      </View>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#007AFF" />
+        ) : error ? (
+          <Paragraph style={styles.error}>{error}</Paragraph>
+        ) : Object.keys(recipients).length > 0 ? (
+          Object.keys(recipients)
+            .sort()
+            .map((letter, index) => (
               <View key={index} style={styles.letterSection}>
                 <View style={styles.letterContainer}>
                   <Text style={styles.letter}>{letter}</Text>
@@ -86,7 +92,7 @@ const ViewRecipientsScreen = () => {
                           <Ionicons
                             name="person-outline"
                             size={24}
-                            color="#0066ff"
+                            color="#007AFF"
                             style={styles.icon}
                           />
                           <View>
@@ -101,27 +107,21 @@ const ViewRecipientsScreen = () => {
                         <Ionicons
                           name="chevron-forward-outline"
                           size={24}
-                          color="#0066ff"
+                          color="#007AFF"
                         />
                       </Card.Content>
                     </Card>
                   </TouchableOpacity>
                 ))}
               </View>
-            );
-          })
-      ) : (
-        <Paragraph style={styles.noRecipientsText}>
-          No recipients found.
-        </Paragraph>
-      )}
-      <Button
-        mode="contained"
-        onPress={() => navigation.navigate('AddRecipient')}
-        style={styles.addButton}>
-        Add New Recipient
-      </Button>
-    </ScrollView>
+            ))
+        ) : (
+          <Paragraph style={styles.noRecipientsText}>
+            No recipients found.
+          </Paragraph>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
@@ -130,14 +130,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  contentContainer: {
-    paddingTop: 20,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   title: {
-    marginVertical: 16,
-    fontSize: 24,
-    textAlign: 'center',
+    fontSize: 20,
     color: '#333',
+  },
+  contentContainer: {
+    paddingTop: 16,
   },
   error: {
     color: 'red',
@@ -148,23 +156,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   letterContainer: {
-    backgroundColor: '#0066ff',
-    height: 40,
-    width: 40,
-    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    height: 32,
+    width: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
+    alignSelf: 'flex-start',
+    marginLeft: 16,
     marginBottom: 8,
   },
   letter: {
     fontWeight: 'bold',
-    fontSize: 20,
+    fontSize: 16,
     color: '#FFFFFF',
+    alignSelf: 'center',
   },
   recipientCard: {
     marginHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 12,
     borderRadius: 8,
     elevation: 2,
   },
@@ -181,7 +191,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   recipientName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
   },
@@ -194,12 +204,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     color: '#555',
-  },
-  addButton: {
-    margin: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#0066ff',
   },
 });
 
