@@ -1,5 +1,5 @@
-import React, {useState, useCallback} from 'react';
-import {View, StyleSheet, Text, FlatList} from 'react-native';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
+import {View, StyleSheet, Text, FlatList, Alert} from 'react-native';
 import {
   Card,
   Title,
@@ -7,24 +7,78 @@ import {
   IconButton,
   ActivityIndicator,
   useTheme,
+  Button,
 } from 'react-native-paper';
-import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
 import {useBalance} from '../../context/BalanceContext';
 import {
   checkWalletOwnership,
   fetchWalletDetails,
   trackButtonClick,
 } from '../../service/Wallet';
+import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const WalkthroughableView = walkthroughable(View);
 
 const WalletCategoriesPage = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const {balance, fetchBalance} = useBalance();
   const [hasWallet, setHasWallet] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTutorialStarted, setIsTutorialStarted] = useState(false);
+  const tutorialStartedRef = useRef(false);
+
+  const {start, copilotEvents, stop} = useCopilot();
   const theme = useTheme();
+
+  useEffect(() => {
+    const handleStepChange = step => {
+      console.log('Tutorial step changed:', step);
+    };
+
+    const handleStop = () => {
+      stop();
+      console.log('Tutorial finished');
+      navigation.setParams({startTutorial: null});
+      tutorialStartedRef.current = false;
+      setIsTutorialStarted(false);
+      navigation.navigate('HomeScreen');
+    };
+
+    copilotEvents.on('stepChange', handleStepChange);
+    copilotEvents.on('stop', handleStop);
+
+    return () => {
+      copilotEvents.off('stepChange', handleStepChange);
+      copilotEvents.off('stop', handleStop);
+    };
+  }, [copilotEvents, navigation]);
+
+  const startTutorialIfNeeded = useCallback(() => {
+    if (route.params?.startTutorial && !tutorialStartedRef.current) {
+      console.log('Attempting to start tutorial');
+      setTimeout(() => {
+        try {
+          start();
+          console.log('Tutorial started successfully');
+          tutorialStartedRef.current = true;
+          setIsTutorialStarted(true);
+        } catch (error) {
+          console.error('Error starting tutorial:', error);
+        }
+      }, 500);
+    } else {
+      console.log('Tutorial already started or flag not set');
+    }
+  }, [route.params, start]);
 
   const initializeComponent = useCallback(async () => {
     await handleCheckWalletOwnership();
@@ -36,7 +90,9 @@ const WalletCategoriesPage = () => {
   useFocusEffect(
     useCallback(() => {
       initializeComponent();
-    }, [initializeComponent]),
+      console.log('Screen focused, checking if tutorial should start');
+      startTutorialIfNeeded();
+    }, [initializeComponent, startTutorialIfNeeded]),
   );
 
   const handleCheckWalletOwnership = async () => {
@@ -45,6 +101,7 @@ const WalletCategoriesPage = () => {
       setHasWallet(response.data.has_wallet);
     } catch (error) {
       console.error('Error checking wallet ownership:', error);
+      handleError(error, 'Failed to check wallet ownership');
     }
   };
 
@@ -54,7 +111,7 @@ const WalletCategoriesPage = () => {
       const response = await fetchWalletDetails();
       setWalletAddress(response.data.wallet_address);
     } catch (error) {
-      console.error('Error fetching wallet details:', error);
+      handleError(error, 'Failed to check wallet details');
     } finally {
       setIsLoading(false);
     }
@@ -67,9 +124,33 @@ const WalletCategoriesPage = () => {
       const sortedTransactions = storedTransactions.sort(
         (a, b) => new Date(b.date) - new Date(a.date),
       );
-      setTransactions(sortedTransactions.slice(0, 3)); // Get only the 3 most recent transactions
+      setTransactions(sortedTransactions.slice(0, 3));
     } catch (error) {
       console.error('Failed to load transactions:', error);
+    }
+  };
+
+  const handleError = (error, defaultMessage) => {
+    if (error.response) {
+      const {status, message} = error.response;
+      switch (status) {
+        case 401:
+          Alert.alert('Error', 'Authentication credentials were not provided.');
+          break;
+        case 404:
+          Alert.alert('Error', 'User does not exist.');
+          break;
+        case 417:
+          Alert.alert('Error', 'User does not have a wallet.');
+          break;
+        case 500:
+          Alert.alert('Error', 'Server error. Please contact support.');
+          break;
+        default:
+          Alert.alert('Error', `${defaultMessage}: ${message}`);
+      }
+    } else {
+      Alert.alert('Error', `${defaultMessage}: ${error.message}`);
     }
   };
 
@@ -79,12 +160,14 @@ const WalletCategoriesPage = () => {
       action: () => navigation.navigate('CreateWallet'),
       disabled: hasWallet,
       icon: 'wallet-plus-outline',
+      text: 'This is the Create Wallet button. You can use it to set up a new digital wallet. It will be disabled once you create a wallet.',
     },
     {
       name: 'Wallet Details',
       action: () => navigation.navigate('WalletDetails', {walletAddress}),
       requiresWallet: true,
       icon: 'wallet-outline',
+      text: "This is the Wallet Details button. You can use it to view your wallet's balance, address and to download your wallet address qr code. You need a wallet to use it.",
     },
     {
       name: 'Transfer',
@@ -94,6 +177,7 @@ const WalletCategoriesPage = () => {
       },
       requiresWallet: true,
       icon: 'swap-horizontal',
+      text: 'This is the Transfer button. You can use it to send the kroon to other wallets using the wallet address if the recipient is not saved.',
     },
     {
       name: 'Add Recipients',
@@ -103,6 +187,7 @@ const WalletCategoriesPage = () => {
       },
       requiresWallet: true,
       icon: 'account-plus-outline',
+      text: 'This is the Add Recipients button. You can use it to save new contact information for people you frequently send the Kroon to.',
     },
     {
       name: 'View Recipients',
@@ -112,51 +197,66 @@ const WalletCategoriesPage = () => {
       },
       requiresWallet: true,
       icon: 'account-multiple-outline',
+      text: 'This is the View Recipients button. You can use it to see and manage your list of saved recipients.',
     },
     {
       name: 'Pay',
       action: () => navigation.navigate('Recipients', {state: {fromPay: true}}),
       requiresWallet: true,
       icon: 'cash',
+      text: 'This is the Pay button. You can use it to quickly initiate a payment to one of your saved recipients.',
     },
     {
       name: 'History',
       action: () => navigation.navigate('PaymentHistory'),
       requiresWallet: true,
       icon: 'history',
+      text: 'This is the History button. You can use it to view a detailed log of all your past transactions.',
     },
   ];
 
-  const renderCategoryItem = ({item}) => {
+  const renderCategoryItem = ({item, index}) => {
     const isDisabled =
       (item.name === 'Create Wallet' && hasWallet) ||
       (item.requiresWallet && !hasWallet) ||
       item.disabled;
-
     return (
-      <Card
-        onPress={isDisabled ? null : item.action}
-        style={[styles.card, isDisabled && styles.disabledCard]}>
-        <Card.Content style={styles.cardContent}>
-          <IconButton
-            icon={item.icon}
-            size={40}
-            color={isDisabled ? theme.colors.disabled : theme.colors.primary}
-          />
-          <Paragraph
-            style={[
-              styles.buttonLabel,
-              {color: isDisabled ? theme.colors.disabled : theme.colors.text},
-            ]}>
-            {item.name}
-          </Paragraph>
-          {isDisabled && (
-            <View style={styles.disabledOverlay}>
-              <IconButton icon="lock" size={20} color={theme.colors.disabled} />
-            </View>
-          )}
-        </Card.Content>
-      </Card>
+      <CopilotStep
+        text={`This is the ${
+          item.name
+        } button. You can use it to ${item.name.toLowerCase()}.`}
+        order={index + 1}
+        name={`wallet_step_${index + 1}`}>
+        <WalkthroughableView style={styles.buttonWrapper}>
+          <Card
+            onPress={isDisabled ? null : item.action}
+            style={[styles.card, isDisabled && styles.disabledCard]}>
+            <Card.Content style={styles.cardContent}>
+              <IconButton
+                icon={item.icon}
+                size={40}
+                color={isDisabled ? theme.colors.disabled : '#007AFF'}
+              />
+              <Paragraph
+                style={[
+                  styles.buttonLabel,
+                  {color: isDisabled ? theme.colors.disabled : '#000000'},
+                ]}>
+                {item.name}
+              </Paragraph>
+              {isDisabled && (
+                <View style={styles.disabledOverlay}>
+                  <IconButton
+                    icon="lock"
+                    size={20}
+                    color={theme.colors.disabled}
+                  />
+                </View>
+              )}
+            </Card.Content>
+          </Card>
+        </WalkthroughableView>
+      </CopilotStep>
     );
   };
 
@@ -171,13 +271,7 @@ const WalletCategoriesPage = () => {
 
   const renderItem = ({item, index}) => {
     if (index === 0) {
-      return (
-        <View style={styles.balanceContainer}>
-          {/* <Text style={styles.balanceLabel}>Balance</Text> */}
-          {/* <Text style={styles.balanceAmount}>{balance} Krone</Text>
-          <Text style={styles.walletAddress}>{walletAddress}</Text> */}
-        </View>
-      );
+      return <View style={styles.balanceContainer}></View>;
     } else if (index === 1) {
       return (
         <View style={styles.categoriesContainer}>
@@ -224,7 +318,6 @@ const WalletCategoriesPage = () => {
     />
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -258,9 +351,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  card: {
+  buttonWrapper: {
     width: '30%',
     marginBottom: 20,
+  },
+  card: {
     backgroundColor: 'white',
   },
   disabledCard: {
@@ -301,6 +396,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     backgroundColor: 'white',
+  },
+  downloadButton: {
+    marginTop: 10,
+    width: '100%',
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+  },
+  downloadButtonContent: {
+    height: 50,
+  },
+  downloadButtonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
