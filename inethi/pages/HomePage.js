@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -6,23 +6,22 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import {Button, Card, Title, Dialog, Portal} from 'react-native-paper';
+import { Button, Card, Title, Dialog, Portal } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {useBalance} from '../context/BalanceContext';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useBalance } from '../context/BalanceContext';
 import * as amplitude from '@amplitude/analytics-react-native';
-import ServiceContainer from '../components/ServiceContainer';
 import {
   checkInternetConnection,
   checkWirelessConnection,
   syncAnalyticsEvents,
   logAnalyticsEvent,
   fetchServices,
-} from '../service/HomePageService';
+} from '../service/HomePageService'; // Importing from external service
 
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
-const HomePage = ({logout}) => {
+const HomePage = ({ logout }) => {
   const route = useRoute();
   const navigation = useNavigation();
 
@@ -31,7 +30,7 @@ const HomePage = ({logout}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
   const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
-  const {balance, fetchBalance} = useBalance();
+  const { balance, fetchBalance } = useBalance();
 
   const [categories, setCategories] = useState({
     Wallet: [
@@ -44,13 +43,13 @@ const HomePage = ({logout}) => {
         url: '',
       },
     ],
-    Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],
-    Appstore: [{name: 'AppStore', action: () => handleAppstoreClick()}],
+    Navigator: [{ name: 'FindHotspot', action: () => handleFindHotspotClick() }],
+    Appstore: [{ name: 'AppStore', action: () => handleAppstoreClick() }],
   });
 
   const handleAppstoreClick = () => {
     console.log('appstore clicked');
-    logAnalyticsEvent('navigate_to_AppStore', {feature: 'App Store'});
+    logAnalyticsEvent('navigate_to_AppStore', { feature: 'App Store' });
     navigation.navigate('AppStore');
   };
 
@@ -78,116 +77,19 @@ const HomePage = ({logout}) => {
 
     return () => clearInterval(intervalId);
   }, []);
-  const checkInternetConnection = async () => {
-    try {
-      const response = await fetch('https://www.google.com', { method: 'HEAD' });
-      if (response.ok) {
-        setIsConnectedToInternet(true);
-        syncAnalyticsEvents();
-      } else {
-        setIsConnectedToInternet(false);
-      }
-    } catch (error) {
-      setIsConnectedToInternet(false);
-    }
-  };
-
-  const checkWirelessConnection = async () => {
-    try {
-      const response = await fetch(nextcloudURL, { method: 'HEAD' });
-      if (response.ok) {
-        setIsConnectedToWireless(true);
-      } else {
-        setIsConnectedToWireless(false);
-      }
-    } catch (error) {
-      setIsConnectedToWireless(false);
-    }
-  };
-
-  const timeout = ms =>
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), ms),
-    );
-  const fetchServices = async () => {
-    try {
-      console.log("fetching services....")
-      const token = await getToken();
-      console.log("after ...tocke")
-      if (!token) return;
-
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-
-      const urlLocal = 'https://manage-backend.inethicloud.net';
-      const urlGlobal =
-        'https://manage-backend.inethicloud.net/service/list-by-type/';
-
-      let servicesDataGlobal = {};
-      let servicesDataLocal = {};
-
-      try {
-        const responseGlobal = await Promise.race([
-          axios.get(urlGlobal, config),
-          timeout(5000),
-        ]);
-        servicesDataGlobal = responseGlobal.data.data;
-      } catch (err) {
-        console.error('Error fetching global data. You may not have Internet.');
-      }
-
-      try {
-        const responseLocal = await Promise.race([
-          axios.get(urlLocal, config),
-          timeout(5000),
-        ]);
-        servicesDataLocal = responseLocal.data.data;
-      } catch (err) {
-        console.error(
-          'Error fetching local data. Are you connected to an iNethi network?',
-        );
-      }
-
-      const combinedServices = { ...servicesDataGlobal };
-
-      Object.entries(servicesDataLocal).forEach(([category, services]) => {
-        combinedServices[category] = services;
-      });
-
-      const fetchedCategories = {
-        ...categories,
-      };
-
-      Object.entries(combinedServices).forEach(([category, services]) => {
-        fetchedCategories[category] = services.map(service => ({
-          name: service.name,
-          url: service.url,
-          action: () => openURL(service.url), // Use openURL function
-        }));
-      });
-
-      setCategories(fetchedCategories);
-    } catch (err) {
-      console.error('Error fetching services:', err);
-      setError(`Failed to fetch services: ${err.message}`);
-    }
-  };
 
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
       try {
-        const servicesData = await fetchServices();
-        const fetchedCategories = {...categories};
+        const servicesData = await fetchServices(); // Fetching services externally
+        const fetchedCategories = { ...categories };
 
         Object.entries(servicesData).forEach(([category, services]) => {
           fetchedCategories[category] = services.map(service => ({
             name: service.name,
             url: service.url,
-            action: () => navigation.navigate('WebView', {url: service.url}),
+            action: () => navigation.navigate('WebView', { url: service.url }),
           }));
         });
 
@@ -209,7 +111,7 @@ const HomePage = ({logout}) => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({name, action, url, requiresWallet, disabled}, idx) => {
+          {pair.map(({ name, action, url, requiresWallet, disabled }, idx) => {
             const isDisabled = (requiresWallet && !hasWallet) || disabled;
 
             return (
@@ -220,7 +122,7 @@ const HomePage = ({logout}) => {
                   if (action && !isDisabled) {
                     action();
                   } else if (url && !isDisabled) {
-                    navigation.navigate('WebView', {url});
+                    navigation.navigate('WebView', { url });
                   } else {
                     console.error('Button has no action or URL');
                   }
@@ -301,7 +203,7 @@ const HomePage = ({logout}) => {
               <View
                 style={[
                   styles.statusIndicator,
-                  {backgroundColor: isConnectedToWireless ? 'green' : 'red'},
+                  { backgroundColor: isConnectedToWireless ? 'green' : 'red' },
                 ]}
               />
               <Text style={styles.statusText}>
@@ -319,7 +221,7 @@ const HomePage = ({logout}) => {
               <View
                 style={[
                   styles.statusIndicator,
-                  {backgroundColor: isConnectedToInternet ? 'green' : 'red'},
+                  { backgroundColor: isConnectedToInternet ? 'green' : 'red' },
                 ]}
               />
               <Text style={styles.statusText}>
