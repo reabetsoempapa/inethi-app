@@ -14,6 +14,7 @@ import {
   IconButton,
   useTheme,
   Card,
+  Text,
 } from 'react-native-paper';
 import {useRoute} from '@react-navigation/native';
 import axios from 'axios';
@@ -158,17 +159,22 @@ const WalletDetailsPage = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Title style={styles.title}>Wallet Details</Title>
-      {walletDetails ? (
-        <Card style={styles.card}>
-          <Card.Content style={styles.cardContent}>
+      <View style={styles.contentContainer}>
+        <View style={styles.balanceContainer}>
+          <Text style={styles.balanceLabel}>Available Balance</Text>
+          <Text style={styles.balanceAmount}>
+            {walletDetails?.balance || '0.0'} Krone
+          </Text>
+        </View>
+        {walletDetails && (
+          <>
             <View style={styles.qrCodeContainer}>
               <QRCode
                 value={walletDetails.wallet_address}
@@ -177,28 +183,31 @@ const WalletDetailsPage = () => {
               />
             </View>
             <View style={styles.walletAddressContainer}>
-              <Paragraph style={styles.walletAddress}>
+              <Text
+                style={styles.walletAddress}
+                numberOfLines={1}
+                ellipsizeMode="middle">
                 {walletDetails.wallet_address}
-              </Paragraph>
+              </Text>
               <IconButton
                 icon="content-copy"
-                size={24}
+                size={20}
                 onPress={handleCopyAddress}
+                color="#007AFF"
               />
             </View>
             <Button
               mode="contained"
               onPress={handleDownloadQrCode}
-              style={styles.downloadButton}>
+              style={styles.downloadButton}
+              contentStyle={styles.downloadButtonContent}
+              labelStyle={styles.downloadButtonLabel}
+              color="#007AFF">
               Download QR Code
             </Button>
-          </Card.Content>
-        </Card>
-      ) : (
-        <Paragraph style={styles.errorText}>
-          Error loading wallet details.
-        </Paragraph>
-      )}
+          </>
+        )}
+      </View>
     </View>
   );
 };
@@ -206,24 +215,33 @@ const WalletDetailsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'white',
+  },
+  contentContainer: {
+    flex: 1,
     padding: 16,
+    alignItems: 'center',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'white',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  card: {
-    marginTop: 20,
-  },
-  cardContent: {
+  balanceContainer: {
     alignItems: 'center',
+    marginBottom: 10,
+  },
+  balanceLabel: {
+    marginTop: 5,
+    fontSize: 8,
+    color: '#666',
+  },
+  balanceAmount: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: 10,
   },
   qrCodeContainer: {
     marginBottom: 20,
@@ -232,16 +250,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingLeft: 12,
+    paddingRight: 4,
   },
   walletAddress: {
     flex: 1,
+    fontSize: 14,
+    color: '#333',
   },
   downloadButton: {
     marginTop: 10,
+    width: '100%',
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
   },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
+  downloadButtonContent: {
+    height: 50,
+  },
+  downloadButtonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -1,11 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
+import {View, StyleSheet, Alert, TouchableOpacity} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import {
   TextInput,
@@ -15,6 +9,8 @@ import {
   Paragraph,
   useTheme,
   IconButton,
+  Modal,
+  Text,
 } from 'react-native-paper';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useBalance} from '../../context/BalanceContext';
@@ -46,6 +42,13 @@ const PaymentPage = () => {
   const device = useCameraDevice('back');
   const {hasPermission, requestPermission} = useCameraPermission();
   const [isPinSet, setIsPinSet] = useState(false);
+  const theme = useTheme();
+
+  useEffect(() => {
+    checkPinStatus();
+    fetchBalance();
+  }, []);
+
   useEffect(() => {
     setIsButtonDisabled(
       !(
@@ -55,6 +58,16 @@ const PaymentPage = () => {
       ),
     );
   }, [receiver, amount, paymentMethod]);
+
+  const checkPinStatus = async () => {
+    try {
+      const storedPin = await AsyncStorage.getItem('@wallet_pin');
+      setIsPinSet(!!storedPin);
+    } catch (error) {
+      console.error('Error checking PIN status:', error);
+      Alert.alert('Error', 'Failed to check PIN status. Please try again.');
+    }
+  };
 
   const handleSendPayment = () => {
     if (!receiver || !amount) {
@@ -83,33 +96,10 @@ const PaymentPage = () => {
     setError('');
     setIsPinModalVisible(true);
   };
-  useEffect(() => {
-    checkPinStatus();
-    updateBalance(500);
-    fetchBalance();
-  }, []);
-
-  useEffect(() => {
-    setIsButtonDisabled(!(receiver && amount));
-  }, [receiver, amount]);
-  const checkPinStatus = async () => {
-    try {
-      const storedPin = await AsyncStorage.getItem('@wallet_pin');
-      console.log(
-        'Checking PIN status:',
-        storedPin ? 'PIN exists' : 'No PIN set',
-      );
-      setIsPinSet(!!storedPin);
-    } catch (error) {
-      console.error('Error checking PIN status:', error);
-      Alert.alert('Error', 'Failed to check PIN status. Please try again.');
-    }
-  };
 
   const verifyPinAndProceed = async () => {
     try {
       const storedPin = await AsyncStorage.getItem('@wallet_pin');
-      console.log('Verifying PIN:', storedPin ? 'PIN exists' : 'No PIN set');
       if (!storedPin) {
         Alert.alert('Error', 'PIN not set. Please set up a PIN first.');
         setIsPinModalVisible(false);
@@ -119,8 +109,8 @@ const PaymentPage = () => {
 
       if (pin === storedPin) {
         setIsPinModalVisible(false);
-        setPin(''); // Clear the PIN input
-        checkBalanceAndProceed(); // Check balance after PIN verification
+        setPin('');
+        checkBalanceAndProceed();
       } else {
         Alert.alert('Error', 'Incorrect PIN. Please try again.');
         setPin('');
@@ -193,8 +183,6 @@ const PaymentPage = () => {
     }
   };
 
-  const theme = useTheme();
-
   return (
     <View style={styles.container}>
       {isScannerOpen && device ? (
@@ -208,12 +196,17 @@ const PaymentPage = () => {
           <Button
             mode="contained"
             onPress={() => setIsScannerOpen(false)}
-            style={styles.exitScannerButton}>
+            style={styles.exitScannerButton}
+            color="#007AFF">
             Exit Scanner
           </Button>
         </>
       ) : (
         <View style={styles.formContainer}>
+          <View style={styles.balanceContainer}>
+            <Text style={styles.balanceLabel}>Available Balance</Text>
+            <Text style={styles.balanceAmount}>{balance} Krone</Text>
+          </View>
           <Picker
             selectedValue={paymentMethod}
             style={styles.picker}
@@ -223,16 +216,17 @@ const PaymentPage = () => {
           </Picker>
           {paymentMethod === 'walletAddress' && (
             <Button
-              mode="contained"
+              mode="outlined"
               onPress={openScanner}
               icon={({size, color}) => (
                 <MaterialCommunityIcons
                   name="qrcode-scan"
                   size={size}
-                  color={color}
+                  color="#007AFF"
                 />
               )}
-              style={styles.scanButton}>
+              style={styles.scanButton}
+              color="#007AFF">
               Scan QR Code
             </Button>
           )}
@@ -245,7 +239,7 @@ const PaymentPage = () => {
             value={receiver}
             onChangeText={text => {
               setReceiver(text);
-              setError(''); // Clear error when input changes
+              setError('');
             }}
             style={styles.input}
             left={
@@ -254,7 +248,7 @@ const PaymentPage = () => {
                   <MaterialCommunityIcons
                     name={paymentMethod === 'username' ? 'account' : 'wallet'}
                     size={size}
-                    color={color}
+                    color="#007AFF"
                   />
                 )}
               />
@@ -268,9 +262,9 @@ const PaymentPage = () => {
           {paymentMethod === 'walletAddress' &&
             !isValidWalletAddress(receiver) &&
             receiver !== '' && (
-              <Paragraph style={styles.errorText}>
+              <Text style={styles.errorText}>
                 Invalid wallet address format
-              </Paragraph>
+              </Text>
             )}
           <TextInput
             label="Amount"
@@ -284,30 +278,31 @@ const PaymentPage = () => {
                   <MaterialCommunityIcons
                     name="cash"
                     size={size}
-                    color={color}
+                    color="#007AFF"
                   />
                 )}
               />
             }
           />
-          {error ? (
-            <Paragraph style={styles.errorText}>{error}</Paragraph>
-          ) : null}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
           <Button
             mode="contained"
             onPress={handleSendPayment}
-            disabled={isButtonDisabled}
-            style={styles.sendButton}>
+            style={styles.sendButton}
+            labelStyle={styles.sendButtonLabel}
+            loading={isLoading}
+            color="#007AFF">
             Send Payment
           </Button>
         </View>
       )}
       <Portal>
-        <Dialog
+        <Modal
           visible={isPinModalVisible}
-          onDismiss={() => setIsPinModalVisible(false)}>
-          <Dialog.Title>Enter PIN</Dialog.Title>
-          <Dialog.Content>
+          onDismiss={() => setIsPinModalVisible(false)}
+          contentContainerStyle={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Enter PIN</Text>
             <TextInput
               label="5-digit PIN"
               value={pin}
@@ -315,13 +310,24 @@ const PaymentPage = () => {
               keyboardType="numeric"
               secureTextEntry
               maxLength={5}
+              style={styles.modalInput}
             />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setIsPinModalVisible(false)}>Cancel</Button>
-            <Button onPress={verifyPinAndProceed}>Verify</Button>
-          </Dialog.Actions>
-        </Dialog>
+            <View style={styles.modalButtonContainer}>
+              <Button
+                onPress={() => setIsPinModalVisible(false)}
+                color="#007AFF"
+                style={styles.modalButton}>
+                Cancel
+              </Button>
+              <Button
+                onPress={verifyPinAndProceed}
+                color="#007AFF"
+                style={styles.modalButton}>
+                Verify
+              </Button>
+            </View>
+          </View>
+        </Modal>
       </Portal>
     </View>
   );
@@ -330,32 +336,88 @@ const PaymentPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    backgroundColor: 'white',
   },
   formContainer: {
     flex: 1,
+    padding: 16,
+  },
+  balanceContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  balanceLabel: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#000',
   },
   picker: {
     marginBottom: 16,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
   },
   input: {
     marginBottom: 16,
+    backgroundColor: 'white',
   },
   scanButton: {
     marginBottom: 16,
+    borderColor: '#007AFF',
   },
   sendButton: {
-    marginTop: 16,
+    marginTop: 10,
+    width: '100%',
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+  },
+  sendButtonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   exitScannerButton: {
     position: 'absolute',
     bottom: 20,
     left: 20,
     right: 20,
+    backgroundColor: '#007AFF',
   },
   errorText: {
     color: 'red',
     marginBottom: 16,
+  },
+  modalContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalInput: {
+    marginBottom: 16,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 5,
   },
 });
 
