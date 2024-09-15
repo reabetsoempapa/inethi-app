@@ -13,11 +13,6 @@ const PaymentUnsuccessful = () => {
       <Ionicons name="close-circle" size={100} color="red" />
       <Text style={styles.errorText}>Payment Unsuccessful</Text>
       {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.buttonText}>Go to Home</Text>
-      </TouchableOpacity>
     </View>
   );
 };

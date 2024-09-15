@@ -10,11 +10,6 @@ const PaymentSuccess = () => {
     <View style={styles.container}>
       <Ionicons name="checkmark-circle" size={100} color="green" />
       <Text style={styles.successText}>Payment Successful!</Text>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.buttonText}>Go to Home</Text>
-      </TouchableOpacity>
     </View>
   );
 };
