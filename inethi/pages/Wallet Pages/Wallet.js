@@ -160,12 +160,14 @@ const WalletCategoriesPage = () => {
       action: () => navigation.navigate('CreateWallet'),
       disabled: hasWallet,
       icon: 'wallet-plus-outline',
+      text: 'This is the Create Wallet button. You can use it to set up a new digital wallet. It will be disabled once you create a wallet.',
     },
     {
       name: 'Wallet Details',
       action: () => navigation.navigate('WalletDetails', {walletAddress}),
       requiresWallet: true,
       icon: 'wallet-outline',
+      text: "This is the Wallet Details button. You can use it to view your wallet's balance, address and to download your wallet address qr code. You need a wallet to use it.",
     },
     {
       name: 'Transfer',
@@ -175,6 +177,7 @@ const WalletCategoriesPage = () => {
       },
       requiresWallet: true,
       icon: 'swap-horizontal',
+      text: 'This is the Transfer button. You can use it to send the kroon to other wallets using the wallet address if the recipient is not saved.',
     },
     {
       name: 'Add Recipients',
@@ -184,6 +187,7 @@ const WalletCategoriesPage = () => {
       },
       requiresWallet: true,
       icon: 'account-plus-outline',
+      text: 'This is the Add Recipients button. You can use it to save new contact information for people you frequently send the Kroon to.',
     },
     {
       name: 'View Recipients',
@@ -193,18 +197,21 @@ const WalletCategoriesPage = () => {
       },
       requiresWallet: true,
       icon: 'account-multiple-outline',
+      text: 'This is the View Recipients button. You can use it to see and manage your list of saved recipients.',
     },
     {
       name: 'Pay',
       action: () => navigation.navigate('Recipients', {state: {fromPay: true}}),
       requiresWallet: true,
       icon: 'cash',
+      text: 'This is the Pay button. You can use it to quickly initiate a payment to one of your saved recipients.',
     },
     {
       name: 'History',
       action: () => navigation.navigate('PaymentHistory'),
       requiresWallet: true,
       icon: 'history',
+      text: 'This is the History button. You can use it to view a detailed log of all your past transactions.',
     },
   ];
 
@@ -213,7 +220,6 @@ const WalletCategoriesPage = () => {
       (item.name === 'Create Wallet' && hasWallet) ||
       (item.requiresWallet && !hasWallet) ||
       item.disabled;
-
     return (
       <CopilotStep
         text={`This is the ${
@@ -265,13 +271,7 @@ const WalletCategoriesPage = () => {
 
   const renderItem = ({item, index}) => {
     if (index === 0) {
-      return (
-        <View style={styles.balanceContainer}>
-          {/* <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>{balance} Krone</Text>
-          <Text style={styles.walletAddress}>{walletAddress}</Text> */}
-        </View>
-      );
+      return <View style={styles.balanceContainer}></View>;
     } else if (index === 1) {
       return (
         <View style={styles.categoriesContainer}>
@@ -318,7 +318,6 @@ const WalletCategoriesPage = () => {
     />
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
