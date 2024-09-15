@@ -29,8 +29,7 @@ import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
 import SetupPIN from './pages/Wallet Pages/PinScreen';
 
-// Import CopilotProvider
-import { CopilotProvider } from 'react-native-copilot';
+import {CopilotProvider} from 'react-native-copilot';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -96,7 +95,7 @@ const WalletPageStack = ({logout}) => {
         name="WalletDetails"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="Wallet Details" logout={logout} />
+            <AppBarComponent title="Details" logout={logout} />
           ),
         }}>
         {props => <WalletDetailsPage {...props} logout={logout} />}
@@ -141,7 +140,7 @@ const WalletPageStack = ({logout}) => {
         name="RecipientDetails"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="Recipient Details" logout={logout} />
+            <AppBarComponent title="Details" logout={logout} />
           ),
         }}>
         {props => <RecipientDetailsScreen {...props} logout={logout} />}
@@ -159,7 +158,7 @@ const WalletPageStack = ({logout}) => {
         name="PaymentHistory"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="Payment History" logout={logout} />
+            <AppBarComponent title="History" logout={logout} />
           ),
         }}>
         {props => <PaymentHistory {...props} logout={logout} />}
@@ -168,7 +167,7 @@ const WalletPageStack = ({logout}) => {
         name="PaymentSuccess"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="Payment Success" logout={logout} />
+            <AppBarComponent title="Successful" logout={logout} />
           ),
         }}>
         {props => <PaymentSuccess {...props} logout={logout} />}
@@ -177,7 +176,7 @@ const WalletPageStack = ({logout}) => {
         name="PaymentUnsuccessful"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="Payment Unsuccessful" logout={logout} />
+            <AppBarComponent title="Unsuccessful" logout={logout} />
           ),
         }}>
         {props => <PaymentUnsuccessful {...props} logout={logout} />}
@@ -260,8 +259,6 @@ const App = () => {
     await AsyncStorage.setItem('userToken', token);
     await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());
     await AsyncStorage.setItem('refreshToken', refresh_token);
-
-    console.log("token :", token)
     setUserToken(token);
   };
 
