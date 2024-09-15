@@ -237,10 +237,6 @@ const HomePage = ({logout}) => {
 
       {renderCategoryCards()}
 
-      <View style={styles.card}>
-        <ServiceContainer />
-      </View>
-
       <Portal>
         {isLoading && (
           <Dialog visible={true}>
