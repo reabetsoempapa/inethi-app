@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, Button, TextInput, Alert, Linking, ActivityIndicator, ToastAndroid, Platform } from 'react-native';
+import { View, Text, Image, Alert, StyleSheet, ScrollView, Button, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { PermissionsAndroid } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Progress from 'react-native-progress';
 import RNFS from 'react-native-fs';
-import jwtDecode from 'jwt-decode';
 import { getApps, download } from '../service/FdroidApi';
 import * as amplitude from '@amplitude/analytics-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppRating from './AppRating';
 import _ from 'lodash';
+import Ionicons from 'react-native-vector-icons/Ionicons'; // For minimize icon
+import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
+
 
 amplitude.init('d584a34a7957c1300fa733ee33a3a960');
 
@@ -63,6 +64,10 @@ export default function FdroidAppstore() {
     const [isServerDown, setIsServerDown] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [user_id, setUserId] = useState("");
+    const [isExpanded, setIsExpanded] = useState({});
+
+
+
 
     useEffect(() => {
         const fetchAndCopyApps = async () => {
@@ -112,6 +117,14 @@ export default function FdroidAppstore() {
         }, 300), // 300ms debounce time
         []
     );
+
+    // Toggle expanded/collapsed state for an app
+    const toggleExpanded = (packageName) => {
+        setIsExpanded(prevState => ({
+            ...prevState,
+            [packageName]: !prevState[packageName]
+        }));
+    };
 
     // Memoized filter function to optimize search performance
     const filteredAppsMemo = useMemo(() => {
@@ -266,49 +279,83 @@ export default function FdroidAppstore() {
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search for apps..."
-                        onChangeText={handleSearch}
+                        onChangeText={setSearchQuery}
                     />
-                    <ScrollView
-                        contentContainerStyle={{ paddingBottom: 50 }} // Add bottom padding here
-                    >
+                    <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
                         {filteredAppsMemo.length === 0 ? (
                             <Text>No apps found for "{searchQuery}"</Text>
                         ) : (
                             filteredAppsMemo.map(app => (
-                                <View key={app.packageName} style={styles.appContainer}>
-                                    <Image source={{ uri: app.icon }} style={styles.icon} />
-                                    <Text style={styles.appTitle}>{app.appName}</Text>
-                                    <Text style={styles.summary}>
-                                        {app.summary}.{"\n\n"}
-                                        {!isServerDown && (
-                                            <Text style={styles.link} onPress={() => handleViewClick(app.packageName)}>
-                                                {" "}view description
-                                            </Text>
-                                        )}
-                                    </Text>
-                                    {isMoreInfor[app.packageName]?.Clicked && (
-                                        <Text style={styles.description}>{app.description}</Text>
-                                    )}
-                                    <Button
-                                        title={isServerDown ? "Install" : "Download"}
-                                        onPress={() => handleDownloadOrInstall(app.packageName, isServerDown, app.url)}
-                                    />
-                                    {downloadProgress[app.packageName] !== undefined && !isServerDown && (
-                                        <Progress.Bar progress={downloadProgress[app.packageName]} width={null} style={styles.progressBar} />
-                                    )}
+                                <TouchableOpacity
+                                    key={app.packageName}
+                                    style={styles.appContainer}
+                                    activeOpacity={isExpanded[app.packageName] ? 1 : 0.7}
+                                    onPress={() => !isExpanded[app.packageName] && toggleExpanded(app.packageName)}
+                                >
+                                    <View style={styles.inlineContainer}>
+                                        {/* App Icon */}
+                                        <Image
+                                            source={{ uri: app.icon }}
+                                            style={isExpanded[app.packageName] ? styles.expandedIcon : styles.icon}
+                                        />
 
-                                    {/* Add AppRating component here */}
-                                    {app.appId ? <AppRating appId={app.appId} /> : <Text></Text>}
-                                </View>
+
+
+                                        {/* App Name and Summary */}
+                                        <View style={styles.textContainer}>
+                                            <Text style={styles.appTitle}>{app.appName}</Text>
+                                            <Text style={styles.summary}>{app.summary}</Text>
+                                        </View>
+
+
+
+                                        {/* Minimize Icon */}
+                                        {isExpanded[app.packageName] && (
+                                            <TouchableOpacity
+                                                style={styles.minimizeIcon}
+                                                onPress={() => toggleExpanded(app.packageName)}
+                                            >
+                                                <Ionicons name="remove-outline" size={45} color="red" />
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+
+
+
+                                    {/* Expanded View */}
+                                    {isExpanded[app.packageName] && (
+                                        <>
+                                            {/* Description */}
+                                            <Text style={styles.subTitle}>About this App</Text>
+                                            <Text style={styles.description}>{app.description}</Text>
+
+                                            {/* Download Button */}
+                                            <TouchableOpacity
+                                                style={styles.downloadButton}
+                                                onPress={() => handleDownloadOrInstall(app.packageName, isServerDown, app.url)}
+                                            >
+                                                <Text style={styles.downloadButtonText}>{isServerDown ? "Install" : "Download"}</Text>
+                                            </TouchableOpacity>
+
+                                            {/* Download Progress */}
+                                            {downloadProgress[app.packageName] !== undefined && !isServerDown && (
+                                                <Progress.Bar progress={downloadProgress[app.packageName]} width={null} style={styles.progressBar} />
+                                            )}
+
+                                            {/* App Rating Component */}
+                                            {app.appId ? <AppRating appId={app.appId} /> : null}
+                                        </>
+                                    )}
+                                </TouchableOpacity>
                             ))
                         )}
                     </ScrollView>
-
                 </View>
             )}
         </View>
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         padding: 20,
@@ -322,19 +369,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         marginBottom: 20,
     },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    summary: {
-        fontSize: 15,
-        marginBottom: 10,
-    },
-    link: {
-        color: 'blue',
-        textDecorationLine: 'underline',
-    },
     appContainer: {
         marginBottom: 20,
         padding: 10,
@@ -346,18 +380,60 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 2,
     },
+    inlineContainer: {
+        flexDirection: 'row', // Makes the items inline
+        alignItems: 'center', // Aligns items vertically in the center
+    },
     icon: {
+        width: 100,
+        height: 100,
+        marginRight: 10,
+    },
+    expandedIcon: {
         width: 64,
         height: 64,
-        marginBottom: 10,
+        marginRight: 10,
+    },
+    minimizeIcon: {
+        marginLeft: 'auto', // Pushes the minimize icon to the right
+        padding: 10,
+    },
+    textContainer: {
+        flex: 1, // Ensures the text container takes up remaining space
     },
     appTitle: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: 'bold',
+        color: 'black',
+        textAlign: "center"
+    },
+    summary: {
+        fontSize: 12,
+        marginBottom: 10,
+        color: "black",
+        fontWeight: "bold",
+        textAlign: "center"
     },
     description: {
-        fontSize: 14,
+        fontSize: 12,
         marginBottom: 10,
+        color: "#343540",
+        fontFamily: "Cochin",
+        letterSpacing: 1,
+        lineHeight: 20,
+    },
+    downloadButton: {
+        backgroundColor: '#4285F4',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 5,
+        marginTop: 10,
+        alignItems: 'center',
+    },
+    downloadButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
     progressBar: {
         marginTop: 10,
@@ -372,4 +448,11 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#4285F4',
     },
+    subTitle: {
+        paddingTop: 15,
+        paddingBottom: 5,
+        color: "#1a1c36",
+        fontWeight: "500"
+    }
+
 });

@@ -79,7 +79,8 @@ export default function AppRating({ appId }) {
                 maxStars={5}
                 rating={userRating}
                 selectedStar={handleSubmitRating}
-                fullStarColor="gold"
+                fullStarColor="blue"
+                starSize={25}
             />
 
             {/* Review Icon and number of reviews */}
