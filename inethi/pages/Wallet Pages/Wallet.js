@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback, useRef} from 'react';
-import {View, StyleSheet, ScrollView, Alert} from 'react-native';
+import {View, StyleSheet, ScrollView} from 'react-native';
 import {
   IconButton,
   Card,
@@ -27,43 +27,46 @@ const WalletCategoriesPage = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const {balance, fetchBalance} = useBalance();
-  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isTutorialStarted, setIsTutorialStarted] = useState(false);
   const tutorialStartedRef = useRef(false);
 
   const {start, copilotEvents, stop} = useCopilot();
-  console.log('Route params:', route.params);
-  console.log('tutorialStartedRef.current', tutorialStartedRef.current);
-  console.log(route.params?.startTutorial);
+  const theme = useTheme();
 
   useEffect(() => {
-    const handleStepChange = step => {
-      console.log('Tutorial step changed:', step);
-    };
+    handleCheckWalletOwnership();
+    setupTutorialListeners();
+    return () => removeTutorialListeners();
+  }, []);
 
-    const handleStop = () => {
-      stop();
-      console.log('Tutorial finished');
-      navigation.setParams({startTutorial: null});
+  useFocusEffect(
+    useCallback(() => {
+      startTutorialIfNeeded();
+    }, [route.params]),
+  );
 
-      tutorialStartedRef.current = false;
-      setIsTutorialStarted(false);
-      // Navigate back to the HomeScreen
-      navigation.navigate('HomeScreen');
-    };
+  const setupTutorialListeners = () => {
+    copilotEvents.on('stepChange', step =>
+      console.log('Tutorial step changed:', step),
+    );
+    copilotEvents.on('stop', handleTutorialStop);
+  };
 
-    copilotEvents.on('stepChange', handleStepChange);
-    copilotEvents.on('stop', handleStop);
+  const removeTutorialListeners = () => {
+    copilotEvents.off('stepChange');
+    copilotEvents.off('stop');
+  };
 
-    return () => {
-      copilotEvents.off('stepChange', handleStepChange);
-      copilotEvents.off('stop', handleStop);
-    };
-  }, [copilotEvents, navigation]);
+  const handleTutorialStop = () => {
+    stop();
+    console.log('Tutorial finished');
+    navigation.setParams({startTutorial: null});
+    tutorialStartedRef.current = false;
+    navigation.navigate('HomeScreen');
+  };
 
-  const startTutorialIfNeeded = useCallback(() => {
+  const startTutorialIfNeeded = () => {
     if (route.params?.startTutorial && !tutorialStartedRef.current) {
       console.log('Attempting to start tutorial');
       setTimeout(() => {
@@ -71,26 +74,12 @@ const WalletCategoriesPage = () => {
           start();
           console.log('Tutorial started successfully');
           tutorialStartedRef.current = true;
-          setIsTutorialStarted(true);
         } catch (error) {
           console.error('Error starting tutorial:', error);
         }
       }, 500);
-    } else {
-      console.log('Tutorial already started or flag not set');
     }
-  }, [route.params, start]);
-
-  useEffect(() => {
-    handleCheckWalletOwnership();
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      console.log('Screen focused, checking if tutorial should start');
-      startTutorialIfNeeded();
-    }, [startTutorialIfNeeded]),
-  );
+  };
 
   const handleCheckWalletOwnership = async () => {
     try {
@@ -106,39 +95,21 @@ const WalletCategoriesPage = () => {
     setIsLoading(true);
     try {
       const response = await fetchWalletDetails();
-      setIsLoading(false);
       navigation.navigate('WalletDetails', {
         walletAddress: response.data.wallet_address,
       });
       await trackButtonClick('wallet_details_button_clicked');
     } catch (error) {
-      setIsLoading(false);
       handleError(error, 'Failed to check wallet details');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleError = (error, defaultMessage) => {
-    if (error.response) {
-      const {status, message} = error.response;
-      switch (status) {
-        case 401:
-          Alert.alert('Error', 'Authentication credentials were not provided.');
-          break;
-        case 404:
-          Alert.alert('Error', 'User does not exist.');
-          break;
-        case 417:
-          Alert.alert('Error', 'User does not have a wallet.');
-          break;
-        case 500:
-          Alert.alert('Error', 'Server error. Please contact support.');
-          break;
-        default:
-          Alert.alert('Error', `${defaultMessage}: ${message}`);
-      }
-    } else {
-      Alert.alert('Error', `${defaultMessage}: ${error.message}`);
-    }
+    const errorMessage = error.response?.data?.message || error.message;
+    console.error(`${defaultMessage}: ${errorMessage}`);
+    // You can add more specific error handling here if needed
   };
 
   const walletCategories = [
@@ -185,64 +156,55 @@ const WalletCategoriesPage = () => {
       name: 'Pay',
       action: () => navigation.navigate('Recipients', {state: {fromPay: true}}),
       requiresWallet: true,
-
       icon: 'cash',
     },
     {
       name: 'History',
       action: () => navigation.navigate('PaymentHistory'),
       requiresWallet: true,
-
       icon: 'history',
     },
   ];
 
-  const theme = useTheme();
-
-  const renderButtons = buttons => {
-    return (
-      <View style={styles.buttonContainer}>
-        {buttons.map(({name, action, requiresWallet, icon}, idx) => {
-          const isDisabled = requiresWallet && !hasWallet;
-
-          return (
-            <CopilotStep
-              text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
-              order={idx + 1}
-              name={`wallet_step_${idx + 1}`}
-              key={idx}>
-              <WalkthroughableView style={styles.buttonWrapper}>
-                <Card onPress={action} disabled={isDisabled}>
-                  <Card.Content style={styles.cardContent}>
-                    <IconButton
-                      icon={icon}
-                      size={40}
-                      color={
-                        isDisabled
+  const renderButtons = buttons => (
+    <View style={styles.buttonContainer}>
+      {buttons.map(({name, action, requiresWallet, icon, disabled}, idx) => {
+        const isDisabled = (requiresWallet && !hasWallet) || disabled;
+        return (
+          <CopilotStep
+            text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
+            order={idx + 1}
+            name={`wallet_step_${idx + 1}`}
+            key={idx}>
+            <WalkthroughableView style={styles.buttonWrapper}>
+              <Card onPress={action} disabled={isDisabled}>
+                <Card.Content style={styles.cardContent}>
+                  <IconButton
+                    icon={icon}
+                    size={40}
+                    color={
+                      isDisabled ? theme.colors.disabled : theme.colors.primary
+                    }
+                  />
+                  <Paragraph
+                    style={[
+                      styles.buttonLabel,
+                      {
+                        color: isDisabled
                           ? theme.colors.disabled
-                          : theme.colors.primary
-                      }
-                    />
-                    <Paragraph
-                      style={[
-                        styles.buttonLabel,
-                        {
-                          color: isDisabled
-                            ? theme.colors.disabled
-                            : theme.colors.text,
-                        },
-                      ]}>
-                      {name}
-                    </Paragraph>
-                  </Card.Content>
-                </Card>
-              </WalkthroughableView>
-            </CopilotStep>
-          );
-        })}
-      </View>
-    );
-  };
+                          : theme.colors.text,
+                      },
+                    ]}>
+                    {name}
+                  </Paragraph>
+                </Card.Content>
+              </Card>
+            </WalkthroughableView>
+          </CopilotStep>
+        );
+      })}
+    </View>
+  );
 
   return (
     <ScrollView
@@ -258,12 +220,8 @@ const WalletCategoriesPage = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContainer: {
-    padding: 16,
-  },
+  container: {flex: 1},
+  scrollContainer: {padding: 16},
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -275,17 +233,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  buttonWrapper: {
-    width: '30%',
-    marginBottom: 20,
-  },
-  cardContent: {
-    alignItems: 'center',
-  },
-  buttonLabel: {
-    marginTop: 8,
-    textAlign: 'center',
-  },
+  buttonWrapper: {width: '30%', marginBottom: 20},
+  cardContent: {alignItems: 'center'},
+  buttonLabel: {marginTop: 8, textAlign: 'center'},
 });
 
 export default WalletCategoriesPage;
