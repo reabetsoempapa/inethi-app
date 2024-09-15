@@ -25,7 +25,7 @@ export const getApps = async () => {
         ]);
 
         let apps = response.data;
-        console.log("data", apps);
+        // console.log("data", apps);
 
         if (typeof apps === 'string') {
             apps = JSON.parse(apps);
@@ -45,7 +45,7 @@ export const getApps = async () => {
             url: `${BASE_URL}${app.url}`,
         }));
 
-        console.log("Filtered:", appList);
+        // console.log("Filtered:", appList);
         return appList;
     } catch (error) {
         console.error('Error fetching app list:', error);

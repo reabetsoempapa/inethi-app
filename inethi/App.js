@@ -28,7 +28,11 @@ import PaymentUnsuccessful from './pages/Wallet Pages/PaymentFail';
 import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
 import SetupPIN from './pages/Wallet Pages/PinScreen';
+import HotspotOptionsPage from './pages/HotspotOptionsPage';
+import RequestNodePage from './pages/RequestNodePage'; // Ensure this is imported
 
+// Import the ReviewPage component
+import ReviewPage from './pages/ReviewPage'; // Update this path according to where ReviewPage is located
 import {CopilotProvider} from 'react-native-copilot';
 
 const Stack = createNativeStackNavigator();
@@ -48,22 +52,20 @@ const HomePageStack = ({logout}) => {
         {props => <HomePage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
-        name="AppStore"
+        name="RequestNode"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="App Store" logout={logout} />
+            <AppBarComponent title="Installation" logout={logout} />
           ),
         }}>
-        {props => <FdroidAppstore {...props} logout={logout} />}
+        {props => <RequestNodePage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
-        name="WebView"
+        name="HotspotOptions"
         options={{
-          header: ({navigation}) => (
-            <AppBarComponent title="Web View" logout={logout} />
-          ),
+          headerShown: false, // Disable header here
         }}>
-        {props => <WebViewComponent {...props} logout={logout} />}
+        {props => <HotspotOptionsPage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
         name="Map"
@@ -74,11 +76,28 @@ const HomePageStack = ({logout}) => {
         }}>
         {props => <MapPage {...props} logout={logout} />}
       </Stack.Screen>
+      {/* Add the AppStore screen here */}
+      <Stack.Screen
+        name="AppStore"
+        options={{
+          header: ({navigation}) => (
+            <AppBarComponent title="App Store" logout={logout} />
+          ),
+        }}>
+        {props => <FdroidAppstore {...props} logout={logout} />}
+      </Stack.Screen>
+      <Stack.Screen
+        name="ReviewPage"
+        options={{
+          header: ({navigation}) => (
+            <AppBarComponent title="Reviews" logout={logout} />
+          ),
+        }}>
+        {props => <ReviewPage {...props} logout={logout} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
-};
-
-// Wallet Page Stack
+}; // Wallet Page Stack
 const WalletPageStack = ({logout}) => {
   return (
     <Stack.Navigator screenOptions={{headerShown: true}}>
@@ -167,7 +186,7 @@ const WalletPageStack = ({logout}) => {
         name="PaymentSuccess"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="Successful" logout={logout} />
+            <AppBarComponent title="Payment Success" logout={logout} />
           ),
         }}>
         {props => <PaymentSuccess {...props} logout={logout} />}
