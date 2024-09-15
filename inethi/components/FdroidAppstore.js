@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, Image, Alert, StyleSheet, ScrollView, Button, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
-import { PermissionsAndroid } from 'react-native';
+import { View, Text, Image, Alert, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import * as Progress from 'react-native-progress';
 import RNFS from 'react-native-fs';
@@ -10,49 +10,10 @@ import AppRating from './AppRating';
 import _ from 'lodash';
 import Ionicons from 'react-native-vector-icons/Ionicons'; // For minimize icon
 import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
-
+import {requestStoragePermission} from "../service/Permissions"
 
 amplitude.init('d584a34a7957c1300fa733ee33a3a960');
 
-const requestStoragePermission = async () => {
-    if (Platform.OS === 'android') {
-        try {
-            let permissions;
-            const sdkInt = Platform.Version;
-            if (sdkInt >= 33) {
-                permissions = [
-                    PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
-                    PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
-                    PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-                ];
-            } else {
-                permissions = [
-                    PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-                    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-                ];
-            }
-
-            const granted = await PermissionsAndroid.requestMultiple(permissions, {
-                title: 'Storage Permission',
-                message: 'This app needs access to your storage to download files',
-                buttonNeutral: 'Ask Me Later',
-                buttonNegative: 'Cancel',
-                buttonPositive: 'OK',
-            });
-
-            if (sdkInt >= 33) {
-                return permissions.every(permission => granted[permission] === PermissionsAndroid.RESULTS.GRANTED);
-            } else {
-                return granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED &&
-                    granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
-            }
-        } catch (err) {
-            console.warn(err);
-            return false;
-        }
-    }
-    return true;
-};
 
 export default function FdroidAppstore() {
     const navigation = useNavigation();
@@ -65,8 +26,6 @@ export default function FdroidAppstore() {
     const [isLoading, setIsLoading] = useState(true);
     const [user_id, setUserId] = useState("");
     const [isExpanded, setIsExpanded] = useState({});
-
-
 
 
     useEffect(() => {
@@ -254,18 +213,7 @@ export default function FdroidAppstore() {
         }
     };
 
-    const handleViewClick = (packageName) => {
-        setMoreInfor(prevState => {
-            const updatedState = { ...prevState };
-            if (updatedState[packageName]) {
-                updatedState[packageName].Clicked = !updatedState[packageName].Clicked;
-            } else {
-                console.error(`Package name ${packageName} not found in isMoreInfor`);
-            }
-            return updatedState;
-        });
-    };
-
+ 
 
     return (
         <View style={{ flex: 1 }}>
