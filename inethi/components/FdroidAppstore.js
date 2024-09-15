@@ -10,6 +10,7 @@ import _ from 'lodash';
 import Ionicons from 'react-native-vector-icons/Ionicons'; // For minimize icon
 import { requestStoragePermission } from "../service/Permissions"
 import { getDownloadedAppsCache, setDownloadedAppsCache, isCacheValid } from '../service/Cache'; // Updated cache service
+import { recordFeatureUsage, recordAppDownloaded } from '../service/Metric'; // Assuming the file is TrackingService
 
 amplitude.init('d584a34a7957c1300fa733ee33a3a960');
 
@@ -185,10 +186,10 @@ export default function FdroidAppstore() {
     };
 
     const handleDownloadOrInstall = async (packageName, isServerDown, appUrl) => {
-        if (isServerDown) {
+        if (isServerDown || isAppDownloaded(packageName)) {
             Alert.alert(
                 'Manual Installation Required',
-                'Server is down. Go to the Download folder and click on MyAppDownloads to install manually.',
+                'Go to the Download folder and click on MyAppDownloads to install manually.',
                 [
                     {
                         text: 'Open Downloads',
@@ -208,7 +209,12 @@ export default function FdroidAppstore() {
                 });
 
                 if (response.statusCode === 200) {
-                    amplitude.track('App Downloaded', { packageName });
+                    // Check if the app is already downloaded (cached)
+                    if (!isAppDownloaded(packageName)) {
+                        // If the app is not cached, track the download event
+                        amplitude.track('App Downloaded', { packageName });//using amplitude
+                        recordAppDownloaded(packageName);//using prometheus grafana
+                    }
 
                     // Update downloaded apps cache
                     const newDownloadedApps = [...downloadedApps, packageName];

@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 
-const url = 'http://10.0.2.2:3001';
+const url = 'http://192.168.0.168:3001';
 
 const recordFeatureUsage = async (feature) => {
     try {
