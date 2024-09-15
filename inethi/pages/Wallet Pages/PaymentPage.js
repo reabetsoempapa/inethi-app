@@ -1,16 +1,22 @@
 import React, {useState, useEffect} from 'react';
 import {
   View,
-  Text,
-  TextInput,
   StyleSheet,
   ActivityIndicator,
   Alert,
   TouchableOpacity,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
+import {
+  TextInput,
+  Button,
+  Dialog,
+  Portal,
+  Paragraph,
+  useTheme,
+  IconButton,
+} from 'react-native-paper';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {Dialog} from 'react-native-paper';
 import {useBalance} from '../../context/BalanceContext';
 import {
   Camera,
@@ -18,13 +24,15 @@ import {
   useCameraPermission,
   useCodeScanner,
 } from 'react-native-vision-camera';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {isValidWalletAddress} from './Helpers/WalletAdressValidator';
 
 const PaymentPage = () => {
   const {balance, fetchBalance, updateBalance} = useBalance();
   const navigation = useNavigation();
   const route = useRoute();
-  const {recipient} = route.params || {}; // Get recipient from params, if available
+  const {recipient} = route.params || {};
 
   const [paymentMethod, setPaymentMethod] = useState('walletAddress');
   const [receiver, setReceiver] = useState(recipient?.wallet_address || '');
@@ -33,8 +41,135 @@ const PaymentPage = () => {
   const [error, setError] = useState('');
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isPinModalVisible, setIsPinModalVisible] = useState(false);
+  const [pin, setPin] = useState('');
   const device = useCameraDevice('back');
   const {hasPermission, requestPermission} = useCameraPermission();
+  const [isPinSet, setIsPinSet] = useState(false);
+  useEffect(() => {
+    setIsButtonDisabled(
+      !(
+        receiver &&
+        amount &&
+        (paymentMethod === 'username' || isValidWalletAddress(receiver))
+      ),
+    );
+  }, [receiver, amount, paymentMethod]);
+
+  const handleSendPayment = () => {
+    if (!receiver || !amount) {
+      setError('Both fields are required');
+      return;
+    }
+
+    if (paymentMethod === 'walletAddress' && !isValidWalletAddress(receiver)) {
+      setError('Invalid wallet address format');
+      return;
+    }
+
+    if (!isPinSet) {
+      Alert.alert(
+        'PIN Not Set',
+        'Please set up a PIN before making a payment.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('SetupPIN'),
+          },
+        ],
+      );
+      return;
+    }
+    setError('');
+    setIsPinModalVisible(true);
+  };
+  useEffect(() => {
+    checkPinStatus();
+    updateBalance(500);
+    fetchBalance();
+  }, []);
+
+  useEffect(() => {
+    setIsButtonDisabled(!(receiver && amount));
+  }, [receiver, amount]);
+  const checkPinStatus = async () => {
+    try {
+      const storedPin = await AsyncStorage.getItem('@wallet_pin');
+      console.log(
+        'Checking PIN status:',
+        storedPin ? 'PIN exists' : 'No PIN set',
+      );
+      setIsPinSet(!!storedPin);
+    } catch (error) {
+      console.error('Error checking PIN status:', error);
+      Alert.alert('Error', 'Failed to check PIN status. Please try again.');
+    }
+  };
+
+  const verifyPinAndProceed = async () => {
+    try {
+      const storedPin = await AsyncStorage.getItem('@wallet_pin');
+      console.log('Verifying PIN:', storedPin ? 'PIN exists' : 'No PIN set');
+      if (!storedPin) {
+        Alert.alert('Error', 'PIN not set. Please set up a PIN first.');
+        setIsPinModalVisible(false);
+        navigation.navigate('SetupPIN');
+        return;
+      }
+
+      if (pin === storedPin) {
+        setIsPinModalVisible(false);
+        setPin(''); // Clear the PIN input
+        checkBalanceAndProceed(); // Check balance after PIN verification
+      } else {
+        Alert.alert('Error', 'Incorrect PIN. Please try again.');
+        setPin('');
+      }
+    } catch (error) {
+      console.error('Error retrieving PIN:', error);
+      Alert.alert('Error', 'Failed to verify PIN. Please try again.');
+    }
+  };
+
+  const checkBalanceAndProceed = () => {
+    if (parseFloat(amount) > parseFloat(balance)) {
+      const errorMsg =
+        'Insufficient funds. Please check your balance and try again.';
+      setError(errorMsg);
+      navigation.navigate('PaymentUnsuccessful', {errorMessage: errorMsg});
+    } else {
+      proceedWithPayment();
+    }
+  };
+
+  const proceedWithPayment = async () => {
+    setIsLoading(true);
+
+    try {
+      const paymentData = {
+        payment_method: paymentMethod,
+        recipient_address: receiver,
+        amount,
+      };
+
+      // Mocked send payment function, replace with actual API call
+      const transaction = await mockSendPayment(paymentData);
+
+      if (transaction.success) {
+        setIsLoading(false);
+        updateBalance(balance - parseFloat(amount));
+        navigation.navigate('PaymentSuccess');
+      } else {
+        throw new Error('Payment failed');
+      }
+    } catch (error) {
+      setIsLoading(false);
+      const errorMsg =
+        error.message || 'Failed to send payment. Please try again later.';
+      setError(errorMsg);
+      navigation.navigate('PaymentUnsuccessful', {errorMessage: errorMsg});
+    }
+  };
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
@@ -58,80 +193,27 @@ const PaymentPage = () => {
     }
   };
 
-  const handleSendPayment = async () => {
-    if (!receiver || !amount) {
-      setError('Both fields are required');
-      return;
-    }
-
-    if (parseFloat(amount) > parseFloat(balance)) {
-      const errorMsg =
-        'Insufficient funds. Please check your balance and try again.';
-      setError(errorMsg);
-      navigation.navigate('PaymentUnsuccessful', {errorMessage: errorMsg});
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const paymentData = {
-        payment_method: paymentMethod,
-        recipient_address: receiver,
-        amount,
-      };
-
-      // Mocked send payment function, replace with actual API call
-      const transaction = await mockSendPayment(paymentData);
-
-      // Example of using the transaction result
-      if (transaction.success) {
-        setIsLoading(false);
-        updateBalance(balance - parseFloat(amount));
-        navigation.navigate('PaymentSuccess');
-      } else {
-        throw new Error('Payment failed');
-      }
-    } catch (error) {
-      setIsLoading(false);
-      const errorMsg =
-        error.message || 'Failed to send payment. Please try again later.';
-      setError(errorMsg);
-      navigation.navigate('PaymentUnsuccessful', {errorMessage: errorMsg});
-    }
-  };
-
-  useEffect(() => {
-    // Update balance to R500 for testing purposes
-    updateBalance(500);
-
-    // Fetch balance from API or mock
-    fetchBalance();
-  }, []);
-
-  useEffect(() => {
-    setIsButtonDisabled(!(receiver && amount));
-  }, [receiver, amount]);
+  const theme = useTheme();
 
   return (
     <View style={styles.container}>
       {isScannerOpen && device ? (
         <>
           <Camera
-            style={{flex: 1, width: '100%'}}
+            style={StyleSheet.absoluteFill}
             device={device}
             isActive={isScannerOpen}
             codeScanner={codeScanner}
           />
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => setIsScannerOpen(false)}>
-            <Text style={styles.buttonText}>Exit Scanner</Text>
-          </TouchableOpacity>
+          <Button
+            mode="contained"
+            onPress={() => setIsScannerOpen(false)}
+            style={styles.exitScannerButton}>
+            Exit Scanner
+          </Button>
         </>
       ) : (
-        <>
+        <View style={styles.formContainer}>
           <Picker
             selectedValue={paymentMethod}
             style={styles.picker}
@@ -140,145 +222,140 @@ const PaymentPage = () => {
             <Picker.Item label="Wallet Address" value="walletAddress" />
           </Picker>
           {paymentMethod === 'walletAddress' && (
-            <TouchableOpacity style={styles.scanButton} onPress={openScanner}>
-              <Ionicons name="qr-code-outline" size={24} color="white" />
-              <Text style={styles.scanButtonText}>Scan QR Code</Text>
-            </TouchableOpacity>
+            <Button
+              mode="contained"
+              onPress={openScanner}
+              icon={({size, color}) => (
+                <MaterialCommunityIcons
+                  name="qrcode-scan"
+                  size={size}
+                  color={color}
+                />
+              )}
+              style={styles.scanButton}>
+              Scan QR Code
+            </Button>
           )}
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name={
-                paymentMethod === 'username'
-                  ? 'person-outline'
-                  : 'wallet-outline'
-              }
-              size={20}
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              onChangeText={setReceiver}
-              value={receiver}
-              placeholder={
-                paymentMethod === 'username'
-                  ? 'Username of receiver'
-                  : 'Wallet address'
-              }
-              placeholderTextColor="#aaa"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="cash-outline" size={20} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              onChangeText={setAmount}
-              value={amount}
-              placeholder="Amount"
-              keyboardType="numeric"
-              placeholderTextColor="#aaa"
-            />
-          </View>
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              isButtonDisabled && styles.disabledButton,
-            ]}
+          <TextInput
+            label={
+              paymentMethod === 'username'
+                ? 'Username of receiver'
+                : 'Wallet address'
+            }
+            value={receiver}
+            onChangeText={text => {
+              setReceiver(text);
+              setError(''); // Clear error when input changes
+            }}
+            style={styles.input}
+            left={
+              <TextInput.Icon
+                icon={({size, color}) => (
+                  <MaterialCommunityIcons
+                    name={paymentMethod === 'username' ? 'account' : 'wallet'}
+                    size={size}
+                    color={color}
+                  />
+                )}
+              />
+            }
+            error={
+              paymentMethod === 'walletAddress' &&
+              !isValidWalletAddress(receiver) &&
+              receiver !== ''
+            }
+          />
+          {paymentMethod === 'walletAddress' &&
+            !isValidWalletAddress(receiver) &&
+            receiver !== '' && (
+              <Paragraph style={styles.errorText}>
+                Invalid wallet address format
+              </Paragraph>
+            )}
+          <TextInput
+            label="Amount"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            style={styles.input}
+            left={
+              <TextInput.Icon
+                icon={({size, color}) => (
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={size}
+                    color={color}
+                  />
+                )}
+              />
+            }
+          />
+          {error ? (
+            <Paragraph style={styles.errorText}>{error}</Paragraph>
+          ) : null}
+          <Button
+            mode="contained"
             onPress={handleSendPayment}
-            disabled={isButtonDisabled}>
-            <Text style={styles.buttonText}>Send Payment</Text>
-          </TouchableOpacity>
-          {isLoading && (
-            <Dialog visible={true}>
-              <Dialog.Content>
-                <ActivityIndicator size="large" />
-              </Dialog.Content>
-            </Dialog>
-          )}
-        </>
+            disabled={isButtonDisabled}
+            style={styles.sendButton}>
+            Send Payment
+          </Button>
+        </View>
       )}
+      <Portal>
+        <Dialog
+          visible={isPinModalVisible}
+          onDismiss={() => setIsPinModalVisible(false)}>
+          <Dialog.Title>Enter PIN</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="5-digit PIN"
+              value={pin}
+              onChangeText={setPin}
+              keyboardType="numeric"
+              secureTextEntry
+              maxLength={5}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setIsPinModalVisible(false)}>Cancel</Button>
+            <Button onPress={verifyPinAndProceed}>Verify</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
-};
-
-const mockSendPayment = async paymentData => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({success: true}); // Mocking a successful payment
-    }, 1000);
-  });
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
+    padding: 16,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    marginBottom: 20,
-    backgroundColor: '#f9f9f9',
-  },
-  input: {
+  formContainer: {
     flex: 1,
-    height: 50,
-    paddingLeft: 40,
-    paddingRight: 10,
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: 10,
   },
   picker: {
-    height: 50,
-    width: '100%',
-    marginBottom: 20,
-    borderWidth: 1, // Add a border to make the picker stand out
-    borderColor: '#0066ff', // Use the primary color for the border
-    borderRadius: 8, // Match the border radius with other inputs
-    backgroundColor: '#f0f0f0', // Light background to make it distinct
-    paddingLeft: 10, // Add some padding
+    marginBottom: 16,
+  },
+  input: {
+    marginBottom: 16,
   },
   scanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#0066ff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  scanButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    marginLeft: 8,
+    marginBottom: 16,
   },
   sendButton: {
-    backgroundColor: '#0066ff',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+    marginTop: 16,
   },
-  disabledButton: {
-    backgroundColor: '#A0A0A0',
+  exitScannerButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
   },
-  backButton: {
-    backgroundColor: '#0066ff',
-    alignItems: 'center',
-    borderRadius: 8,
-    paddingVertical: 15,
-    marginTop: 20,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  errorText: {
+    color: 'red',
+    marginBottom: 16,
   },
 });
 

@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {AppState, View, StyleSheet, Image} from 'react-native';
+import {AppState, View, StyleSheet, Image, Text} from 'react-native';
 import {Appbar, Dialog, Portal, Button, Paragraph} from 'react-native-paper';
 import NetInfo from '@react-native-community/netinfo';
 import {useBalance} from '../context/BalanceContext';
@@ -15,6 +15,9 @@ const AppBarComponent = ({title, logout}) => {
   const [infoVisible, setInfoVisible] = useState(false);
   const [appState, setAppState] = useState(AppState.currentState);
   const navigation = useNavigation();
+  const [isOnline, setIsOnline] = useState(true);
+  const [data, setData] = useState('1GB');
+  const [time, setTime] = useState('12:00');
 
   const checkConnection = async () => {
     try {
@@ -23,15 +26,19 @@ const AppBarComponent = ({title, logout}) => {
         const response = await fetch(NETWORK_SERVICE_URL);
         if (response.ok) {
           setVisible(false);
+          setIsOnline(true);
           await AsyncStorage.removeItem('hasShownNetworkDialog');
         } else {
           showDialogIfNotShown();
+          setIsOnline(false);
         }
       } else {
         showDialogIfNotShown();
+        setIsOnline(false);
       }
     } catch (error) {
       showDialogIfNotShown();
+      setIsOnline(false);
     }
   };
 
@@ -80,30 +87,37 @@ const AppBarComponent = ({title, logout}) => {
 
   return (
     <>
-      {title ? (
-        <Appbar.Header style={styles.appBar}>
-          <Appbar.BackAction
-            onPress={() => navigation.goBack()}
-            color="#FFFFFF"
-          />
-          <View style={styles.centerContent}>
+      <Appbar.Header style={styles.appBar}>
+        <View style={styles.content}>
+          <View style={styles.leftSection}>
+            {title && (
+              <Appbar.BackAction
+                onPress={() => navigation.goBack()}
+                color="#FFFFFF"
+              />
+            )}
             <Image
               source={require('../assets/images/inethitransparent.png')}
               style={styles.logo}
             />
-            <Appbar.Content title={title} titleStyle={styles.title} />
           </View>
-          <View style={styles.iconContainer}>
-            <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
-            <MaterialCommunityIcons
-              name="information-outline"
-              size={28}
-              color="#FFFFFF"
-              onPress={handleInfoPress}
-            />
+          <View style={styles.centerSection}>
+            {title && <Text style={styles.title}>{title}</Text>}
           </View>
-        </Appbar.Header>
-      ) : null}
+          <View style={styles.rightSection}>
+            <Text style={styles.balanceText}>{balance}</Text>
+            <View style={styles.iconContainer}>
+              <Appbar.Action icon="logout" onPress={logout} color="#FFFFFF" />
+              <MaterialCommunityIcons
+                name="information-outline"
+                size={28}
+                color="#FFFFFF"
+                onPress={handleInfoPress}
+              />
+            </View>
+          </View>
+        </View>
+      </Appbar.Header>
       <Portal>
         <Dialog visible={visible} onDismiss={hideDialog}>
           <Dialog.Title>Internet Connection</Dialog.Title>
@@ -138,27 +152,53 @@ const AppBarComponent = ({title, logout}) => {
 const styles = StyleSheet.create({
   appBar: {
     backgroundColor: '#4285F4',
+    height: 'auto',
+    paddingVertical: 5,
+  },
+  content: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  centerSection: {
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rightSection: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   title: {
     color: '#FFFFFF',
     textAlign: 'center',
-  },
-  centerContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontSize: 18,
+    //fontWeight: 'bold',
+    marginLeft: 10,
   },
   logo: {
-    width: 50,
-    height: 40,
+    width: 40,
+    height: 32,
     marginRight: 10,
     resizeMode: 'contain',
+  },
+  balanceText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginRight: 10,
+    marginLeft: 20,
   },
   iconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end', // Ensure icons are aligned to the right
   },
 });
 

@@ -1,19 +1,18 @@
-/* eslint-disable prettier/prettier */
 import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
   TextInput,
-  Button,
   Text,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import {handleLogin} from '../utils/utils';
-import {Dialog} from 'react-native-paper';
+import {Dialog, Button} from 'react-native-paper';
 
 const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
   const baseURL = 'https://manage-backend.inethicloud.net';
@@ -23,7 +22,7 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const navigation = useNavigation(); // Updated to use useNavigation
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
@@ -49,14 +48,16 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
       );
 
       if (response.status === 201) {
-        onRegisterSuccess();
+        if (onRegisterSuccess) {
+          onRegisterSuccess();
+        }
         await handleLogin(
           username,
           password,
           onLoginSuccess,
           setError,
           setLoading,
-          navigation, // Updated to use navigation
+          navigation,
         );
       } else {
         setError('Failed to register');
@@ -93,24 +94,32 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
 
   return (
     <View style={styles.container}>
+      <Image
+        source={require('../assets/images/inethitransparent.png')}
+        style={styles.logo}
+      />
       <TextInput
         style={styles.input}
         value={username}
         onChangeText={setUsername}
         placeholder="Username"
+        placeholderTextColor="#999"
       />
       <View style={styles.passwordContainer}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, styles.passwordInput]}
           value={password}
           onChangeText={setPassword}
           placeholder="Password"
+          placeholderTextColor="#999"
           secureTextEntry={!showPassword}
         />
         <TouchableOpacity
           style={styles.showPasswordButton}
           onPress={() => setShowPassword(!showPassword)}>
-          <Text>{showPassword ? 'Hide' : 'Show'}</Text>
+          <Text style={styles.showPasswordButtonText}>
+            {showPassword ? 'Hide' : 'Show'}
+          </Text>
         </TouchableOpacity>
       </View>
       <TextInput
@@ -118,18 +127,22 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         placeholder="Confirm Password"
+        placeholderTextColor="#999"
         secureTextEntry={!showPassword}
       />
 
       <Button
-        title="Register"
+        mode="contained"
         onPress={handleRegister}
         disabled={isButtonDisabled}
-      />
+        style={styles.button}
+        labelStyle={styles.buttonText}>
+        Register
+      </Button>
       {loading && (
         <Dialog visible={true}>
           <Dialog.Content>
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size="large" color="#4285F4" />
           </Dialog.Content>
         </Dialog>
       )}
@@ -147,31 +160,55 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  logo: {
+    width: 150,
+    height: 120,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginBottom: 40,
   },
   input: {
-    height: 40,
+    height: 50,
     marginBottom: 12,
     borderWidth: 1,
+    borderColor: '#4285F4',
+    borderRadius: 5,
     padding: 10,
+    fontSize: 16,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
+  passwordInput: {
+    flex: 1,
+    marginBottom: 0,
+  },
   showPasswordButton: {
-    marginLeft: 10,
+    padding: 10,
+  },
+  showPasswordButtonText: {
+    color: '#4285F4',
+    fontWeight: 'bold',
+  },
+  button: {
+    marginTop: 20,
+    backgroundColor: '#4285F4',
+    paddingVertical: 10,
+  },
+  buttonText: {
+    fontSize: 18,
+    color: '#FFFFFF',
   },
   loginLink: {
     marginTop: 20,
     textAlign: 'center',
-    color: 'blue',
+    color: '#4285F4',
     textDecorationLine: 'underline',
-  },
-  errorText: {
-    color: 'red',
-    marginTop: 10,
-    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
 

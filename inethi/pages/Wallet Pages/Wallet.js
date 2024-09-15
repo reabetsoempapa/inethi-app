@@ -1,39 +1,96 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
+import {View, StyleSheet, ScrollView, Alert} from 'react-native';
 import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Alert,
+  IconButton,
+  Card,
+  Title,
+  Paragraph,
   ActivityIndicator,
-  Text,
-  Button,
-} from 'react-native';
-import {IconButton, Dialog, Portal} from 'react-native-paper';
-import {useNavigation} from '@react-navigation/native';
+  useTheme,
+} from 'react-native-paper';
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
 import {useBalance} from '../../context/BalanceContext';
 import {
   checkWalletOwnership,
   fetchWalletDetails,
   trackButtonClick,
 } from '../../service/Wallet';
-import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot'; // Copilot integration
+import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot';
 
-// Make IconButton walkthroughable
-const WalkthroughableIconButton = walkthroughable(IconButton);
+const WalkthroughableView = walkthroughable(View);
 
 const WalletCategoriesPage = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const {balance, fetchBalance} = useBalance();
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTutorialStarted, setIsTutorialStarted] = useState(false);
+  const tutorialStartedRef = useRef(false);
 
-  // Access the start function from useCopilot
-  const {start} = useCopilot();
+  const {start, copilotEvents, stop} = useCopilot();
+  console.log('Route params:', route.params);
+  console.log('tutorialStartedRef.current', tutorialStartedRef.current);
+  console.log(route.params?.startTutorial);
+
+  useEffect(() => {
+    const handleStepChange = step => {
+      console.log('Tutorial step changed:', step);
+    };
+
+    const handleStop = () => {
+      stop();
+      console.log('Tutorial finished');
+      navigation.setParams({startTutorial: null});
+
+      tutorialStartedRef.current = false;
+      setIsTutorialStarted(false);
+      // Navigate back to the HomeScreen
+      navigation.navigate('HomeScreen');
+    };
+
+    copilotEvents.on('stepChange', handleStepChange);
+    copilotEvents.on('stop', handleStop);
+
+    return () => {
+      copilotEvents.off('stepChange', handleStepChange);
+      copilotEvents.off('stop', handleStop);
+    };
+  }, [copilotEvents, navigation]);
+
+  const startTutorialIfNeeded = useCallback(() => {
+    if (route.params?.startTutorial && !tutorialStartedRef.current) {
+      console.log('Attempting to start tutorial');
+      setTimeout(() => {
+        try {
+          start();
+          console.log('Tutorial started successfully');
+          tutorialStartedRef.current = true;
+          setIsTutorialStarted(true);
+        } catch (error) {
+          console.error('Error starting tutorial:', error);
+        }
+      }, 500);
+    } else {
+      console.log('Tutorial already started or flag not set');
+    }
+  }, [route.params, start]);
 
   useEffect(() => {
     handleCheckWalletOwnership();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Screen focused, checking if tutorial should start');
+      startTutorialIfNeeded();
+    }, [startTutorialIfNeeded]),
+  );
 
   const handleCheckWalletOwnership = async () => {
     try {
@@ -58,12 +115,6 @@ const WalletCategoriesPage = () => {
       setIsLoading(false);
       handleError(error, 'Failed to check wallet details');
     }
-  };
-
-  const handleShowQrCode = async () => {
-    await handleCheckWalletDetails();
-    setIsQrDialogOpen(true);
-    await trackButtonClick('wallet_qr_code_button_clicked');
   };
 
   const handleError = (error, defaultMessage) => {
@@ -125,22 +176,28 @@ const WalletCategoriesPage = () => {
       name: 'View Recipients',
       action: async () => {
         await trackButtonClick('view_recipients_button_clicked');
-        navigation.navigate('ViewRecipients');
+        navigation.navigate('Recipients');
       },
+      requiresWallet: true,
       icon: 'account-multiple-outline',
     },
     {
       name: 'Pay',
-      action: () =>
-        navigation.navigate('ViewRecipients', {state: {fromPay: true}}),
+      action: () => navigation.navigate('Recipients', {state: {fromPay: true}}),
+      requiresWallet: true,
+
       icon: 'cash',
     },
     {
       name: 'History',
       action: () => navigation.navigate('PaymentHistory'),
+      requiresWallet: true,
+
       icon: 'history',
     },
   ];
+
+  const theme = useTheme();
 
   const renderButtons = buttons => {
     return (
@@ -149,21 +206,38 @@ const WalletCategoriesPage = () => {
           const isDisabled = requiresWallet && !hasWallet;
 
           return (
-            <View key={idx} style={styles.buttonWrapper}>
-              <CopilotStep
-                text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
-                order={idx + 1}
-                name={`step_${idx + 1}`}>
-                <WalkthroughableIconButton
-                  icon={icon}
-                  size={40}
-                  onPress={action}
-                  disabled={isDisabled}
-                  style={styles.icon}
-                />
-              </CopilotStep>
-              <Text style={styles.buttonLabel}>{name}</Text>
-            </View>
+            <CopilotStep
+              text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
+              order={idx + 1}
+              name={`wallet_step_${idx + 1}`}
+              key={idx}>
+              <WalkthroughableView style={styles.buttonWrapper}>
+                <Card onPress={action} disabled={isDisabled}>
+                  <Card.Content style={styles.cardContent}>
+                    <IconButton
+                      icon={icon}
+                      size={40}
+                      color={
+                        isDisabled
+                          ? theme.colors.disabled
+                          : theme.colors.primary
+                      }
+                    />
+                    <Paragraph
+                      style={[
+                        styles.buttonLabel,
+                        {
+                          color: isDisabled
+                            ? theme.colors.disabled
+                            : theme.colors.text,
+                        },
+                      ]}>
+                      {name}
+                    </Paragraph>
+                  </Card.Content>
+                </Card>
+              </WalkthroughableView>
+            </CopilotStep>
           );
         })}
       </View>
@@ -171,37 +245,30 @@ const WalletCategoriesPage = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {renderButtons(walletCategories)}
-
-        <Portal>
-          {isLoading && (
-            <Dialog visible={true}>
-              <Dialog.Content>
-                <ActivityIndicator size="large" />
-              </Dialog.Content>
-            </Dialog>
-          )}
-        </Portal>
-      </ScrollView>
-
-      <Button title="Start Tutorial" onPress={() => start()} />
-    </View>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollContainer}>
+      <Title style={styles.title}>Wallet Categories</Title>
+      {renderButtons(walletCategories)}
+      {isLoading && (
+        <ActivityIndicator animating={true} color={theme.colors.primary} />
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f4f5',
   },
   scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
     padding: 16,
-    paddingTop: 40,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -210,15 +277,13 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     width: '30%',
-    alignItems: 'center',
     marginBottom: 20,
   },
-  icon: {
-    marginBottom: 8,
+  cardContent: {
+    alignItems: 'center',
   },
   buttonLabel: {
-    fontSize: 14,
-    color: '#333333',
+    marginTop: 8,
     textAlign: 'center',
   },
 });

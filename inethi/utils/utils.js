@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import axios from 'axios';
 
 export const handleLogin = async (
@@ -7,7 +6,7 @@ export const handleLogin = async (
   onLoginSuccess,
   setError,
   setLoading,
-  navigate,
+  navigation,
 ) => {
   setLoading(true);
   try {
@@ -26,8 +25,11 @@ export const handleLogin = async (
     );
     const {access_token, expires_in, refresh_token} = response.data;
     if (access_token && expires_in && refresh_token) {
-      onLoginSuccess(access_token, expires_in, refresh_token); // Pass expires_in to App.js
-      navigate('/');
+      await onLoginSuccess(access_token, expires_in, refresh_token);
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'AppRoutes'}],
+      });
     } else {
       setError('No access token received');
     }

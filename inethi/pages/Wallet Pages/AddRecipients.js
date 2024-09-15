@@ -5,10 +5,9 @@ import {
   Alert,
   ScrollView,
   TouchableOpacity,
-  Text,
 } from 'react-native';
-import {Button, TextInput, Paragraph} from 'react-native-paper';
-import {useNavigation} from '@react-navigation/native'; // Correct navigation hook
+import {Button, TextInput, Title, Text} from 'react-native-paper';
+import {useNavigation} from '@react-navigation/native';
 import {addRecipient} from '../../service/recipient';
 import {
   Camera,
@@ -17,7 +16,7 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
+import {isValidWalletAddress} from './Helpers/WalletAdressValidator';
 const AddRecipientScreen = () => {
   const [recipientName, setRecipientName] = useState('');
   const [recipientWalletAddress, setRecipientWalletAddress] = useState('');
@@ -25,7 +24,7 @@ const AddRecipientScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const navigation = useNavigation(); // Use the correct hook
+  const navigation = useNavigation();
 
   const device = useCameraDevice('back');
   const {hasPermission, requestPermission} = useCameraPermission();
@@ -40,6 +39,11 @@ const AddRecipientScreen = () => {
   });
 
   const handleAddRecipient = async () => {
+    if (!isValidWalletAddress(recipientWalletAddress)) {
+      setError('Invalid wallet address format');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await addRecipient(
@@ -47,15 +51,14 @@ const AddRecipientScreen = () => {
         recipientWalletAddress,
         recipientWalletName,
       );
-      Alert.alert('Recipient added successfully');
-      navigation.goBack(); // Navigate back to the previous screen
+      Alert.alert('Success', 'Recipient added successfully');
+      navigation.goBack();
     } catch (error) {
       setError(`Error adding recipient: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
-
   const openScanner = async () => {
     const permission = await requestPermission();
     if (permission) {
@@ -73,48 +76,60 @@ const AddRecipientScreen = () => {
       {isScannerOpen && device ? (
         <>
           <Camera
-            style={{flex: 1, width: '100%'}}
+            style={StyleSheet.absoluteFill}
             device={device}
             isActive={isScannerOpen}
             codeScanner={codeScanner}
           />
           <TouchableOpacity
-            style={styles.exitScannerButton}
+            style={styles.closeScannerButton}
             onPress={() => setIsScannerOpen(false)}>
             <Ionicons name="close" size={30} color="white" />
           </TouchableOpacity>
         </>
       ) : (
-        <ScrollView contentContainerStyle={styles.formContainer}>
-          <Text style={styles.headerText}>Add Recipient</Text>
-
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Title style={styles.title}>Add New Recipient</Title>
           <TextInput
             label="Recipient Name"
             value={recipientName}
-            onChangeText={text => setRecipientName(text)}
+            onChangeText={setRecipientName}
             style={styles.input}
             mode="outlined"
           />
-          <View style={styles.inputWithButton}>
+          <View style={styles.walletAddressContainer}>
             <TextInput
-              label="Recipient Wallet Address"
+              label="Wallet Address"
               value={recipientWalletAddress}
-              onChangeText={text => setRecipientWalletAddress(text)}
-              style={[styles.input, styles.inputWithButtonTextInput]}
+              onChangeText={text => {
+                setRecipientWalletAddress(text);
+                setError(''); // Clear error when input changes
+              }}
+              style={[styles.input, styles.walletAddressInput]}
               mode="outlined"
+              error={
+                !isValidWalletAddress(recipientWalletAddress) &&
+                recipientWalletAddress !== ''
+              }
             />
             <TouchableOpacity style={styles.scanButton} onPress={openScanner}>
               <Ionicons name="qr-code-outline" size={24} color="white" />
             </TouchableOpacity>
           </View>
+          {!isValidWalletAddress(recipientWalletAddress) &&
+            recipientWalletAddress !== '' && (
+              <Text style={styles.errorText}>
+                Invalid wallet address format
+              </Text>
+            )}
           <TextInput
-            label="Recipient Wallet Name"
+            label="Wallet Name"
             value={recipientWalletName}
-            onChangeText={text => setRecipientWalletName(text)}
+            onChangeText={setRecipientWalletName}
             style={styles.input}
             mode="outlined"
           />
-          {error && <Paragraph style={styles.error}>{error}</Paragraph>}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
           <Button
             mode="contained"
             onPress={handleAddRecipient}
@@ -131,71 +146,51 @@ const AddRecipientScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     backgroundColor: '#fff',
   },
-  formContainer: {
-    flexGrow: 1,
-    padding: 20,
-    justifyContent: 'center',
+  scrollContent: {
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#333',
   },
   input: {
     marginBottom: 16,
   },
-  inputWithButton: {
+  walletAddressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
-  inputWithButtonTextInput: {
+  walletAddressInput: {
     flex: 1,
-  },
-  error: {
-    color: 'red',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  addButton: {
-    marginTop: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#0066ff',
-  },
-  backButton: {
-    marginTop: 10,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
+    marginRight: 8,
   },
   scanButton: {
-    width: 48,
-    height: 48,
     backgroundColor: '#0066ff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  exitScannerButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    backgroundColor: '#ff0000',
-    borderRadius: 50,
     padding: 10,
-    zIndex: 1,
+    borderRadius: 8,
   },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  errorText: {
+    color: 'red',
+    marginBottom: 16,
   },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: 'black',
-    marginBottom: 30,
+  addButton: {
+    marginTop: 8,
+    backgroundColor: '#0066ff',
+    paddingVertical: 8,
+  },
+  closeScannerButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 10,
   },
 });
 

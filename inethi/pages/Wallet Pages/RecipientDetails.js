@@ -1,7 +1,8 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, StyleSheet, ScrollView} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {Button} from 'react-native-paper';
+import {Button, Card, Title, Paragraph, Text} from 'react-native-paper';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const RecipientDetailsScreen = () => {
   const navigation = useNavigation();
@@ -13,49 +14,75 @@ const RecipientDetailsScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Recipient Details</Text>
-      <Text style={styles.detail}>Name: {recipient.name}</Text>
-      <Text style={styles.detail}>
-        Wallet Address: {recipient.wallet_address}
-      </Text>
-      <Text style={styles.detail}>Wallet Name: {recipient.wallet_name}</Text>
-      <Button mode="contained" onPress={handlePay} style={styles.button}>
-        Pay
-      </Button>
-    </View>
+    <ScrollView style={styles.container}>
+      <Card style={styles.card}>
+        <Card.Content>
+          <Title style={styles.title}>Recipient Details</Title>
+          <View style={styles.detailRow}>
+            <Ionicons name="person-outline" size={24} color="#0066ff" />
+            <Paragraph style={styles.detail}>Name: {recipient.name}</Paragraph>
+          </View>
+          <View style={styles.detailRow}>
+            <Ionicons name="wallet-outline" size={24} color="#0066ff" />
+            <Paragraph style={styles.detail}>
+              Wallet Address: {recipient.wallet_address}
+            </Paragraph>
+          </View>
+          <View style={styles.detailRow}>
+            <Ionicons name="logo-bitcoin" size={24} color="#0066ff" />
+            <Paragraph style={styles.detail}>
+              Wallet Name: {recipient.wallet_name}
+            </Paragraph>
+          </View>
+        </Card.Content>
+      </Card>
+
+      <View style={styles.buttonContainer}>
+        <Button mode="contained" onPress={handlePay} style={styles.payButton}>
+          Pay
+        </Button>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
     backgroundColor: '#fff',
   },
+  card: {
+    margin: 16,
+    elevation: 4,
+  },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
     color: '#333',
   },
-  detail: {
-    fontSize: 18,
-    marginBottom: 15,
-    textAlign: 'center',
-    color: '#555',
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  button: {
-    marginTop: 20,
-    width: '80%',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignSelf: 'center',
+  detail: {
+    fontSize: 16,
+    marginLeft: 12,
+    color: '#555',
+    flex: 1,
+  },
+  buttonContainer: {
+    margin: 16,
+  },
+  payButton: {
+    marginBottom: 12,
+    paddingVertical: 8,
+    backgroundColor: '#0066ff',
   },
   backButton: {
-    marginTop: 10,
+    paddingVertical: 8,
     borderColor: '#0066ff',
   },
 });

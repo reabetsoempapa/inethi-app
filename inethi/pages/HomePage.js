@@ -1,143 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
-  Image,
-  Alert,
   ScrollView,
   Text,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import {
-  Button,
-  Card,
-  Title,
-  Dialog,
-  Portal,
-  TextInput,
-  Paragraph,
-  IconButton,
-} from 'react-native-paper';
+import {Button, Card, Title, Dialog, Portal} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import axios from 'axios';
-import { getToken } from '../utils/tokenUtils';
-import { CopilotStep, walkthroughable, useCopilot } from 'react-native-copilot'; // Import Copilot components
-
-import ServiceContainer from '../components/ServiceContainer';
-import { useBalance } from '../context/BalanceContext';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {useBalance} from '../context/BalanceContext';
 import * as amplitude from '@amplitude/analytics-react-native';
-import analytics from '@react-native-firebase/analytics';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
+import ServiceContainer from '../components/ServiceContainer';
+import {
+  checkInternetConnection,
+  checkWirelessConnection,
+  syncAnalyticsEvents,
+  logAnalyticsEvent,
+  fetchServices,
+} from '../service/HomePageService';
+
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
-// Make components walkthroughable
-const WalkthroughableView = walkthroughable(View);
-const WalkthroughableText = walkthroughable(Text);
-const WalkthroughableButton = walkthroughable(Button);
-
-const HomePage = ({ logout }) => {
-  const { start } = useCopilot(); // Get the start function from useCopilot
-  const route = useRoute(); // Access route to get parameters
-  const baseURL = 'https://manage-backend.inethicloud.net';
-  const nextcloudURL = 'https://nextcloud.inethicloud.net';
+const HomePage = ({logout}) => {
+  const route = useRoute();
+  const navigation = useNavigation();
 
   const [hasWallet, setHasWallet] = useState(false);
-  const navigation = useNavigation(); // Updated to use useNavigation
-
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const [isConnectedToWireless, setIsConnectedToWireless] = useState(false);
-
   const [isConnectedToInternet, setIsConnectedToInternet] = useState(false);
-  const { balance, fetchBalance } = useBalance();
+  const {balance, fetchBalance} = useBalance();
 
-
-  const handleAppstoreClick = () => {
-    console.log("appstore clicked")
-    analytics().logEvent('navigate_to_AppStore', { feature: 'App Store' });
-    navigation.navigate("AppStore");
-
-  }
-
-
-  useEffect(() => {
-    // Check if the route contains the `startTutorial` parameter
-    if (route.params?.startTutorial) {
-      console.log('detected');
-      start(); // Start the tutorial
-      // Remove the parameter to prevent restarting the tutorial on re-render
-      navigation.setParams({ startTutorial: false });
-      console.log('finished');
-    }
-  }, [route.params]);
   const [categories, setCategories] = useState({
     Wallet: [
       {
         name: 'Wallet',
         action: () =>
-          navigation.navigate('WalletPageStack', {
+          navigation.navigate('Wallet', {
             screen: 'WalletCategories',
           }),
         url: '',
       },
     ],
-    Navigator: [{ name: 'FindHotspot', action: () => handleFindHotspotClick() }],
-    Appstore: [{ name: 'AppStore', action: () => handleAppstoreClick() }]
+    Navigator: [{name: 'FindHotspot', action: () => handleFindHotspotClick()}],
+    Appstore: [{name: 'AppStore', action: () => handleAppstoreClick()}],
   });
-  const handleFindHotspotClick = async () => {
-    const eventName = 'find_hotspot_button_clicked';
 
-    const events =
-      JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
-    events.push({
-      eventName,
-      timestamp: new Date(),
-      data: {
-        button: 'FindHotspot',
-      },
-    });
-    await AsyncStorage.setItem('analyticsEvents', JSON.stringify(events));
-
-    navigation.navigate('Map'); // Updated
-
-    const state = await NetInfo.fetch();
-    if (state.isConnected) {
-      syncAnalyticsEvents();
-    }
+  const handleAppstoreClick = () => {
+    console.log('appstore clicked');
+    logAnalyticsEvent('navigate_to_AppStore', {feature: 'App Store'});
+    navigation.navigate('AppStore');
   };
 
-  const syncAnalyticsEvents = async () => {
-    try {
-      const events =
-        JSON.parse(await AsyncStorage.getItem('analyticsEvents')) || [];
-      if (events.length > 0) {
-        for (const event of events) {
-          await analytics().logEvent(event.eventName, event.data);
-          await amplitude.track(event.eventName, event.data);
-        }
-        await AsyncStorage.removeItem('analyticsEvents');
-        console.log('Synced analytics events');
-      }
-    } catch (error) {
-      console.error('Error syncing analytics events:', error);
-    }
+  const handleFindHotspotClick = async () => {
+    await logAnalyticsEvent('find_hotspot_button_clicked', {
+      button: 'FindHotspot',
+    });
+    navigation.navigate('Map');
   };
 
   useEffect(() => {
     const checkStatuses = async () => {
-      await checkWirelessConnection();
-      await checkInternetConnection();
+      const wirelessStatus = await checkWirelessConnection();
+      const internetStatus = await checkInternetConnection();
+      setIsConnectedToWireless(wirelessStatus);
+      setIsConnectedToInternet(internetStatus);
 
-      // Logic for checking connection statuses...
+      if (internetStatus) {
+        syncAnalyticsEvents();
+      }
     };
 
     checkStatuses();
-    const intervalId = setInterval(() => {
-      checkStatuses();
-    }, 30000);
+    const intervalId = setInterval(checkStatuses, 30000);
 
     return () => clearInterval(intervalId);
   }, []);
@@ -243,27 +180,22 @@ const HomePage = ({ logout }) => {
     const initialize = async () => {
       setIsLoading(true);
       try {
-        await Promise.all([fetchServices(), fetchBalance()]);
+        const servicesData = await fetchServices();
+        const fetchedCategories = {...categories};
+
+        Object.entries(servicesData).forEach(([category, services]) => {
+          fetchedCategories[category] = services.map(service => ({
+            name: service.name,
+            url: service.url,
+            action: () => navigation.navigate('WebView', {url: service.url}),
+          }));
+        });
+
+        setCategories(fetchedCategories);
+        await fetchBalance();
       } catch (err) {
         console.error('Initialization error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initialize();
-  }, []);
-
-  const openURL = url => {
-    navigation.navigate('WebView', { url }); // Removed state wrapper
-  };
-
-  useEffect(() => {
-    const initialize = async () => {
-      setIsLoading(true);
-      try {
-        await Promise.all([fetchServices(), fetchBalance()]);
-      } catch (err) {
-        console.error('Initialization error:', err);
+        setError(`Initialization failed: ${err.message}`);
       } finally {
         setIsLoading(false);
       }
@@ -277,46 +209,37 @@ const HomePage = ({ logout }) => {
       const pair = buttons.slice(i, i + 2);
       buttonRows.push(
         <View key={i} style={styles.buttonRow}>
-          {pair.map(({ name, action, url, requiresWallet, disabled }, idx) => {
+          {pair.map(({name, action, url, requiresWallet, disabled}, idx) => {
             const isDisabled = (requiresWallet && !hasWallet) || disabled;
 
             return (
-              <CopilotStep
+              <Button
                 key={idx}
-                text={`This is the ${name} button.`}
-                order={i + idx + 1} // Adjust order based on the loop index
-                name={`step_${i + idx + 1}`}>
-                <WalkthroughableButton
-                  mode="contained"
-                  onPress={() => {
-                    if (action && !isDisabled) {
-                      action();
-                    } else if (url && !isDisabled) {
-                      openURL(url);
-                    } else {
-                      console.error('Button has no action or URL');
-                    }
-                  }}
-                  style={[styles.button, isDisabled && styles.buttonDisabled]}
-                  labelStyle={
-                    isDisabled ? styles.buttonTextDisabled : styles.buttonText
+                mode="contained"
+                onPress={() => {
+                  if (action && !isDisabled) {
+                    action();
+                  } else if (url && !isDisabled) {
+                    navigation.navigate('WebView', {url});
+                  } else {
+                    console.error('Button has no action or URL');
                   }
-                  disabled={isDisabled}
-                  icon={() => {
-                    if (name === 'FindHotspot') {
-                      return (
-                        <Ionicons
-                          name="map-outline"
-                          size={20}
-                          color="#FFFFFF"
-                        />
-                      );
-                    }
-                    return null;
-                  }}>
-                  {name}
-                </WalkthroughableButton>
-              </CopilotStep>
+                }}
+                style={[styles.button, isDisabled && styles.buttonDisabled]}
+                labelStyle={
+                  isDisabled ? styles.buttonTextDisabled : styles.buttonText
+                }
+                disabled={isDisabled}
+                icon={() => {
+                  if (name === 'FindHotspot') {
+                    return (
+                      <Ionicons name="map-outline" size={20} color="#FFFFFF" />
+                    );
+                  }
+                  return null;
+                }}>
+                {name}
+              </Button>
             );
           })}
         </View>,
@@ -336,8 +259,8 @@ const HomePage = ({ logout }) => {
     ));
 
   const InternetDataCard = () => {
-    const totalData = 20; // Total data in GB
-    const remainingData = 19; // Remaining data in GB
+    const totalData = 20;
+    const remainingData = 19;
     const usedData = totalData - remainingData;
     const progress = remainingData / totalData;
 
@@ -369,74 +292,47 @@ const HomePage = ({ logout }) => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Status Cards */}
       <View style={styles.statusContainer}>
-        {/* iNethi Wireless Card */}
-        <CopilotStep
-          text="This shows the iNethi Wireless connection status."
-          order={1}
-          name="step_1">
-          <WalkthroughableView style={styles.statusCard}>
-            <View style={styles.statusContent}>
-              <Ionicons name="wifi" size={30} color="#FFFFFF" />
-              <Text style={styles.statusTitle}>iNethi Wireless</Text>
-              <View style={styles.statusIndicatorContainer}>
-                <View
-                  style={[
-                    styles.statusIndicator,
-                    { backgroundColor: isConnectedToWireless ? 'green' : 'red' },
-                  ]}
-                />
-                <Text style={styles.statusText}>
-                  {isConnectedToWireless ? 'Connected' : 'Disconnected'}
-                </Text>
-              </View>
+        <View style={styles.statusCard}>
+          <View style={styles.statusContent}>
+            <Ionicons name="wifi" size={30} color="#FFFFFF" />
+            <Text style={styles.statusTitle}>iNethi Wireless</Text>
+            <View style={styles.statusIndicatorContainer}>
+              <View
+                style={[
+                  styles.statusIndicator,
+                  {backgroundColor: isConnectedToWireless ? 'green' : 'red'},
+                ]}
+              />
+              <Text style={styles.statusText}>
+                {isConnectedToWireless ? 'Connected' : 'Disconnected'}
+              </Text>
             </View>
-          </WalkthroughableView>
-        </CopilotStep>
+          </View>
+        </View>
 
-        {/* Internet Status Card */}
-        <CopilotStep
-          text="This shows the Internet connection status."
-          order={2}
-          name="step_2">
-          <WalkthroughableView style={styles.statusCard}>
-            <View style={styles.statusContent}>
-              <Ionicons name="globe" size={30} color="#FFFFFF" />
-              <Text style={styles.statusTitle}>Internet</Text>
-              <View style={styles.statusIndicatorContainer}>
-                <View
-                  style={[
-                    styles.statusIndicator,
-                    { backgroundColor: isConnectedToInternet ? 'green' : 'red' },
-                  ]}
-                />
-                <Text style={styles.statusText}>
-                  {isConnectedToInternet ? 'Connected' : 'Disconnected'}
-                </Text>
-              </View>
+        <View style={styles.statusCard}>
+          <View style={styles.statusContent}>
+            <Ionicons name="globe" size={30} color="#FFFFFF" />
+            <Text style={styles.statusTitle}>Internet</Text>
+            <View style={styles.statusIndicatorContainer}>
+              <View
+                style={[
+                  styles.statusIndicator,
+                  {backgroundColor: isConnectedToInternet ? 'green' : 'red'},
+                ]}
+              />
+              <Text style={styles.statusText}>
+                {isConnectedToInternet ? 'Connected' : 'Disconnected'}
+              </Text>
             </View>
-          </WalkthroughableView>
-        </CopilotStep>
+          </View>
+        </View>
       </View>
 
-      {/* Internet Data Card */}
-      <CopilotStep
-        text="Here you can view your remaining Internet data."
-        order={3}
-        name="step_3">
-        <WalkthroughableView>
-          <InternetDataCard />
-        </WalkthroughableView>
-      </CopilotStep>
+      <InternetDataCard />
 
-      {/* Category Cards */}
-      <CopilotStep
-        text="Here are the available categories. Tap one to explore."
-        order={4}
-        name="step_4">
-        <WalkthroughableView>{renderCategoryCards()}</WalkthroughableView>
-      </CopilotStep>
+      {renderCategoryCards()}
 
       <Portal>
         {isLoading && (
@@ -447,9 +343,6 @@ const HomePage = ({ logout }) => {
           </Dialog>
         )}
       </Portal>
-
-      {/* Button to Start Tutorial */}
-      {/* <Button title="Start Tutorial" onPress={() => start()} /> */}
     </ScrollView>
   );
 };
