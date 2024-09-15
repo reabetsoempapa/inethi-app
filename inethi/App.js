@@ -28,7 +28,6 @@ import PaymentUnsuccessful from './pages/Wallet Pages/PaymentFail';
 import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
 
-// Import CopilotProvider
 import {CopilotProvider} from 'react-native-copilot';
 
 const Stack = createNativeStackNavigator();
@@ -39,7 +38,7 @@ const HomePageStack = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Home"
+        name="HomeScreen"
         component={HomePage}
         options={{
           header: ({navigation, route, options}) => (
@@ -65,7 +64,6 @@ const HomePageStack = () => {
           ),
         }}
       />
-
       <Stack.Screen
         name="Map"
         component={MapPage}
@@ -186,23 +184,6 @@ const WalletPageStack = () => {
   );
 };
 
-// Help Page Stack
-const HelpPageStack = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="Help"
-        component={HelpPage}
-        options={{
-          header: ({navigation, route, options}) => (
-            <AppBarComponent title="Help" logout={options.logout} />
-          ),
-        }}
-      />
-    </Stack.Navigator>
-  );
-};
-
 // Settings Page Stack
 const SettingsPageStack = () => {
   return (
@@ -250,15 +231,16 @@ const AppRoutes = ({logout, userToken}) => {
         component={HelpPage}
         listeners={({navigation}) => ({
           tabPress: e => {
-            e.preventDefault(); // Prevent default tab press behavior
-            console.log('Tutorial passing');
-            // Navigate to Home and pass the `startTutorial: true` flag
-            navigation.navigate('Home', {startTutorial: true});
-            console.log('Tutorial passed');
+            e.preventDefault();
+            console.log('Help tab pressed, navigating to WalletCategories');
+            navigation.navigate('WalletPageStack', {
+              screen: 'WalletCategories',
+              params: {startTutorial: true},
+              initial: false,
+            });
           },
         })}
       />
-
       <Tab.Screen
         name="Settings"
         component={SettingsPageStack}
@@ -284,13 +266,13 @@ const App = () => {
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('tokenExpiry');
     await AsyncStorage.removeItem('refreshToken');
-    setUserToken(null); // This will trigger a re-render and redirect to the login page
+    setUserToken(null);
   };
 
   const handleLoginSuccess = async (token, expiresIn, refresh_token) => {
     const expiryDate = new Date().getTime() + expiresIn * 1000;
     await AsyncStorage.setItem('userToken', token);
-    await AsyncStorage.setItem('tokenExpiry', expiryDate.toString()); // Store the expiry time
+    await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());
     await AsyncStorage.setItem('refreshToken', refresh_token);
     setUserToken(token);
   };
@@ -299,8 +281,22 @@ const App = () => {
     <PaperProvider>
       <SafeAreaProvider>
         <BalanceProvider logout={logout}>
-          <CopilotProvider overlay="svg">
-            <NavigationContainer>
+          <NavigationContainer>
+            <CopilotProvider
+              overlay="svg"
+              animated={true}
+              tooltipStyle={{
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                borderRadius: 10,
+                paddingHorizontal: 20,
+                paddingVertical: 10,
+              }}
+              stepNumberStyle={{
+                backgroundColor: '#4285F4',
+                color: '#FFFFFF',
+              }}
+              arrowColor={'rgba(0, 0, 0, 0.8)'}
+              verticalOffset={36}>
               {userToken ? (
                 <Stack.Navigator>
                   <Stack.Screen
@@ -331,8 +327,8 @@ const App = () => {
                   />
                 </Stack.Navigator>
               )}
-            </NavigationContainer>
-          </CopilotProvider>
+            </CopilotProvider>
+          </NavigationContainer>
         </BalanceProvider>
       </SafeAreaProvider>
     </PaperProvider>

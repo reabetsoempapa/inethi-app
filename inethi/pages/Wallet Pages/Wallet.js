@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {
   View,
   StyleSheet,
@@ -6,34 +6,75 @@ import {
   Alert,
   ActivityIndicator,
   Text,
-  Button,
 } from 'react-native';
 import {IconButton, Dialog, Portal} from 'react-native-paper';
-import {useNavigation} from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
 import {useBalance} from '../../context/BalanceContext';
 import {
   checkWalletOwnership,
   fetchWalletDetails,
   trackButtonClick,
 } from '../../service/Wallet';
-import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot'; // Copilot integration
+import {CopilotStep, walkthroughable, useCopilot} from 'react-native-copilot';
 
-// Make IconButton walkthroughable
-const WalkthroughableIconButton = walkthroughable(IconButton);
+const WalkthroughableView = walkthroughable(View);
 
 const WalletCategoriesPage = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const {balance, fetchBalance} = useBalance();
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTutorialStarted, setIsTutorialStarted] = useState(false);
+  const tutorialStartedRef = useRef(false);
 
-  // Access the start function from useCopilot
-  const {start} = useCopilot();
+  const {start, copilotEvents} = useCopilot();
+
+  useEffect(() => {
+    const handleStepChange = step => {
+      console.log('Tutorial step changed:', step);
+    };
+
+    copilotEvents.on('stepChange', handleStepChange);
+
+    return () => {
+      copilotEvents.off('stepChange', handleStepChange);
+    };
+  }, [copilotEvents]);
+
+  const startTutorialIfNeeded = useCallback(() => {
+    if (route.params?.startTutorial && !tutorialStartedRef.current) {
+      console.log('Attempting to start tutorial');
+      setTimeout(() => {
+        try {
+          start();
+          console.log('Tutorial started successfully');
+          tutorialStartedRef.current = true;
+          setIsTutorialStarted(true);
+        } catch (error) {
+          console.error('Error starting tutorial:', error);
+        }
+      }, 500);
+    } else {
+      console.log('Tutorial already started or flag not set');
+    }
+  }, [route.params, start]);
 
   useEffect(() => {
     handleCheckWalletOwnership();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Screen focused, checking if tutorial should start');
+      startTutorialIfNeeded();
+    }, [startTutorialIfNeeded]),
+  );
 
   const handleCheckWalletOwnership = async () => {
     try {
@@ -58,12 +99,6 @@ const WalletCategoriesPage = () => {
       setIsLoading(false);
       handleError(error, 'Failed to check wallet details');
     }
-  };
-
-  const handleShowQrCode = async () => {
-    await handleCheckWalletDetails();
-    setIsQrDialogOpen(true);
-    await trackButtonClick('wallet_qr_code_button_clicked');
   };
 
   const handleError = (error, defaultMessage) => {
@@ -149,21 +184,22 @@ const WalletCategoriesPage = () => {
           const isDisabled = requiresWallet && !hasWallet;
 
           return (
-            <View key={idx} style={styles.buttonWrapper}>
-              <CopilotStep
-                text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
-                order={idx + 1}
-                name={`step_${idx + 1}`}>
-                <WalkthroughableIconButton
+            <CopilotStep
+              text={`This is the ${name} button. You can use it to ${name.toLowerCase()}.`}
+              order={idx + 2} // +2 because we have an intro step
+              name={`wallet_step_${idx + 1}`}
+              key={idx}>
+              <WalkthroughableView style={styles.buttonWrapper}>
+                <IconButton
                   icon={icon}
                   size={40}
                   onPress={action}
                   disabled={isDisabled}
                   style={styles.icon}
                 />
-              </CopilotStep>
-              <Text style={styles.buttonLabel}>{name}</Text>
-            </View>
+                <Text style={styles.buttonLabel}>{name}</Text>
+              </WalkthroughableView>
+            </CopilotStep>
           );
         })}
       </View>
@@ -173,6 +209,14 @@ const WalletCategoriesPage = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <CopilotStep
+          text="Welcome to the Wallet Categories! Here you can manage all your wallet-related activities."
+          order={1}
+          name="intro">
+          <WalkthroughableView>
+            <Text style={styles.headerText}>Wallet Categories</Text>
+          </WalkthroughableView>
+        </CopilotStep>
         {renderButtons(walletCategories)}
 
         <Portal>
@@ -185,8 +229,6 @@ const WalletCategoriesPage = () => {
           )}
         </Portal>
       </ScrollView>
-
-      <Button title="Start Tutorial" onPress={() => start()} />
     </View>
   );
 };
@@ -202,6 +244,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     paddingTop: 40,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#4285F4',
   },
   buttonContainer: {
     flexDirection: 'row',
