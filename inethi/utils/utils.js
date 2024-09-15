@@ -25,8 +25,11 @@ export const handleLogin = async (
     );
     const {access_token, expires_in, refresh_token} = response.data;
     if (access_token && expires_in && refresh_token) {
-      onLoginSuccess(access_token, expires_in, refresh_token);
-      navigation.navigate('AppRoutes');
+      await onLoginSuccess(access_token, expires_in, refresh_token);
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'AppRoutes'}],
+      });
     } else {
       setError('No access token received');
     }

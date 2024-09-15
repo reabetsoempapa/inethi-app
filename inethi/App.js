@@ -294,46 +294,35 @@ const App = () => {
               }}
               arrowColor={'rgba(0, 0, 0, 0.8)'}
               verticalOffset={55}>
-              {userToken ? (
-                <Stack.Navigator>
+              <Stack.Navigator>
+                {userToken ? (
                   <Stack.Screen name="AppRoutes" options={{headerShown: false}}>
-                    {props => (
-                      <AppRoutes
-                        {...props}
-                        logout={logout}
-                        userToken={userToken}
-                      />
-                    )}
+                    {props => <AppRoutes {...props} logout={logout} />}
                   </Stack.Screen>
-                  <Stack.Screen
-                    name="WalletPageStack"
-                    options={{headerShown: false}}>
-                    {props => <WalletPageStack {...props} logout={logout} />}
-                  </Stack.Screen>
-                </Stack.Navigator>
-              ) : (
-                <Stack.Navigator>
-                  <Stack.Screen name="Login" options={{headerShown: false}}>
-                    {props => (
-                      <LoginPage
-                        {...props}
-                        onLoginSuccess={handleLoginSuccess}
-                      />
-                    )}
-                  </Stack.Screen>
-                  <Stack.Screen
-                    name="Register"
-                    options={{headerTitle: 'Register'}}>
-                    {props => (
-                      <RegisterPage
-                        {...props}
-                        onRegisterSuccess={() => {}}
-                        onLoginSuccess={handleLoginSuccess}
-                      />
-                    )}
-                  </Stack.Screen>
-                </Stack.Navigator>
-              )}
+                ) : (
+                  <>
+                    <Stack.Screen name="Login" options={{headerShown: false}}>
+                      {props => (
+                        <LoginPage
+                          {...props}
+                          onLoginSuccess={handleLoginSuccess}
+                        />
+                      )}
+                    </Stack.Screen>
+                    <Stack.Screen
+                      name="Register"
+                      options={{headerTitle: 'Register'}}>
+                      {props => (
+                        <RegisterPage
+                          {...props}
+                          onRegisterSuccess={() => {}}
+                          onLoginSuccess={handleLoginSuccess}
+                        />
+                      )}
+                    </Stack.Screen>
+                  </>
+                )}
+              </Stack.Navigator>
             </CopilotProvider>
           </NavigationContainer>
         </BalanceProvider>
