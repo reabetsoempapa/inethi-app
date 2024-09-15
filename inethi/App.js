@@ -81,7 +81,7 @@ const HomePageStack = ({logout}) => {
 // Wallet Page Stack
 const WalletPageStack = ({logout}) => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{headerShown: true}}>
       <Stack.Screen
         name="WalletCategories"
         options={{
@@ -95,7 +95,7 @@ const WalletPageStack = ({logout}) => {
         name="WalletDetails"
         options={{
           header: ({navigation}) => (
-            <AppBarComponent title="Details" logout={logout} />
+            <AppBarComponent title="Wallet Details" logout={logout} />
           ),
         }}>
         {props => <WalletDetailsPage {...props} logout={logout} />}
@@ -211,10 +211,10 @@ const MainTabs = ({navigation, logout}) => {
           let iconName;
           if (route.name === 'Home') {
             iconName = 'home-outline';
+          } else if (route.name === 'Wallet') {
+            iconName = 'wallet-outline';
           } else if (route.name === 'Help') {
             iconName = 'help-circle-outline';
-          } else if (route.name === 'Settings') {
-            iconName = 'settings-outline';
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -226,23 +226,24 @@ const MainTabs = ({navigation, logout}) => {
         {props => <HomePageStack {...props} logout={logout} />}
       </Tab.Screen>
       <Tab.Screen
+        name="Wallet"
+        options={{headerShown: false}} // Keep this false as we're handling headers in WalletPageStack
+      >
+        {props => <WalletPageStack {...props} logout={logout} />}
+      </Tab.Screen>
+      <Tab.Screen
         name="Help"
         options={{headerShown: false}}
         listeners={{
           tabPress: e => {
             e.preventDefault();
-            console.log('Help tab pressed, navigating to WalletCategories');
-            navigation.navigate('WalletPageStack', {
+            navigation.navigate('Wallet', {
               screen: 'WalletCategories',
               params: {startTutorial: true},
-              initial: false,
             });
           },
         }}>
         {props => <HelpPage {...props} />}
-      </Tab.Screen>
-      <Tab.Screen name="SettingsPage" options={{headerShown: false}}>
-        {props => <SettingsPageStack {...props} logout={logout} />}
       </Tab.Screen>
     </Tab.Navigator>
   );
@@ -311,8 +312,8 @@ const App = () => {
               verticalOffset={55}>
               <Stack.Navigator>
                 {userToken ? (
-                  <Stack.Screen name="AppRoutes" options={{headerShown: false}}>
-                    {props => <AppRoutes {...props} logout={logout} />}
+                  <Stack.Screen name="MainTabs" options={{headerShown: false}}>
+                    {props => <MainTabs {...props} logout={logout} />}
                   </Stack.Screen>
                 ) : (
                   <>

@@ -1,13 +1,13 @@
 import React, {useState, useEffect, useCallback, useRef} from 'react';
+import {View, StyleSheet, ScrollView, Alert, Text} from 'react-native';
 import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Alert,
+  IconButton,
+  Card,
+  Title,
+  Paragraph,
   ActivityIndicator,
-  Text,
-} from 'react-native';
-import {IconButton, Dialog, Portal} from 'react-native-paper';
+  useTheme,
+} from 'react-native-paper';
 import {
   useNavigation,
   useRoute,
@@ -189,6 +189,8 @@ const WalletCategoriesPage = () => {
     },
   ];
 
+  const theme = useTheme();
+
   const renderButtons = buttons => {
     return (
       <View style={styles.buttonContainer}>
@@ -202,16 +204,30 @@ const WalletCategoriesPage = () => {
               name={`wallet_step_${idx + 1}`}
               key={idx}>
               <WalkthroughableView style={styles.buttonWrapper}>
-                <View style={styles.iconTextContainer}>
-                  <IconButton
-                    icon={icon}
-                    size={40}
-                    onPress={action}
-                    disabled={isDisabled}
-                    style={styles.icon}
-                  />
-                  <Text style={styles.buttonLabel}>{name}</Text>
-                </View>
+                <Card onPress={action} disabled={isDisabled}>
+                  <Card.Content style={styles.cardContent}>
+                    <IconButton
+                      icon={icon}
+                      size={40}
+                      color={
+                        isDisabled
+                          ? theme.colors.disabled
+                          : theme.colors.primary
+                      }
+                    />
+                    <Paragraph
+                      style={[
+                        styles.buttonLabel,
+                        {
+                          color: isDisabled
+                            ? theme.colors.disabled
+                            : theme.colors.text,
+                        },
+                      ]}>
+                      {name}
+                    </Paragraph>
+                  </Card.Content>
+                </Card>
               </WalkthroughableView>
             </CopilotStep>
           );
@@ -221,33 +237,30 @@ const WalletCategoriesPage = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {renderButtons(walletCategories)}
-        <Portal>
-          {isLoading && (
-            <Dialog visible={true}>
-              <Dialog.Content>
-                <ActivityIndicator size="large" />
-              </Dialog.Content>
-            </Dialog>
-          )}
-        </Portal>
-      </ScrollView>
-    </View>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollContainer}>
+      <Title style={styles.title}>Wallet Categories</Title>
+      {renderButtons(walletCategories)}
+      {isLoading && (
+        <ActivityIndicator animating={true} color={theme.colors.primary} />
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f4f5',
   },
   scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
     padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -256,15 +269,13 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     width: '30%',
-    alignItems: 'center',
     marginBottom: 20,
   },
-  icon: {
-    marginBottom: 8,
+  cardContent: {
+    alignItems: 'center',
   },
   buttonLabel: {
-    fontSize: 14,
-    color: '#333333',
+    marginTop: 8,
     textAlign: 'center',
   },
 });
