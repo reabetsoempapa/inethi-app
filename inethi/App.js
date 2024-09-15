@@ -28,6 +28,8 @@ import PaymentUnsuccessful from './pages/Wallet Pages/PaymentFail';
 import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
 import SetupPIN from './pages/Wallet Pages/PinScreen';
+import HotspotOptionsPage from './pages/HotspotOptionsPage';
+import RequestNodePage from './pages/RequestNodePage'; // Ensure this is imported
 
 // Import the ReviewPage component
 import ReviewPage from './pages/ReviewPage'; // Update this path according to where ReviewPage is located
@@ -48,26 +50,29 @@ const HomePageStack = ({ logout }) => {
           header: ({ navigation }) => (
             <AppBarComponent title="Home" logout={logout} />
           ),
-        }}>
+        }}
+      >
         {props => <HomePage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
-        name="AppStore"
+        name="RequestNode"
         options={{
           header: ({ navigation }) => (
             <AppBarComponent title="App Store" logout={logout} />
           ),
-        }}>
-        {props => <FdroidAppstore {...props} logout={logout} />}
+        }}
+      >
+        {props => <RequestNodePage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
-        name="WebView"
+        name="HotspotOptions"
         options={{
           header: ({ navigation }) => (
             <AppBarComponent title="Web View" logout={logout} />
           ),
-        }}>
-        {props => <WebViewComponent {...props} logout={logout} />}
+        }}
+      >
+        {props => <HotspotOptionsPage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
         name="Map"
@@ -75,7 +80,8 @@ const HomePageStack = ({ logout }) => {
           header: ({ navigation }) => (
             <AppBarComponent title="Map" logout={logout} />
           ),
-        }}>
+        }}
+      >
         {props => <MapPage {...props} logout={logout} />}
       </Stack.Screen>
       <Stack.Screen
@@ -270,8 +276,6 @@ const App = () => {
     await AsyncStorage.setItem('userToken', token);
     await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());
     await AsyncStorage.setItem('refreshToken', refresh_token);
-
-    console.log("token :", token)
     setUserToken(token);
   };
 
