@@ -290,6 +290,7 @@ const PaymentPage = () => {
             onPress={handleSendPayment}
             style={styles.sendButton}
             labelStyle={styles.sendButtonLabel}
+            contentStyle={styles.sendButtonContent}
             loading={isLoading}
             color="#007AFF">
             Send Payment
@@ -337,6 +338,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+    paddingTop: 35,
   },
   formContainer: {
     flex: 1,
@@ -368,6 +370,7 @@ const styles = StyleSheet.create({
   scanButton: {
     marginBottom: 16,
     borderColor: '#007AFF',
+    color: 'black',
   },
   sendButton: {
     marginTop: 10,
@@ -378,6 +381,9 @@ const styles = StyleSheet.create({
   sendButtonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  sendButtonContent: {
+    height: 50,
   },
   exitScannerButton: {
     position: 'absolute',
