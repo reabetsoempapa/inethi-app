@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {Provider as PaperProvider} from 'react-native-paper';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -12,7 +12,7 @@ import AppBarComponent from './components/AppBarComponent';
 import WebViewComponent from './components/WebViewComponent';
 import PaymentPage from './pages/Wallet Pages/PaymentPage';
 import RegisterPage from './pages/RegisterPage';
-import { BalanceProvider } from './context/BalanceContext';
+import {BalanceProvider} from './context/BalanceContext';
 import ServiceContainer from './components/ServiceContainer';
 import FdroidAppstore from './components/FdroidAppstore';
 import MapPage from './pages/MapPage';
@@ -28,7 +28,6 @@ import PaymentUnsuccessful from './pages/Wallet Pages/PaymentFail';
 import HelpPage from './pages/HelpPage';
 import SettingsPage from './pages/Settings';
 
-// Import CopilotProvider
 import {CopilotProvider} from 'react-native-copilot';
 
 const Stack = createNativeStackNavigator();
@@ -39,10 +38,10 @@ const HomePageStack = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Home"
+        name="HomeScreen"
         component={HomePage}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Home" logout={options.logout} />
           ),
         }}
@@ -51,7 +50,7 @@ const HomePageStack = () => {
         name="AppStore"
         component={FdroidAppstore}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="App Store" logout={options.logout} />
           ),
         }}
@@ -60,28 +59,16 @@ const HomePageStack = () => {
         name="WebView"
         component={WebViewComponent}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Web View" logout={options.logout} />
           ),
         }}
       />
-      {/* <Stack.Screen
-        name="ServiceContainer"
-        component={ServiceContainer}
-        options={{
-          header: ({ navigation, route, options }) => (
-            <AppBarComponent
-              title="Service Container"
-              logout={options.logout}
-            />
-          ),
-        }}
-      /> */}
       <Stack.Screen
         name="Map"
         component={MapPage}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Map" logout={options.logout} />
           ),
         }}
@@ -98,7 +85,7 @@ const WalletPageStack = () => {
         name="WalletCategories"
         component={WalletCategoriesPage}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent
               title="Wallet Categories"
               logout={options.logout}
@@ -110,7 +97,7 @@ const WalletPageStack = () => {
         name="WalletDetails"
         component={WalletDetailsPage}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Wallet Details" logout={options.logout} />
           ),
         }}
@@ -119,7 +106,7 @@ const WalletPageStack = () => {
         name="AddRecipient"
         component={AddRecipientScreen}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Add Recipient" logout={options.logout} />
           ),
         }}
@@ -128,7 +115,7 @@ const WalletPageStack = () => {
         name="ViewRecipients"
         component={ViewRecipientsScreen}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="View Recipients" logout={options.logout} />
           ),
         }}
@@ -137,7 +124,7 @@ const WalletPageStack = () => {
         name="CreateWallet"
         component={CreateWalletPage}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Create Wallet" logout={options.logout} />
           ),
         }}
@@ -146,7 +133,7 @@ const WalletPageStack = () => {
         name="RecipientDetails"
         component={RecipientDetailsScreen}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent
               title="Recipient Details"
               logout={options.logout}
@@ -158,7 +145,7 @@ const WalletPageStack = () => {
         name="Payment"
         component={PaymentPage}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Payment" logout={options.logout} />
           ),
         }}
@@ -167,7 +154,7 @@ const WalletPageStack = () => {
         name="PaymentHistory"
         component={PaymentHistory}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Payment History" logout={options.logout} />
           ),
         }}
@@ -176,7 +163,7 @@ const WalletPageStack = () => {
         name="PaymentSuccess"
         component={PaymentSuccess}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Payment Success" logout={options.logout} />
           ),
         }}
@@ -185,28 +172,11 @@ const WalletPageStack = () => {
         name="PaymentUnsuccessful"
         component={PaymentUnsuccessful}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent
               title="Payment Unsuccessful"
               logout={options.logout}
             />
-          ),
-        }}
-      />
-    </Stack.Navigator>
-  );
-};
-
-// Help Page Stack
-const HelpPageStack = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="Help"
-        component={HelpPage}
-        options={{
-          header: ({ navigation, route, options }) => (
-            <AppBarComponent title="Help" logout={options.logout} />
           ),
         }}
       />
@@ -222,7 +192,7 @@ const SettingsPageStack = () => {
         name="Settings"
         component={SettingsPage}
         options={{
-          header: ({ navigation, route, options }) => (
+          header: ({navigation, route, options}) => (
             <AppBarComponent title="Settings" logout={options.logout} />
           ),
         }}
@@ -232,11 +202,11 @@ const SettingsPageStack = () => {
 };
 
 // Main App Routes with Bottom Tabs for Authenticated Users
-const AppRoutes = ({ logout, userToken }) => {
+const AppRoutes = ({logout, userToken}) => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
+      screenOptions={({route}) => ({
+        tabBarIcon: ({color, size}) => {
           let iconName;
           if (route.name === 'Home') {
             iconName = 'home-outline';
@@ -249,31 +219,32 @@ const AppRoutes = ({ logout, userToken }) => {
         },
         tabBarActiveTintColor: '#4285F4',
         tabBarInactiveTintColor: 'gray',
-        tabBarStyle: [{ display: 'flex' }, null],
+        tabBarStyle: [{display: 'flex'}, null],
       })}>
       <Tab.Screen
         name="Home"
         component={HomePageStack}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Tab.Screen
         name="Help"
         component={HelpPage}
         listeners={({navigation}) => ({
           tabPress: e => {
-            e.preventDefault(); // Prevent default tab press behavior
-            console.log('Tutorial passing');
-            // Navigate to Home and pass the `startTutorial: true` flag
-            navigation.navigate('Home', {startTutorial: true});
-            console.log('Tutorial passed');
+            e.preventDefault();
+            console.log('Help tab pressed, navigating to WalletCategories');
+            navigation.navigate('WalletPageStack', {
+              screen: 'WalletCategories',
+              params: {startTutorial: true},
+              initial: false,
+            });
           },
         })}
       />
-
       <Tab.Screen
         name="Settings"
         component={SettingsPageStack}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
     </Tab.Navigator>
   );
@@ -295,13 +266,13 @@ const App = () => {
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('tokenExpiry');
     await AsyncStorage.removeItem('refreshToken');
-    setUserToken(null); // This will trigger a re-render and redirect to the login page
+    setUserToken(null);
   };
 
   const handleLoginSuccess = async (token, expiresIn, refresh_token) => {
     const expiryDate = new Date().getTime() + expiresIn * 1000;
     await AsyncStorage.setItem('userToken', token);
-    await AsyncStorage.setItem('tokenExpiry', expiryDate.toString()); // Store the expiry time
+    await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());
     await AsyncStorage.setItem('refreshToken', refresh_token);
     setUserToken(token);
   };
@@ -310,8 +281,22 @@ const App = () => {
     <PaperProvider>
       <SafeAreaProvider>
         <BalanceProvider logout={logout}>
-          <CopilotProvider overlay="svg">
-            <NavigationContainer>
+          <NavigationContainer>
+            <CopilotProvider
+              overlay="svg"
+              animated={true}
+              tooltipStyle={{
+                backgroundColor: '#e1e8f2',
+                borderRadius: 10,
+                paddingHorizontal: 20,
+                paddingVertical: 15,
+              }}
+              stepNumberStyle={{
+                backgroundColor: '#4285F4',
+                color: '#FFFFFF',
+              }}
+              arrowColor={'rgba(0, 0, 0, 0.8)'}
+              verticalOffset={55}>
               {userToken ? (
                 <Stack.Navigator>
                   <Stack.Screen
@@ -342,8 +327,8 @@ const App = () => {
                   />
                 </Stack.Navigator>
               )}
-            </NavigationContainer>
-          </CopilotProvider>
+            </CopilotProvider>
+          </NavigationContainer>
         </BalanceProvider>
       </SafeAreaProvider>
     </PaperProvider>
