@@ -248,11 +248,15 @@ export default function FdroidAppstore() {
                 </View>
             ) : (
                 <View style={styles.container}>
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search for apps..."
-                        onChangeText={setSearchQuery}
-                    />
+                    <View style={styles.searchContainer}>
+                        <Ionicons name="search" size={20} color="#ccc" style={styles.searchIcon} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search for apps..."
+                            onChangeText={setSearchQuery}
+                            placeholderTextColor="#ccc" // Set placeholder text color for visibility
+                        />
+                    </View>
                     <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
                         {filteredAppsMemo.length === 0 ? (
                             <Text>No apps found for "{searchQuery}"</Text>
@@ -287,7 +291,7 @@ export default function FdroidAppstore() {
                                                 style={styles.minimizeIcon}
                                                 onPress={() => toggleExpanded(app.packageName)}
                                             >
-                                                <Ionicons name="remove-outline" size={45} color="red" />
+                                                <Ionicons name="remove-outline" size={50} color="#9e2e26" />
                                             </TouchableOpacity>
                                         )}
                                     </View>
@@ -330,18 +334,36 @@ export default function FdroidAppstore() {
 }
 
 const styles = StyleSheet.create({
-    container: {
+
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 25,
+        paddingHorizontal: 10,
+        marginBottom: 20,
+        height: 50,  // Fixed height for the container
+    },
+    searchInput: {
+        flex: 1,
+        backgroundColor: '#fff',  // Make the TextInput white
+        height: '80%',  // Ensure the input takes full height of the container
+        borderWidth: 0,  // No borders
+        paddingHorizontal: 20,  // Padding inside the input
+        color: '#333',  // Text color
+        justifyContent: 'center',  // Vertical alignment
+        paddingVertical: "10",
+        borderColor: "#fff"
+    },
+    searchIcon: {
+        marginRight: 8,  // Space between the icon and input
+    }, container: {
         padding: 20,
         backgroundColor: '#f8f8f8',
     },
-    searchInput: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        marginBottom: 20,
-    },
+
     appContainer: {
         marginBottom: 20,
         padding: 10,
