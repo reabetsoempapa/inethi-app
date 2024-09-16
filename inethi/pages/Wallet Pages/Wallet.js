@@ -7,7 +7,6 @@ import {
   IconButton,
   ActivityIndicator,
   useTheme,
-  Button,
   Snackbar,
 } from 'react-native-paper';
 import {
@@ -55,13 +54,10 @@ const WalletCategoriesPage = () => {
   }, []);
 
   useEffect(() => {
-    const handleStepChange = step => {
-      console.log('Tutorial step changed:', step);
-    };
+    const handleStepChange = step => {};
 
     const handleStop = () => {
       stop();
-      console.log('Tutorial finished');
       navigation.setParams({startTutorial: null});
       tutorialStartedRef.current = false;
       setIsTutorialStarted(false);
@@ -79,19 +75,14 @@ const WalletCategoriesPage = () => {
 
   const startTutorialIfNeeded = useCallback(() => {
     if (route.params?.startTutorial && !tutorialStartedRef.current) {
-      console.log('Attempting to start tutorial');
       setTimeout(() => {
         try {
           start();
-          console.log('Tutorial started successfully');
           tutorialStartedRef.current = true;
           setIsTutorialStarted(true);
-        } catch (error) {
-          console.error('Error starting tutorial:', error);
-        }
+        } catch (error) {}
       }, 500);
     } else {
-      console.log('Tutorial already started or flag not set');
     }
   }, [route.params, start]);
 
@@ -107,7 +98,6 @@ const WalletCategoriesPage = () => {
   useFocusEffect(
     useCallback(() => {
       initializeComponent();
-      console.log('Screen focused, checking if tutorial should start');
       startTutorialIfNeeded();
     }, [initializeComponent, startTutorialIfNeeded]),
   );
@@ -121,7 +111,6 @@ const WalletCategoriesPage = () => {
         JSON.stringify(response.data.has_wallet),
       );
     } catch (error) {
-      console.error('Error checking wallet ownership:', error);
       const storedHasWallet = await AsyncStorage.getItem('hasWallet');
       if (storedHasWallet !== null) {
         setHasWallet(JSON.parse(storedHasWallet));
@@ -136,7 +125,6 @@ const WalletCategoriesPage = () => {
       setWalletAddress(response.data.wallet_address);
       await AsyncStorage.setItem('walletAddress', response.data.wallet_address);
     } catch (error) {
-      console.error('Error fetching wallet details:', error);
       const storedWalletAddress = await AsyncStorage.getItem('walletAddress');
       if (storedWalletAddress) {
         setWalletAddress(storedWalletAddress);
@@ -154,9 +142,7 @@ const WalletCategoriesPage = () => {
         (a, b) => new Date(b.date) - new Date(a.date),
       );
       setTransactions(sortedTransactions.slice(0, 3));
-    } catch (error) {
-      console.error('Failed to load transactions:', error);
-    }
+    } catch (error) {}
   };
 
   const walletCategories = [

@@ -28,7 +28,6 @@ export const storeToken = async (token, expiresIn, username) => {
   await AsyncStorage.setItem('username', username); // Store username
 };
 
-
 export const isTokenExpired = async () => {
   const expiryDate = await AsyncStorage.getItem('tokenExpiry');
   return new Date().getTime() > parseInt(expiryDate);
@@ -62,7 +61,6 @@ export const getNewToken = async logout => {
 
     await storeToken(access_token, expires_in, username); // Store token and username
     await AsyncStorage.setItem('refreshToken', newRefreshToken);
-    console.log(`New token ${access_token}`);
     return access_token;
   } catch (error) {
     if (error.response) {
@@ -77,4 +75,3 @@ export const getNewToken = async logout => {
     throw new Error('Failed to refresh token');
   }
 };
-

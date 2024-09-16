@@ -36,7 +36,6 @@ export const syncAnalyticsEvents = async () => {
         await amplitude.track(event.eventName, event.data);
       }
       await AsyncStorage.removeItem('analyticsEvents');
-      console.log('Synced analytics events');
     }
   } catch (error) {
     console.error('Error syncing analytics events:', error);

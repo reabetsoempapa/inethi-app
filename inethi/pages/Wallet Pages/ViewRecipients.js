@@ -37,7 +37,6 @@ const ViewRecipientsScreen = () => {
     try {
       const result = await fetchRecipients();
       const groupedRecipients = groupRecipientsByAlphabet(result);
-      console.log('Grouped recipients:', groupedRecipients); // Debug log
       setRecipients(groupedRecipients);
     } catch (error) {
       setError(`Error fetching recipients: ${error.message}`);
