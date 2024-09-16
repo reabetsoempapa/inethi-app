@@ -37,10 +37,8 @@ const CreateWalletPage = () => {
   const storePin = async pin => {
     try {
       await AsyncStorage.setItem('@wallet_pin', pin);
-      console.log('PIN stored successfully');
       const storedPin = await AsyncStorage.getItem('@wallet_pin');
       if (storedPin === pin) {
-        console.log('PIN verification successful');
       } else {
         console.error('PIN verification failed');
         showSnackbar('Failed to verify the PIN. Please try again.');

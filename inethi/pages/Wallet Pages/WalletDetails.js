@@ -31,17 +31,13 @@ const WalletDetailsPage = () => {
   const qrCodeRef = useRef();
 
   useEffect(() => {
-    console.log('WalletDetailsPage mounted');
     checkNetworkStatus();
     initializeWalletAddress();
-    return () => {
-      console.log('WalletDetailsPage unmounted');
-    };
+    return () => {};
   }, []);
 
   const checkNetworkStatus = useCallback(async () => {
     const state = await NetInfo.fetch();
-    console.log('Network status:', state.isConnected ? 'Online' : 'Offline');
     setIsOnline(state.isConnected);
     if (!state.isConnected) {
       setShowOfflineNotice(true);
@@ -49,59 +45,46 @@ const WalletDetailsPage = () => {
   }, []);
 
   const initializeWalletAddress = async () => {
-    console.log('Initializing wallet address');
     let address = routeWalletAddress;
     if (!address) {
       address = await AsyncStorage.getItem('@wallet_address');
     }
     if (address) {
-      console.log('Wallet address found:', address);
       setWalletAddress(address);
       await AsyncStorage.setItem('@wallet_address', address);
       fetchWalletDetails(address);
     } else {
-      console.log('No wallet address available');
       setIsLoading(false);
     }
   };
 
   const fetchWalletDetails = useCallback(
     async address => {
-      console.log('Fetching Wallet details');
       setIsLoading(true);
       try {
         if (isOnline) {
           const token = await getToken();
-          console.log('Token retrieved');
           const config = {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
           };
-          console.log(
-            'Sending request to:',
-            `${baseURL}${walletDetailsEndpoint}`,
-          );
+
           const response = await axios.get(
             `${baseURL}${walletDetailsEndpoint}`,
             config,
           );
-          console.log('Wallet details received:', response.data);
           setWalletDetails(response.data);
           await AsyncStorage.setItem(
             '@wallet_details',
             JSON.stringify(response.data),
           );
-          console.log('Wallet details cached');
         } else {
-          console.log('Offline: Retrieving cached wallet details');
           const cachedData = await AsyncStorage.getItem('@wallet_details');
           if (cachedData) {
-            console.log('Cached wallet details found');
             setWalletDetails(JSON.parse(cachedData));
           } else {
-            console.log('No cached wallet details available');
             setWalletDetails({balance: '0.0', wallet_address: address});
           }
         }
@@ -116,16 +99,13 @@ const WalletDetailsPage = () => {
   );
 
   const handleError = error => {
-    console.log('Handling error:', error);
     setShowOfflineNotice(true);
   };
 
   const requestStoragePermission = async () => {
-    console.log('Requesting storage permission');
     if (Platform.OS === 'android') {
       try {
         if (Number(Platform.Version) >= 33) {
-          console.log('Android 13 or higher, no need for storage permission');
           return true;
         }
         const granted = await PermissionsAndroid.request(
@@ -138,30 +118,25 @@ const WalletDetailsPage = () => {
             buttonPositive: 'OK',
           },
         );
-        console.log('Permission request result:', granted);
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
         console.warn('Error requesting permission:', err);
         return false;
       }
     } else {
-      console.log('iOS device, no need for storage permission');
       return true;
     }
   };
 
   const handleDownloadQrCode = async () => {
-    console.log('Attempting to download QR code');
     const hasPermission = await requestStoragePermission();
 
     if (!hasPermission) {
-      console.log('Storage permission denied');
       setShowOfflineNotice(true);
       return;
     }
 
     if (qrCodeRef.current) {
-      console.log('QR code ref available, generating SVG string');
       qrCodeRef.current.toDataURL(dataURL => {
         RNFS.writeFile(
           `${RNFS.DownloadDirectoryPath}/qrcode_${walletAddress}.png`,
@@ -169,7 +144,6 @@ const WalletDetailsPage = () => {
           'base64',
         )
           .then(success => {
-            console.log('QR code saved successfully');
             Alert.alert('Success', `QR code saved to Downloads folder`);
           })
           .catch(err => {
@@ -178,19 +152,16 @@ const WalletDetailsPage = () => {
           });
       });
     } else {
-      console.log('QR code ref not available');
       setShowOfflineNotice(true);
     }
   };
 
   const handleCopyAddress = () => {
-    console.log('Copying wallet address to clipboard');
     Clipboard.setString(walletAddress);
     Alert.alert('Copied', 'Wallet address copied to clipboard');
   };
 
   if (isLoading) {
-    console.log('Rendering loading state');
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -198,7 +169,6 @@ const WalletDetailsPage = () => {
     );
   }
 
-  console.log('Rendering wallet details');
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>

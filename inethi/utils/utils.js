@@ -34,11 +34,7 @@ export const handleLogin = async (
       setError('No access token received');
     }
   } catch (err) {
-    console.log('Error response:', err.response);
     if (err.response) {
-      console.log('Data:', err.response.data);
-      console.log('Status:', err.response.status);
-      console.log('Headers:', err.response.headers);
       setError(
         `Failed to login: ${
           err.response.data.error_description ||
@@ -47,10 +43,8 @@ export const handleLogin = async (
         }`,
       );
     } else if (err.request) {
-      console.log('Request:', err.request);
       setError('No response received from the server.');
     } else {
-      console.log('Error Message:', err.message);
       setError('Failed to login: ' + err.message);
     }
   } finally {

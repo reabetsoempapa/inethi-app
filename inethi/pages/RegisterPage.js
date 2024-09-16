@@ -63,7 +63,6 @@ const RegisterPage = ({onRegisterSuccess, onLoginSuccess}) => {
         setError('Failed to register');
       }
     } catch (error) {
-      console.log(error);
       setError('Failed to register: ' + error.message);
       if (error.response) {
         if (error.response.status === 409) {
