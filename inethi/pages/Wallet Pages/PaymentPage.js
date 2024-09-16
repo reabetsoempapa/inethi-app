@@ -381,6 +381,7 @@ const styles = StyleSheet.create({
   sendButtonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: 'white',
   },
   sendButtonContent: {
     height: 50,

@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Card,
   Text,
-  IconButton,
 } from 'react-native-paper';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {fetchRecipients} from '../../service/recipient';
@@ -61,12 +60,11 @@ const ViewRecipientsScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Title style={styles.title}>Recipients</Title>
-        <IconButton
-          icon="plus"
-          size={24}
-          color="#007AFF"
+        <TouchableOpacity
           onPress={() => navigation.navigate('AddRecipient')}
-        />
+          style={styles.addButton}>
+          <Ionicons name="add" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.contentContainer}>
         {isLoading ? (
@@ -84,32 +82,31 @@ const ViewRecipientsScreen = () => {
                 {recipients[letter].map((recipient, idx) => (
                   <TouchableOpacity
                     key={idx}
-                    onPress={() => handleRecipientPress(recipient)}>
-                    <Card style={styles.recipientCard}>
-                      <Card.Content style={styles.recipientContent}>
-                        <View style={styles.recipientInfo}>
-                          <Ionicons
-                            name="person-outline"
-                            size={24}
-                            color="#007AFF"
-                            style={styles.icon}
-                          />
-                          <View>
-                            <Paragraph style={styles.recipientName}>
-                              {recipient.name}
-                            </Paragraph>
-                            <Text style={styles.recipientDetails}>
-                              {recipient.wallet_name}
-                            </Text>
-                          </View>
-                        </View>
+                    onPress={() => handleRecipientPress(recipient)}
+                    style={styles.recipientCard}>
+                    <View style={styles.recipientContent}>
+                      <View style={styles.recipientInfo}>
                         <Ionicons
-                          name="chevron-forward-outline"
+                          name="person-outline"
                           size={24}
                           color="#007AFF"
+                          style={styles.icon}
                         />
-                      </Card.Content>
-                    </Card>
+                        <View>
+                          <Text style={styles.recipientName}>
+                            {recipient.name}
+                          </Text>
+                          <Text style={styles.recipientDetails}>
+                            {recipient.wallet_name}
+                          </Text>
+                        </View>
+                      </View>
+                      <Ionicons
+                        name="chevron-forward-outline"
+                        size={24}
+                        color="#007AFF"
+                      />
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -131,17 +128,19 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+    position: 'relative',
+    marginTop: 25,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#000000',
+    textAlign: 'center',
   },
   addButton: {
     backgroundColor: '#007AFF',
@@ -150,6 +149,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'absolute',
+    right: 16,
   },
   contentContainer: {
     paddingTop: 16,
