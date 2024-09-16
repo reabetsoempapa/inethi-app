@@ -1,17 +1,7 @@
 import React, {useState, useEffect} from 'react';
-import {View, StyleSheet, Alert, TouchableOpacity} from 'react-native';
+import {View, StyleSheet, Alert} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import {
-  TextInput,
-  Button,
-  Dialog,
-  Portal,
-  Paragraph,
-  useTheme,
-  IconButton,
-  Modal,
-  Text,
-} from 'react-native-paper';
+import {TextInput, Button, Portal, Modal, Text} from 'react-native-paper';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useBalance} from '../../context/BalanceContext';
 import {
@@ -23,6 +13,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {isValidWalletAddress} from './Helpers/WalletAdressValidator';
+import {sendPayment, trackButtonClick} from '../../service/Wallet';
 
 const PaymentPage = () => {
   const {balance, fetchBalance, updateBalance} = useBalance();
@@ -42,7 +33,6 @@ const PaymentPage = () => {
   const device = useCameraDevice('back');
   const {hasPermission, requestPermission} = useCameraPermission();
   const [isPinSet, setIsPinSet] = useState(false);
-  const theme = useTheme();
 
   useEffect(() => {
     checkPinStatus();
@@ -138,29 +128,66 @@ const PaymentPage = () => {
     try {
       const paymentData = {
         payment_method: paymentMethod,
-        recipient_address: receiver,
+        recipient_alias: paymentMethod === 'username' ? receiver : undefined,
+        recipient_address:
+          paymentMethod === 'walletAddress' ? receiver : undefined,
         amount,
       };
 
-      // Mocked send payment function, replace with actual API call
-      const transaction = await mockSendPayment(paymentData);
+      const response = await sendPayment(paymentData);
 
-      if (transaction.success) {
+      if (response.data.success) {
         setIsLoading(false);
         updateBalance(balance - parseFloat(amount));
+        trackButtonClick('Payment_Sent', {amount, paymentMethod});
+
+        // Store the successful transaction in AsyncStorage
+        await storeTransaction({
+          id: Date.now(), // Using timestamp as a simple unique identifier
+          recipient_address: receiver,
+          amount,
+          status: 'Success',
+          date: new Date().toISOString(),
+        });
+
         navigation.navigate('PaymentSuccess');
       } else {
-        throw new Error('Payment failed');
+        throw new Error(response.data.message || 'Payment failed');
       }
     } catch (error) {
       setIsLoading(false);
       const errorMsg =
-        error.message || 'Failed to send payment. Please try again later.';
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to send payment. Please try again later.';
       setError(errorMsg);
+      trackButtonClick('Payment_Failed', {
+        amount,
+        paymentMethod,
+        error: errorMsg,
+      });
       navigation.navigate('PaymentUnsuccessful', {errorMessage: errorMsg});
     }
   };
 
+  const storeTransaction = async transaction => {
+    try {
+      const existingTransactions =
+        JSON.parse(await AsyncStorage.getItem('transactions')) || [];
+      const updatedTransactions = [...existingTransactions, transaction];
+      await AsyncStorage.setItem(
+        'transactions',
+        JSON.stringify(updatedTransactions),
+      );
+    } catch (error) {
+      console.error('Failed to store transaction:', error);
+      // Consider showing an alert to the user
+      Alert.alert(
+        'Warning',
+        'Failed to save transaction history. The payment was successful, but it may not appear in your history.',
+      );
+    }
+  };
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
     onCodeScanned: codes => {
@@ -292,6 +319,7 @@ const PaymentPage = () => {
             labelStyle={styles.sendButtonLabel}
             contentStyle={styles.sendButtonContent}
             loading={isLoading}
+            disabled={isButtonDisabled}
             color="#007AFF">
             Send Payment
           </Button>
@@ -381,6 +409,7 @@ const styles = StyleSheet.create({
   sendButtonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: 'white',
   },
   sendButtonContent: {
     height: 50,

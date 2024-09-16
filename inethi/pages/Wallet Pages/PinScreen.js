@@ -20,12 +20,10 @@ const SetupPIN = () => {
       Alert.alert('Error', 'PIN must be 5 digits long');
       return;
     }
-
     if (pin !== confirmPin) {
       Alert.alert('Error', 'PINs do not match');
       return;
     }
-
     try {
       await AsyncStorage.setItem('@wallet_pin', pin);
       Alert.alert('Success', 'PIN set successfully', [
@@ -62,7 +60,7 @@ const SetupPIN = () => {
         maxLength={5}
       />
       <TouchableOpacity style={styles.button} onPress={handleSetupPIN}>
-        <Text style={styles.buttonText}>Set PIN</Text>
+        <Text style={styles.buttonLabel}>Set PIN</Text>
       </TouchableOpacity>
     </View>
   );
@@ -74,42 +72,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFFFFF',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#000000',
   },
   description: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
-    color: '#666',
+    color: '#000000',
   },
   input: {
     width: '100%',
     height: 50,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E0E0E0',
     borderRadius: 8,
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   button: {
-    backgroundColor: '#0066ff',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    alignItems: 'center',
     marginTop: 10,
+    width: '100%',
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
   },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+  buttonLabel: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    padding: 15,
   },
 });
 

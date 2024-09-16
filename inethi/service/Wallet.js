@@ -80,3 +80,13 @@ export const fetchWalletDetails = async () => {
   };
   return axios.get(`${baseURL}${walletDetailsEndpoint}`, config);
 };
+export const sendPayment = async paymentData => {
+  const token = await getToken();
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  };
+  return axios.post(`${baseURL}${walletSendEndpoint}`, paymentData, config);
+};
