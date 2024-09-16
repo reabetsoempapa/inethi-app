@@ -261,15 +261,9 @@ const WalletCategoriesPage = () => {
   const renderItem = ({item, index}) => {
     if (index === 0) {
       return (
-        <View style={styles.balanceContainer}>
-          {/* <Text style={styles.balanceLabel}>Current Balance</Text>
-          <Text style={styles.balanceAmount}>{balance} eKROON</Text> */}
-          {walletAddress && (
-            <Text style={styles.walletAddress}>
-              {/* Wallet Address: {walletAddress} */}
-            </Text>
-          )}
-        </View>
+        <>
+          <Text style={styles.walletTitle}>Wallet</Text>
+        </>
       );
     } else if (index === 1) {
       return (
@@ -286,19 +280,7 @@ const WalletCategoriesPage = () => {
         </View>
       );
     } else if (index === 2) {
-      return (
-        <View style={styles.recentTransactionsContainer}>
-          <Title style={styles.recentTransactionsTitle}>
-            Recent Transactions
-          </Title>
-          <FlatList
-            data={transactions}
-            renderItem={renderTransactionItem}
-            keyExtractor={item => item.id.toString()}
-            scrollEnabled={false}
-          />
-        </View>
-      );
+      return <View style={styles.recentTransactionsContainer}></View>;
     }
     return null;
   };
@@ -336,6 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   balanceContainer: {
+    marginBottom: 0,
     backgroundColor: 'white',
     padding: 20,
     alignItems: 'center',
@@ -421,6 +404,15 @@ const styles = StyleSheet.create({
   downloadButtonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  walletTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+    paddingTop: 45,
+    paddingBottom: 15,
+    backgroundColor: 'white',
   },
 });
 
