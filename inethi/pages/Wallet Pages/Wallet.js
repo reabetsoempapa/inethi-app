@@ -249,15 +249,6 @@ const WalletCategoriesPage = () => {
     );
   };
 
-  const renderTransactionItem = ({item}) => (
-    <View style={styles.transactionItem}>
-      <Text>To: {item.recipient_address}</Text>
-      <Text>Amount: {item.amount}</Text>
-      <Text>Status: {item.status}</Text>
-      <Text>Date: {new Date(item.date).toLocaleString()}</Text>
-    </View>
-  );
-
   const renderItem = ({item, index}) => {
     if (index === 0) {
       return (
@@ -279,10 +270,7 @@ const WalletCategoriesPage = () => {
           />
         </View>
       );
-    } else if (index === 2) {
-      return <View style={styles.recentTransactionsContainer}></View>;
-    }
-    return null;
+    } else return null;
   };
 
   return (

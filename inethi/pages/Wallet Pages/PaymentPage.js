@@ -16,7 +16,7 @@ import {isValidWalletAddress} from './Helpers/WalletAdressValidator';
 import {sendPayment, trackButtonClick} from '../../service/Wallet';
 
 const PaymentPage = () => {
-  const {balance, fetchBalance, updateBalance} = useBalance();
+  const {balance, fetchBalance, updateBalance} = useBalance(0.0);
   const navigation = useNavigation();
   const route = useRoute();
   const {recipient} = route.params || {};
@@ -33,12 +33,22 @@ const PaymentPage = () => {
   const device = useCameraDevice('back');
   const {hasPermission, requestPermission} = useCameraPermission();
   const [isPinSet, setIsPinSet] = useState(false);
+  const [displayBalance, setDisplayBalance] = useState('0.0');
 
   useEffect(() => {
     checkPinStatus();
-    fetchBalance();
+    fetchBalanceAndUpdate();
   }, []);
 
+  const fetchBalanceAndUpdate = async () => {
+    try {
+      await fetchBalance();
+      setDisplayBalance(balance);
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+      setDisplayBalance('0.0 '); // Set to initial state on error
+    }
+  };
   useEffect(() => {
     setIsButtonDisabled(
       !(
@@ -232,7 +242,7 @@ const PaymentPage = () => {
         <View style={styles.formContainer}>
           <View style={styles.balanceContainer}>
             <Text style={styles.balanceLabel}>Available Balance</Text>
-            <Text style={styles.balanceAmount}>{balance} Krone</Text>
+            <Text style={styles.balanceAmount}>{displayBalance}</Text>
           </View>
           <Picker
             selectedValue={paymentMethod}

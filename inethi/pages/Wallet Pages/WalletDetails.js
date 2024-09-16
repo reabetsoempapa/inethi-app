@@ -175,7 +175,7 @@ const WalletDetailsPage = () => {
         <View style={styles.balanceContainer}>
           {/* <Text style={styles.balanceLabel}>Available Balance</Text> */}
           <Text style={styles.balanceAmount}>
-            {walletDetails?.balance || '0.0'} Krone
+            {walletDetails?.balance || '0.0'}
           </Text>
         </View>
         {walletAddress && (

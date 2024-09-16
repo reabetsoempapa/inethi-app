@@ -5,7 +5,7 @@ import {getToken} from '../utils/tokenUtils';
 const BalanceContext = createContext();
 
 export const BalanceProvider = ({children, logout}) => {
-  const [balance, setBalance] = useState('0.0 Krone');
+  const [balance, setBalance] = useState('0.0');
   const baseURL = 'https://manage-backend.inethicloud.net';
   const balanceEndpoint = '/wallet/balance/';
   const walletOwnershipEndpoint = '/wallet/ownership/';
