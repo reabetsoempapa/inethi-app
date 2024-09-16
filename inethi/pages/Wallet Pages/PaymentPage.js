@@ -140,6 +140,16 @@ const PaymentPage = () => {
         setIsLoading(false);
         updateBalance(balance - parseFloat(amount));
         trackButtonClick('Payment_Sent', {amount, paymentMethod});
+
+        // Store the successful transaction in AsyncStorage
+        await storeTransaction({
+          id: Date.now(), // Using timestamp as a simple unique identifier
+          recipient_address: receiver,
+          amount,
+          status: 'Success',
+          date: new Date().toISOString(),
+        });
+
         navigation.navigate('PaymentSuccess');
       } else {
         throw new Error(response.data.message || 'Payment failed');
@@ -160,6 +170,24 @@ const PaymentPage = () => {
     }
   };
 
+  const storeTransaction = async transaction => {
+    try {
+      const existingTransactions =
+        JSON.parse(await AsyncStorage.getItem('transactions')) || [];
+      const updatedTransactions = [...existingTransactions, transaction];
+      await AsyncStorage.setItem(
+        'transactions',
+        JSON.stringify(updatedTransactions),
+      );
+    } catch (error) {
+      console.error('Failed to store transaction:', error);
+      // Consider showing an alert to the user
+      Alert.alert(
+        'Warning',
+        'Failed to save transaction history. The payment was successful, but it may not appear in your history.',
+      );
+    }
+  };
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
     onCodeScanned: codes => {
