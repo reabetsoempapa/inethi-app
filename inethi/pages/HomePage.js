@@ -20,6 +20,7 @@ import {
   logAnalyticsEvent,
   fetchServices,
 } from '../service/HomePageService'; // Importing from external service
+import { recordFeatureUsage } from '../service/Metric';
 
 amplitude.init('d641bfb8c1944a8894e65cc64309318e');
 
@@ -56,8 +57,9 @@ const HomePage = ({ logout }) => {
   const [progress, setProgress] = useState(0); // For progress bar
 
   const handleAppstoreClick = () => {
-    logAnalyticsEvent('navigate_to_AppStore', { feature: 'App Store' });
-    navigation.navigate('AppStore');
+    logAnalyticsEvent('navigate_to_AppStore', { feature: 'App Store' });//recording app navigation using amplitude
+    recordFeatureUsage("AppStore");//recording app navigation using prometheus
+    navigation.navigate('AppStore'); // navigating to appstore
   };
 
   const handleHotspotOptionsClick = () => {
