@@ -127,21 +127,29 @@ const ViewRecipientsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
   title: {
     fontSize: 20,
-    color: '#333',
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  addButton: {
+    backgroundColor: '#007AFF',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contentContainer: {
     paddingTop: 16,
@@ -161,17 +169,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    marginLeft: 16,
+    alignSelf: 'center',
     marginBottom: 8,
   },
   letter: {
     fontWeight: 'bold',
     fontSize: 16,
     color: '#FFFFFF',
-    alignSelf: 'center',
   },
   recipientCard: {
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginBottom: 12,
     borderRadius: 8,
@@ -181,6 +188,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    padding: 16,
   },
   recipientInfo: {
     flexDirection: 'row',
@@ -192,17 +200,17 @@ const styles = StyleSheet.create({
   recipientName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000000',
   },
   recipientDetails: {
     fontSize: 14,
-    color: '#555',
+    color: '#555555',
   },
   noRecipientsText: {
     fontSize: 16,
     textAlign: 'center',
     marginTop: 20,
-    color: '#555',
+    color: '#555555',
   },
 });
 
